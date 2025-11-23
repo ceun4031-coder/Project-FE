@@ -1,0 +1,95 @@
+/* src/styles/tokens.css */
+
+/* ───── Color Tokens (Figma 기준 그대로) ───── */
+:root {
+  /* Primary (브랜드 보라) */
+  --primary-600: #4c44b8; /* pressed/active */
+  --primary-500: #6c5ce7; /* main */
+  --primary-400: #7e6df0;
+  --primary-300: #9380f7;
+  --primary-200: #b7a8ff;
+  --primary-100: #ede9ff;
+
+  /* Secondary (라벤더 보조 컬러) */
+  --secondary-500: #a29bfe;
+  --secondary-400: #9188f0;
+  --secondary-300: #bfb7ff;
+  --secondary-200: #dcd6ff;
+  --secondary-100: #f4f1ff;
+
+  /* Neutral (텍스트 & 기본 UI) */
+  --neutral-900: #1e1e2f; /* 헤더 텍스트 */
+  --neutral-800: #2d2d40;
+  --neutral-700: #3a3a4f; /* 본문 텍스트 */
+  --neutral-600: #55556c;
+  --neutral-500: #82829a; /* 서브 텍스트 */
+  --neutral-300: #c7c7d9;
+  --neutral-200: #e5e5f0; /* disabled BG */
+  --neutral-100: #f7f7fc; /* 메인 페이지 BG */
+  --neutral-50: #ffffff;
+
+  --disabled-bg: #e5e5f0; /* disabled BG */
+  --disabled-text: #A0A0B5;
+
+  /* Surface (카드/섹션/모달 배경) */
+  --surface-1: #ffffff;
+  --surface-2: #f4f1ff;
+  --surface-3: #ede9ff;
+
+  /* Border */
+  --border-strong: #c7c7d9;
+  --border-subtle: #e5e5f0;
+
+  /* ───── Semantic 기본 매핑 (body, 카드용) ───── */
+  --color-bg: var(--neutral-100);
+  --color-surface: var(--surface-1);
+  --color-text: var(--neutral-700);
+  --color-text-muted: var(--neutral-500);
+
+  /* radius & shadow */
+  --radius-pill:999px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-soft: 0 6px 12px rgba(0, 0, 0, 0.12);
+
+  /* spacing (8px 단위) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* 폰트 */
+  --font-family-base: system-ui, "Segoe UI", sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 1.6;
+
+  /* ──────────────────────── */
+  /*  레이아웃/브레이크포인트 */
+  /* ──────────────────────── */
+  --bp-mobile: 375px;     /* 모바일 */
+  --bp-tablet: 768px;     /* 태블릿 */
+  --bp-web: 1280px;       /* 일반 웹 */
+  --bp-web-wide: 1440px;  /* PC 웹(와이드) */
+
+  /* Container Width (피그마 기준) */
+  /* 1440px: Container 1200 + 좌우 margin 120 */
+  /* 1280px: Container 1120 + 좌우 margin 80  */
+  --container-web-width: 1120px;    /* 1280, margin 80 */
+  --container-web-wide-width: 1200px; /* 1440, margin 120 */
+
+  /* Gutter(컬럼 사이 간격) – 필요하면 grid에 사용 */
+  --gutter-mobile: 16px;
+  --gutter-tablet: 16px;
+  --gutter-web: 24px;
+
+  /* Outer Margin (좌우 여백) */
+  --outer-margin-mobile: 16px;   /* 375px */
+  --outer-margin-tablet: 24px;   /* 768px */
+  --outer-margin-web: 80px;      /* 1280px */
+  --outer-margin-web-wide: 120px;/* 1440px */
+}

@@ -1,0 +1,90 @@
+/* src/components/common/Button.css */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill); 
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease,
+    box-shadow 0.15s ease;
+}
+
+/* 공통 상태 */
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;          /* 이벤트 완전 차단 */
+  background: var(--disabled-bg) !important;
+  color: var(--disabled-text) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;   /* hover shadow 차단 */
+  transform: none !important;    /* active animation 차단 */
+  transition: none !important;   /* 미세한 뚝딱거림 방지 */
+}
+
+
+/* ───── Size ───── */
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.btn--md {
+  padding: 8px 16px;
+}
+
+.btn--lg {
+  padding: 10px 20px;
+  font-size: 1rem;
+}
+
+/* ───── Full Width ───── */
+.btn--full {
+  width: 100%;
+}
+
+/* ───── Primary ───── */
+.btn--primary {
+  background: var(--primary-500);
+  color: var(--neutral-50);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--primary-600);
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+/* ───── Secondary ───── */
+.btn--secondary {
+  background: var(--secondary-500);
+  color: var(--neutral-50);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: var(--secondary-400);
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+/* ───── Ghost ───── */
+.btn--ghost {
+  background: transparent;
+  color: var(--primary-500);
+  border-color: var(--border-strong);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--primary-100);
+}
+
+/* ───── Outline ───── */
+.btn--outline {
+  background: transparent;
+  color: var(--primary-500);
+  border-color: var(--primary-500);
+}
+.btn--outline:hover:not(:disabled) {
+  background: var(--primary-100);
+}
