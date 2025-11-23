@@ -1,6 +1,7 @@
-/* src/styles/tokens.css */
+/* src/styles/tokens.css -> project-app/tailwind.config.js로 이동시킴 [11-23]
+*/
 
-/* ───── Color Tokens (Figma 기준 그대로) ───── */
+/* ───── Color Tokens ───── */
 :root {
   /* Primary (브랜드 보라) */
   --primary-600: #4c44b8; /* pressed/active */
