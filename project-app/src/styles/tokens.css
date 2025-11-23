@@ -64,7 +64,7 @@
   --space-10: 40px;
 
   /* 폰트 */
-  --font-family-base: system-ui, "Segoe UI", sans-serif;
+  --font-family-base: "Inter", "Segoe UI", sans-serif;
   --font-size-base: 16px;
   --line-height-base: 1.6;
 
