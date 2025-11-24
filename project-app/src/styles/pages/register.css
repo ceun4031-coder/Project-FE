@@ -1,88 +1,67 @@
-/* ------------------------------ */
-/* 전체 카드 레이아웃            */
-/* ------------------------------ */
-
 .register-card {
   display: flex;
   width: 100%;
-  max-width: 900px;
-  min-height: 540px;
+  max-width: 1180px;
+  min-height: 720px;
   margin: 60px auto;
-  background: var(--surface-1);
+  background: white;
   border-radius: 28px;
   overflow: hidden;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
 }
 
-/* ------------------------------ */
-/* 왼쪽 비주얼 부분               */
-/* ------------------------------ */
-
+/* 왼쪽 비주얼 */
 .register-visual {
   flex: 1;
-  background: linear-gradient(135deg, #ede9ff, #f7f7fc);
+  background: linear-gradient(135deg, #ede9ff, #f4f2ff);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  position: relative;
 }
 
 .register-visual-inner {
-  width: 80%;
-  height: 80%;
-  background: rgba(255, 255, 255, 0.35);
-  border-radius: 24px;
+  position: relative;
+  width: 85%;
+  height: 90%;
 }
 
-/* ------------------------------ */
-/* 오른쪽 폼 영역                 */
-/* ------------------------------ */
+/* 일러스트 */
+.register-visual-graphic {
+  position: absolute;
+  bottom: -6px;
+  left: 40%;
+  width: 78%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 5;
+}
 
+/* 오른쪽 폼 */
 .register-form-area {
   flex: 1;
-  padding: 60px 50px;
-  display: flex;
-  flex-direction: column;
+  padding: 60px 70px;
 }
 
 .register-title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   margin-bottom: 32px;
-  color: var(--neutral-900);
 }
 
-/* input field */
 .register-field {
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
-.register-field label {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  display: block;
-}
-
-/* 버튼 */
-.register-btn {
-  margin-top: 12px;
-}
-
-.login-move-btn {
-  margin-top: 12px;
-}
-
-/* OR 구분선 */
+/* OR divider */
 .register-divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 26px 0;
+  margin: 32px 0;
   color: var(--neutral-500);
   font-size: 13px;
 }
-
 .register-divider::before,
 .register-divider::after {
   content: "";
@@ -97,31 +76,15 @@
   padding: 12px;
   border-radius: 999px;
   border: 1px solid var(--border-subtle);
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  background: #fff;
   gap: 8px;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
 .google-btn img {
   width: 20px;
-  height: 20px;
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-  .register-card {
-    flex-direction: column;
-    max-width: 95%;
-  }
-
-  .register-visual {
-    height: 200px;
-  }
-
-  .register-form-area {
-    padding: 40px 24px;
-  }
 }

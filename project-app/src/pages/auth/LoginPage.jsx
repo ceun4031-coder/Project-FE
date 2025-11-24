@@ -6,6 +6,8 @@ import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/common/Input";
 import PasswordInput from "../../components/common/PasswordInput";
 import Button from "../../components/common/Button";
+import TodayWordCard from './../../components/common/TodayWordCard';
+import LoginIllustration from "../../assets/images/login.svg";
 
 import "../../styles/pages/login.css";
 import { login } from "../../api/authApi";
@@ -83,14 +85,22 @@ export default function LoginPage() {
 
   return (
     <main className="page-container">
-      <div className="login-card">
+       <div className="login-card">
+
         {/* 왼쪽 비주얼 영역 */}
         <div className="login-visual">
           <div className="login-visual-inner">
-            {/* 필요 시 이미지/일러스트 추가 */}
+            {/* 오늘의 단어 카드 */}
+            <TodayWordCard />
+
+            {/* 캐릭터 일러스트 */}
+            <img
+              src={LoginIllustration}
+              alt="login illustration"
+              className="login-visual-graphic"
+            />
           </div>
         </div>
-
         {/* 오른쪽 로그인 폼 */}
         <div className="login-form-area">
           <h1 className="login-title">로그인</h1>
@@ -129,27 +139,25 @@ export default function LoginPage() {
                 {error}
               </p>
             )}
-
-            {/* 아이디 저장 / 찾기 */}
+ {/* 아이디 저장 / 찾기 */}
             <div className="login-options">
-              <label className="login-save-id">
+              <label style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                 <input
                   type="checkbox"
                   name="saveId"
                   checked={formData.saveId}
                   onChange={handleChange}
                 />
-                <span>아이디 저장</span>
+                아이디 저장
               </label>
-
-              <div className="login-find-links">
-                <Link to="/auth/find-id" className="login-link">
-                  아이디 찾기
-                </Link>
-                <span className="login-divider-line">|</span>
-                <Link to="/auth/find-password" className="login-link">
-                  비밀번호 찾기
-                </Link>
+              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <Link to="/auth/find" style={{ color: "var(--primary-500)" }}>
+                아이디 찾기
+              </Link>
+              <span style={{ color: "var(--neutral-500)" }}>|</span>
+              <Link to="/auth/find" style={{ color: "var(--primary-500)" }}>
+                비밀번호 찾기
+              </Link>
               </div>
             </div>
 

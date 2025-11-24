@@ -48,6 +48,7 @@ export async function register({ id, email, password, nickname }) {
     const exists = MOCK_USERS.some(
       (u) => u.id === id || u.email === email
     );
+
     if (exists) {
       const error = new Error("DUPLICATE");
       error.response = {
@@ -62,19 +63,28 @@ export async function register({ id, email, password, nickname }) {
 
   // 실제 서버 모드
   const res = await httpClient.post("/auth/register", {
-    id,
     email,
-    password,
-    nickname,
+    password,      // → USER_PW
+    nickname,      // → NICKNAME
+    userName,      // → USER_NAME
+    userBirth,     // → USER_BIRTH
+    preference,    // → PREFERENCE
+    goal,          // → GOAL
+    dailyWordGoal, // → DAILY_WORD_GOAL
   });
   return res.data;
 }
 
+// 로그아웃
 export async function logout() {
-  if (!USE_MOCK_AUTH) {
-    try {
-      await httpClient.post("/auth/logout");
-    } catch {}
-  }
+  // 1) 클라이언트 상태는 먼저 정리
   clearTokens();
+  window.dispatchEvent(new Event("auth:logout"));
+
+  // 2) 서버 로그아웃은 백그라운드로 시도 
+  try {
+    await httpClient.post("/auth/logout");
+  } catch (e) {
+    // 실패해도 사용자 UX에는 영향 없으므로 무시
+  }
 }
