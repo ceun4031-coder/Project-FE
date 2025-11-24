@@ -53,7 +53,35 @@ export default {
         border: {
           strong: '#c7c7d9',
           subtle: '#e5e5f0',
-        }
+        },
+         danger: {
+      50:  '#fef2f2',
+      100: '#fee2e2',
+      200: '#fecaca',
+      500: '#ef4444',
+      600: '#dc2626',
+    },
+    warning: {
+      50:  '#fffbeb',
+      100: '#fef3c7',
+      200: '#fde68a',
+      500: '#f59e0b',
+      600: '#d97706',
+    },
+    success: {
+      50:  '#ecfdf5',
+      100: '#d1fae5',
+      200: '#a7f3d0',
+      500: '#10b981',
+      600: '#059669',
+    },
+    info: {
+      50:  '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      500: '#3b82f6',
+      600: '#2563eb',
+    },
       },
 
       // 2. 폰트 설정

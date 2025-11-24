@@ -41,11 +41,58 @@
   --border-strong: #c7c7d9;
   --border-subtle: #e5e5f0;
 
+  /* ──────────────────────── */
+  /*  Status / Feedback Colors */
+  /* ──────────────────────── */
+
+  /* Danger / Error (폼 에러, 경고 배너 등) */
+  --danger-50:  #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-200: #fecaca;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+
+  /* Warning (주의, 토스트, 배너 등) */
+  --warning-50:  #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+
+  /* Success (성공 토스트, 상태 배지 등) */
+  --success-50:  #ecfdf5;
+  --success-100: #d1fae5;
+  --success-200: #a7f3d0;
+  --success-500: #10b981;
+  --success-600: #059669;
+
+  /* Info (안내용 배너, 라벨 등) */
+  --info-50:  #eff6ff;
+  --info-100: #dbeafe;
+  --info-200: #bfdbfe;
+  --info-500: #3b82f6;
+  --info-600: #2563eb;
+
   /* ───── Semantic 기본 매핑 (body, 카드용) ───── */
   --color-bg: var(--neutral-100);
   --color-surface: var(--surface-1);
   --color-text: var(--neutral-700);
   --color-text-muted: var(--neutral-500);
+  /* ───── Semantic Status 매핑 ───── */
+  --color-error:        var(--danger-500);
+  --color-error-bg:     var(--danger-50);
+  --color-warning:      var(--warning-500);
+  --color-warning-bg:   var(--warning-50);
+  --color-success:      var(--success-500);
+  --color-success-bg:   var(--success-50);
+  --color-info:         var(--info-500);
+  --color-info-bg:      var(--info-50);
+
+  /* 폼/포커스 공통 포커스 링 색상 */
+  --focus-ring-color:   rgba(124, 101, 255, 0.35); /* primary 기반 정도로 */
+
+  /* 모달/드롭다운 오버레이용 */
+  --overlay-scrim:      rgba(15, 23, 42, 0.55); /* 어두운 스크림 */
 
   /* radius & shadow */
   --radius-pill:999px;

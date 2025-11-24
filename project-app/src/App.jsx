@@ -1,5 +1,6 @@
 import ButtonDemo from "./testStyle/ButtonTest";
 import TokenSystemDemo from "./testStyle/TokenSystem";
+import InputDemo from './testStyle/InputTest';
 
 import { Routes, Route } from "react-router-dom";
 import Header from './components/layout/Header';
@@ -17,8 +18,7 @@ function App() {
           path="/" 
           element={
             <div className="page-container">
-              <ButtonDemo />
-              <TokenSystemDemo />
+              <InputDemo/>
             </div>
           } 
         />
