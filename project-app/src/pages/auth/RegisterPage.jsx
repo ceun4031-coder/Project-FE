@@ -1,84 +1,139 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-const RegisterPage = () => {
+import Input from "../../components/common/Input";
+import PasswordInput from "../../components/common/PasswordInput";
+import Button from "../../components/common/Button";
+
+import "../../styles/pages/register.css";
+
+export default function RegisterPage() {
   const navigate = useNavigate();
 
-  // 상태 관리
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    passwordConfirm: '',
-    nickname: ''
+    email: "",
+    password: "",
+    passwordConfirm: "",
+    nickname: "",
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // 간단한 비밀번호 확인 로직
+
     if (formData.password !== formData.passwordConfirm) {
-      alert('비밀번호가 일치하지 않습니다.');
+      alert("비밀번호가 서로 일치하지 않습니다");
       return;
     }
 
-    console.log('회원가입 요청:', formData);
-    // TODO: API 호출 로직 작성
-    navigate('/auth/login');
+    console.log("회원가입 데이터:", formData);
+    navigate("/auth/login");
   };
 
   return (
-      <main className='page-container'>
-      <h1>회원가입</h1>
+    <main className="page-container">
+      <div className="register-card">
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">이메일</label>
-          <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            value={formData.email} 
-            onChange={handleChange} 
-            required 
-          />
+        {/* 왼쪽 일러스트 영역 */}
+        <div className="register-visual">
+          <div className="register-visual-inner">
+            {/* 이미지 비워 둠 */}
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="password">비밀번호</label>
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            value={formData.password} 
-            onChange={handleChange} 
-            required 
-          />
+        {/* 오른쪽 회원가입 폼 */}
+        <div className="register-form-area">
+          <h1 className="register-title">회원가입</h1>
+
+          <form onSubmit={handleSubmit}>
+
+            {/* 이메일 */}
+            <div className="register-field">
+              <label>아이디(이메일)</label>
+              <Input
+                type="email"
+                name="email"
+                placeholder="이메일을 입력하세요"
+                value={formData.email}
+                onChange={handleChange}
+                fullWidth
+              />
+            </div>
+
+            {/* 비밀번호 */}
+            <div className="register-field">
+              <label>비밀번호</label>
+              <PasswordInput
+                name="password"
+                placeholder="비밀번호를 입력하세요"
+                value={formData.password}
+                onChange={handleChange}
+                fullWidth
+              />
+            </div>
+
+            {/* 비밀번호 확인 */}
+            <div className="register-field">
+              <label>비밀번호 확인</label>
+              <PasswordInput
+                name="passwordConfirm"
+                placeholder="비밀번호를 다시 입력하세요"
+                value={formData.passwordConfirm}
+                onChange={handleChange}
+                fullWidth
+              />
+            </div>
+
+            {/* 닉네임 */}
+            <div className="register-field">
+              <label>닉네임</label>
+              <Input
+                type="text"
+                name="nickname"
+                placeholder="닉네임을 입력하세요"
+                value={formData.nickname}
+                onChange={handleChange}
+                fullWidth
+              />
+            </div>
+
+            {/* 회원가입 버튼 */}
+            <div className="register-btn">
+              <Button variant="primary" size="md" full>
+                회원가입
+              </Button>
+            </div>
+
+            {/* 로그인 버튼 */}
+            <div className="login-move-btn">
+              <Button
+                variant="secondary"
+                size="md"
+                full
+                onClick={() => navigate("/auth/login")}
+              >
+                로그인 하러가기
+              </Button>
+            </div>
+
+            {/* OR 구분선 */}
+            <div className="register-divider">OR</div>
+
+            {/* 구글 로그인 */}
+            <button type="button" className="google-btn">
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" />
+              구글 계정으로 가입하기
+            </button>
+
+          </form>
         </div>
-
-        <div>
-          <label htmlFor="passwordConfirm">비밀번호 확인</label>
-          <input 
-            type="password" 
-            id="passwordConfirm" 
-            name="passwordConfirm" 
-            value={formData.passwordConfirm} 
-            onChange={handleChange} 
-            required 
-          />
-        </div>
-
-        <button type="submit">가입하기</button>
-      </form>
-
-      <div>
-        <Link to="/auth/login">이미 계정이 있으신가요?</Link>
       </div>
     </main>
   );
-};
-
-export default RegisterPage;
+}

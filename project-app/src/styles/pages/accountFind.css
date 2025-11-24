@@ -1,0 +1,130 @@
+/* ------------------------------- */
+/* 공통 카드 레이아웃               */
+/* ------------------------------- */
+
+.account-card {
+  display: flex;
+  width: 100%;
+  max-width: 900px;
+  min-height: 540px;
+  margin: 60px auto;
+  background: var(--surface-1);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+/* 왼쪽 비주얼 박스 */
+.account-visual {
+  flex: 1;
+  background: linear-gradient(135deg, #ede9ff, #f7f7fc);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.account-visual-inner {
+  width: 80%;
+  height: 80%;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 24px;
+}
+
+/* 오른쪽 영역 */
+.account-form-area {
+  flex: 1;
+  padding: 60px 50px;
+}
+
+/* ------------------------------- */
+/* 제목                             */
+/* ------------------------------- */
+
+.account-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin-bottom: 28px;
+}
+
+/* ------------------------------- */
+/* 탭 영역                          */
+/* ------------------------------- */
+
+.account-tabs {
+  display: flex;
+  background: var(--neutral-100);
+  padding: 6px;
+  border-radius: 999px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden; /* 중요 */
+  z-index: 10;
+}
+
+.account-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--neutral-600);
+  position: relative;
+  z-index: 20; /* tab은 배경보다 위 */
+  transition: color 0.2s ease;
+}
+
+.account-tab.active {
+  color: var(--primary-500);
+}
+
+/* 움직이는 슬라이드 배경 (pill) */
+.account-tab-bg {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: calc(50% - 12px);
+  height: calc(100% - 12px);
+  background: var(--surface-1);
+  border-radius: 999px;
+  transition: transform 0.3s ease;
+  box-shadow: var(--shadow-soft);
+  z-index: 5; /* tab보다 뒤 */
+}
+
+/* ------------------------------- */
+/* 폼 내용                          */
+/* ------------------------------- */
+
+.account-field {
+  margin-bottom: 18px;
+}
+
+.account-field label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* 숨김 처리 */
+.form-hidden {
+  display: none;
+}
+
+/* ------------------------------- */
+/* 반응형                          */
+/* ------------------------------- */
+
+@media (max-width: 768px) {
+  .account-card {
+    flex-direction: column;
+    max-width: 95%;
+  }
+
+  .account-form-area {
+    padding: 40px 24px;
+  }
+}

@@ -1,6 +1,7 @@
 import Button from "../common/Button";
 import "./Header.css";
 import { NavLink, useNavigate } from 'react-router-dom';
+import Logo from "../../assets/logo.svg";
 
 export default function Header() {
     const navigate = useNavigate();
@@ -12,10 +13,18 @@ export default function Header() {
 
                     {/* 로고 */}
                     <div className="header-logo" onClick={() => navigate('/')}>
-                        LOGO
+                        <img 
+                            src={Logo}
+                            alt="StoryLex 로고"
+                            style={{
+                                height: "34px",
+                                width: "auto",
+                                display: "block"
+                            }}
+                        />
                     </div>
 
-                    {/* 내비게이션 (Web 이상) */}
+                    {/* 내비게이션 */}
                     <nav className="header-nav">
                         <NavLink to="/">Home</NavLink>
                         <NavLink to="/word">단어목록</NavLink>

@@ -7,6 +7,7 @@ import Header from './components/layout/Header';
 
 import RegisterPage from './pages/auth/RegisterPage';
 import LoginPage from './pages/auth/LoginPage';
+import AccountFindPage from "./pages/auth/AccountFindPage";
 
 function App() {
 
@@ -24,6 +25,7 @@ function App() {
         />
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<RegisterPage />} />
+        <Route path="/auth/find" element={<AccountFindPage />} />
       </Routes>
     </>
   );
