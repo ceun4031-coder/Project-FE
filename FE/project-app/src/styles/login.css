@@ -1,0 +1,120 @@
+/* 전체 레이아웃 */
+.login-container {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  margin: 60px auto;
+  background: var(--surface-1);
+  border-radius: 32px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+/* 왼쪽 영역 */
+.login-left {
+  flex: 1;
+  background: linear-gradient(135deg, #f1eaff, #d9d0ff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.login-illust {
+  width: 70%;
+}
+
+/* 오른쪽 영역 */
+.login-right {
+  flex: 1;
+  padding: 60px 80px;
+  background: #ffffff;
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin-bottom: 30px;
+}
+
+/* 폼 입력 */
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 15px;
+  color: var(--neutral-700);
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  padding: 0 18px;
+  font-size: 15px;
+}
+
+.form-group input:focus {
+  border-color: var(--primary-500);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
+/* 옵션 섹션 */
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.checkbox input {
+  margin-right: 6px;
+}
+
+.login-links a {
+  color: var(--primary-500);
+}
+
+/* OR 구분선 */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.divider span {
+  padding: 0 12px;
+  color: var(--neutral-500);
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* 구글 로그인 버튼 */
+.google-btn {
+  width: 100%;
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--neutral-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.google-btn img {
+  width: 22px;
+}
