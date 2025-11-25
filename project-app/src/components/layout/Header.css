@@ -1,98 +1,159 @@
-/* src/styles/Header.css */
+/* src/components/layout/Header.css */
 
-/* ----------------------------------------- */
-/* Base Header 영역                          */
-/* ----------------------------------------- */
+/* ─ 공통 헤더 ─ */
 .header {
-  width: 100%;
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
-  backdrop-filter: blur(8px);
-  z-index: 50;
+  z-index: 40;
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-/* 내부 컨텐츠 정렬 */
 .header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
-  padding-bottom: 12px;
+  gap: var(--space-4);
+  min-height: 64px;
+  padding-block: var(--space-2);
 }
 
-/* ----------------------------------------- */
-/* 로고                                       */
-/* ----------------------------------------- */
+/* 로고 */
 .header-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-shrink: 0;
-  cursor: pointer; /* 클릭 가능 표시 */
+  cursor: pointer;
 }
 
-/* 로고 이미지 크기 (헤더 높이에 맞춤) */
 .header-logo-img {
-  display: block;
-  height: 28px;   /* 기본 높이 */
-  width: auto;
+  height: 28px;
 }
 
-/* 큰 화면에서는 약간 더 키우기 */
-@media (min-width: 1280px) {
-  .header-logo-img {
-    height: 32px;
-  }
-}
-
-/* ----------------------------------------- */
-/* 내비게이션                                 */
-/* ----------------------------------------- */
+/* 네비게이션 영역 */
 .header-nav {
-  display: none; /* 모바일 숨김 */
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+/* 캡슐 네비 배경 – 대비 강화 버전 */
+.header-nav-group {
+  display: inline-flex;
   align-items: center;
-  gap: 32px;
+  padding: 4px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);  box-shadow:
+    0 8px 18px rgba(76, 68, 184, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.4);
+  gap: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-/* Web부터는 보이게 */
-@media (min-width: 1280px) {
-  .header-nav {
-    display: flex;
-  }
+.header-nav-group::-webkit-scrollbar {
+  display: none;
 }
 
-/* ----------------------------------------- */
-/* 우측 액션 버튼 영역                         */
-/* ----------------------------------------- */
+
+.header-nav-group::-webkit-scrollbar {
+  display: none;
+}
+
+/* 각 탭 링크 */
+.header-nav-link {
+  flex: 0 0 auto;
+  white-space: nowrap;
+
+  padding-block: 8px;
+  padding-inline: 20px;
+  border-radius: var(--radius-pill);
+
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+
+  color: var(--neutral-500);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* 활성 탭 */
+.header-nav-link--active {
+  background: var(--neutral-50);
+  color: var(--primary-500);
+  box-shadow: 0 6px 14px rgba(108, 92, 231, 0.25);
+}
+
+/* 우측 액션 버튼 영역 */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 
-/* ----------------------------------------- */
-/* 반응형 패딩 조정                            */
-/* ----------------------------------------- */
-@media (min-width: 768px) and (max-width: 1279.98px) {
+/* ─ 반응형 ─ */
+
+/* 모바일 ~ 작은 태블릿 (대략 bp-tablet 미만) */
+@media (max-width: 767px) {
   .header-inner {
-    padding-top: 16px;
-    padding-bottom: 16px;
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+    padding-block: var(--space-2);
+  }
+
+  .header-nav {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .header-nav-group {
+    width: 100%;
+  }
+
+  .header-actions {
+    order: 2;
+  }
+
+  .header-nav-link {
+    padding-block: 6px;
+    padding-inline: 14px;
+    font-size: 0.8rem;
   }
 }
 
-@media (min-width: 1280px) and (max-width: 1439.98px) {
+/* 태블릿 이상 (bp-tablet 이상) */
+@media (min-width: 768px) {
   .header-inner {
-    padding-top: 18px;
-    padding-bottom: 18px;
+    flex-wrap: nowrap;
+    min-height: 72px;
+    padding-block: 0;
+  }
+
+  .header-nav {
+    order: 2;
+    justify-content: center;
+  }
+
+  .header-actions {
+    order: 3;
   }
 }
 
-@media (min-width: 1440px) {
+/* 넓은 웹 (대략 bp-web 이상) */
+@media (min-width: 1280px) {
   .header-inner {
-    padding-top: 20px;
-    padding-bottom: 20px;
+    gap: var(--space-5);
+  }
+
+  .header-nav-group {
+    padding-inline: 8px;
   }
 }
