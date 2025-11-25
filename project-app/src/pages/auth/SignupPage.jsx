@@ -1,4 +1,4 @@
-// src/pages/auth/SignupPage.jsx
+// src/pages/api/auth/SignupPage.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -111,7 +111,7 @@ export default function SignupPage() {
     if (!validate()) return;
 
     // 유효성 통과 → setup 페이지로 기본 정보 전달
-    navigate("api/auth/setup", {
+    navigate("/api/auth/setup", {
       state: {
         basicInfo: {
           email: formData.email,
@@ -270,7 +270,7 @@ export default function SignupPage() {
 
             <p className="register-footer-text">
               이미 계정이 있으신가요?{" "}
-              <Link to="/auth/login" className="register-link">
+              <Link to="/api/auth/login" className="register-link">
                 로그인
               </Link>
             </p>

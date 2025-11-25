@@ -1,5 +1,4 @@
-// src/pages/auth/LoginPage.jsx
-
+// src/pages/api/auth/LoginPage.jsx
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./LoginPage.css";
@@ -7,10 +6,12 @@ import "./LoginPage.css";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import PasswordInput from "../../components/common/PasswordInput";
-import TodayWordCard from './../../components/common/TodayWordCard';
+import TodayWordCard from "../../components/common/TodayWordCard";
+
 import LoginIllustration from "../../assets/images/login.svg";
 
 import { login } from "../../api/authApi";
+
 const SAVE_ID_KEY = "storylex_login_id";
 
 export default function LoginPage() {
@@ -56,7 +57,6 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      // 실제 로그인 API 호출 (백엔드 스펙에 맞게 authApi.login 구현되어 있어야 함)
       await login({
         id: formData.id,
         password: formData.password,
@@ -69,10 +69,9 @@ export default function LoginPage() {
         localStorage.removeItem(SAVE_ID_KEY);
       }
 
-      // 로그인 성공 후 이동 (필요에 따라 /dashboard 등으로 변경)
+      // 로그인 성공 후 이동
       navigate("/dashboard");
     } catch (err) {
-      // 백엔드 응답 메시지가 있으면 우선 사용
       const message =
         err?.response?.data?.message ||
         "로그인에 실패했습니다. 아이디와 비밀번호를 다시 확인해 주세요.";
@@ -84,15 +83,12 @@ export default function LoginPage() {
 
   return (
     <main className="page-container">
-       <div className="login-card">
-
+      <div className="login-card">
         {/* 왼쪽 비주얼 영역 */}
         <div className="login-visual">
           <div className="login-visual-inner">
-            {/* 오늘의 단어 카드 */}
             <TodayWordCard />
 
-            {/* 캐릭터 일러스트 */}
             <img
               src={LoginIllustration}
               alt="login illustration"
@@ -100,15 +96,22 @@ export default function LoginPage() {
             />
           </div>
         </div>
+
         {/* 오른쪽 로그인 폼 */}
         <div className="login-form-area">
           <h1 className="login-title">로그인</h1>
 
           <form onSubmit={handleSubmit} className="login-form">
             {/* 아이디 */}
-            <div className="login-field">
-              <label className="login-label">아이디</label>
+            <div className="form-field">
+              <label
+                className="form-label form-label--required"
+                htmlFor="login-id"
+              >
+                아이디
+              </label>
               <Input
+                id="login-id"
                 type="text"
                 name="id"
                 placeholder="아이디를 입력하세요"
@@ -120,9 +123,15 @@ export default function LoginPage() {
             </div>
 
             {/* 비밀번호 */}
-            <div className="login-field">
-              <label className="login-label">비밀번호</label>
+            <div className="form-field">
+              <label
+                className="form-label form-label--required"
+                htmlFor="login-password"
+              >
+                비밀번호
+              </label>
               <PasswordInput
+                id="login-password"
                 name="password"
                 placeholder="비밀번호를 입력하세요"
                 value={formData.password}
@@ -134,29 +143,31 @@ export default function LoginPage() {
 
             {/* 에러 메시지 */}
             {error && (
-              <p className="login-error">
+              <p className="form-error login-error">
                 {error}
               </p>
             )}
- {/* 아이디 저장 / 찾기 */}
+
+            {/* 아이디 저장 / 찾기 */}
             <div className="login-options">
-              <label style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <label className="login-checkbox">
                 <input
                   type="checkbox"
                   name="saveId"
                   checked={formData.saveId}
                   onChange={handleChange}
                 />
-                아이디 저장
+                <span>아이디 저장</span>
               </label>
-              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <Link to="/auth/find" style={{ color: "var(--primary-500)" }}>
-                아이디 찾기
-              </Link>
-              <span style={{ color: "var(--neutral-500)" }}>|</span>
-              <Link to="/auth/find" style={{ color: "var(--primary-500)" }}>
-                비밀번호 찾기
-              </Link>
+
+              <div className="login-links">
+                <Link to="/api/auth/find" className="login-link">
+                  아이디 찾기
+                </Link>
+                <span className="login-links-divider">|</span>
+                <Link to="/api/auth/find" className="login-link">
+                  비밀번호 찾기
+                </Link>
               </div>
             </div>
 
@@ -180,7 +191,7 @@ export default function LoginPage() {
                 variant="secondary"
                 size="md"
                 full
-                onClick={() => navigate("/auth/register")}
+                onClick={() => navigate("/api/auth/signup")}
                 disabled={submitting}
               >
                 회원가입
@@ -190,12 +201,11 @@ export default function LoginPage() {
             {/* OR 구분 */}
             <div className="login-divider">OR</div>
 
-            {/* 구글 로그인 (연동 전까지는 버튼만) */}
+            {/* 구글 로그인 버튼 */}
             <button
               type="button"
               className="google-btn"
               disabled={submitting}
-              // onClick={() => window.location.href = `${API_BASE_URL}/auth/google`} 등으로 연동 가능
             >
               <img
                 src="https://www.svgrepo.com/show/475656/google-color.svg"

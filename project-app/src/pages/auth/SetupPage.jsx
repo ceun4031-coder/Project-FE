@@ -1,4 +1,4 @@
-// src/pages/auth/SetupPage.jsx
+// src/pages/api/auth/SetupPage.jsx
 
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@ export default function SetupPage() {
   // 새로고침 / 직접 진입 방지
   useEffect(() => {
     if (!basicInfo) {
-      navigate("/auth/register", { replace: true });
+      navigate("/api/auth/register", { replace: true });
     }
   }, [basicInfo, navigate]);
 
@@ -68,7 +68,7 @@ export default function SetupPage() {
           overrideDailyWordGoal ?? (level ? Number(level) : 20),
       });
 
-      navigate("/auth/login", { replace: true });
+      navigate("/api/auth/login", { replace: true });
     } catch (err) {
       const message =
         err?.response?.data?.message ||
