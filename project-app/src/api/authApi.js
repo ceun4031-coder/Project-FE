@@ -11,7 +11,7 @@ const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === "true";
 // 임시 유저 데이터
 const MOCK_USERS = [
   {
-    email: "test@ex.com",
+    email: "t1@ex.com",
     password: "1111",
     nickname: "테스트유저",
   },

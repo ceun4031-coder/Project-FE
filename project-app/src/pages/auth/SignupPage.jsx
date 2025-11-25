@@ -112,7 +112,7 @@ export default function SignupPage() {
     if (!validate()) return;
 
     // 유효성 통과 → setup 페이지로 기본 정보 전달
-    navigate("/api/auth/setup", {
+    navigate("/auth/setup", {
       state: {
         basicInfo: {
           email: formData.email,
@@ -308,7 +308,7 @@ export default function SignupPage() {
 
             <p className="signup-footer-text">
               이미 계정이 있으신가요?{" "}
-              <Link to="/api/auth/login" className="signup-link">
+              <Link to="/auth/login" className="signup-link">
                 로그인
               </Link>
             </p>

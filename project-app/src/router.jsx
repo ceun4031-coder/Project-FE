@@ -1,4 +1,3 @@
-// router.jsx
 import { Routes, Route } from "react-router-dom";
 
 import SignupPage from "./pages/auth/SignupPage";
@@ -10,23 +9,21 @@ import DashboardPage from "./pages/dashboard/DashboardPage";
 function AppRouter() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <div className="page-container">
-            {/* 홈 내용 */}
-          </div>
-        }
+      {/* 비회원 홈 */}
+      <Route path="/" element={
+        <div className="page-container">{/* 홈 내용 */}
+        </div>}
       />
 
-      {/* Auth */}
-      <Route path="/api/auth/login" element={<LoginPage />} />
-      <Route path="/api/auth/signup" element={<SignupPage />} />
-      <Route path="/api/auth/setup" element={<SetupPage />} />
-      <Route path="/api/auth/find" element={<AccountFindPage />} />
+      {/* Auth 페이지 */}
+      <Route path="/auth/login" element={<LoginPage />} />
+      <Route path="/auth/signup" element={<SignupPage />} />
+      <Route path="/auth/setup" element={<SetupPage />} />
+      <Route path="/auth/find" element={<AccountFindPage />} />
 
       {/* Dashboard */}
       <Route path="/dashboard" element={<DashboardPage />} />
+
     </Routes>
   );
 }

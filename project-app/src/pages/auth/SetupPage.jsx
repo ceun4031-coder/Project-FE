@@ -22,7 +22,7 @@ export default function SetupPage() {
   // 새로고침 / 직접 진입 방지
   useEffect(() => {
     if (!basicInfo) {
-      navigate("/api/auth/signup", { replace: true });
+      navigate("/auth/signup", { replace: true });
     }
   }, [basicInfo, navigate]);
 
@@ -69,7 +69,7 @@ export default function SetupPage() {
           overrideDailyWordGoal ?? (level ? Number(level) : 20),
       });
 
-      navigate("/api/auth/login", { replace: true });
+      navigate("/auth/login", { replace: true });
     } catch (err) {
       const message =
         err?.response?.data?.message ||

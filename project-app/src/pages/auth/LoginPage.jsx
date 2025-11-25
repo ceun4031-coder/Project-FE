@@ -208,11 +208,11 @@ export default function LoginPage() {
               </label>
 
               <div className="login-links">
-                <Link to="/api/auth/find?tab=email" className="login-link">
+                <Link to="/auth/find?tab=email" className="login-link">
                   이메일 찾기
                 </Link>
                 <span className="login-links-divider">|</span>
-                <Link to="/api/auth/find?tab=pw" className="login-link">
+                <Link to="/auth/find?tab=pw" className="login-link">
                   비밀번호 찾기
                 </Link>
               </div>
@@ -252,7 +252,7 @@ export default function LoginPage() {
                 {/* 회원가입 */}
            <p className="signup-footer-text">
               아직 계정이 없으신가요?{" "}
-              <Link to="/api/auth/signup" className="signup-link">
+              <Link to="/auth/signup" className="signup-link">
                 회원가입
               </Link>
             </p>
