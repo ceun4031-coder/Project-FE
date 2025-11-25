@@ -208,11 +208,11 @@ export default function LoginPage() {
               </label>
 
               <div className="login-links">
-                <Link to="/api/auth/find" className="login-link">
-                  아이디 찾기
+                <Link to="/api/auth/find?tab=email" className="login-link">
+                  이메일 찾기
                 </Link>
                 <span className="login-links-divider">|</span>
-                <Link to="/api/auth/find" className="login-link">
+                <Link to="/api/auth/find?tab=pw" className="login-link">
                   비밀번호 찾기
                 </Link>
               </div>
@@ -231,19 +231,7 @@ export default function LoginPage() {
               </Button>
             </div>
 
-            {/* 회원가입 버튼 */}
-            <div className="signup-btn">
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                full
-                onClick={() => navigate("/api/auth/signup")}
-                disabled={submitting}
-              >
-                회원가입
-              </Button>
-            </div>
+        
 
             {/* OR 구분 */}
             <div className="login-divider">OR</div>
@@ -260,6 +248,14 @@ export default function LoginPage() {
               />
               구글 계정으로 로그인
             </button>
+
+                {/* 회원가입 */}
+           <p className="signup-footer-text">
+              아직 계정이 없으신가요?{" "}
+              <Link to="/api/auth/signup" className="signup-link">
+                회원가입
+              </Link>
+            </p>
           </form>
         </div>
       </div>

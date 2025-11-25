@@ -178,3 +178,20 @@
   cursor: not-allowed;
   opacity: 0.7;
 }
+
+.signup-footer-text {
+  margin-top: var(--space-4);  /* 16px */
+  font-size: 0.875rem;
+  color: var(--neutral-600);
+  text-align: center;
+}
+
+.signup-link {
+  color: var(--primary-500);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}
