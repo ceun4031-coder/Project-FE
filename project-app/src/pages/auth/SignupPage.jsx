@@ -1,4 +1,4 @@
-// src/pages/auth/RegisterPage.jsx
+// src/pages/auth/SignupPage.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -8,9 +8,9 @@ import PasswordInput from "../../components/common/PasswordInput";
 import TodayWordCard from "../../components/common/TodayWordCard";
 import RegisterIllustration from "../../assets/images/login.svg";
 
-import "./RegisterPage.css";
+import "./SignupPage.css";
 
-export default function RegisterPage() {
+export default function SignupPage() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({

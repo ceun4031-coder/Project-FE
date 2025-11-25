@@ -1,7 +1,7 @@
 // router.jsx
 import { Routes, Route } from "react-router-dom";
 
-import RegisterPage from "./pages/api/auth/signupPage";
+import SignupPage from "./pages/auth/SignupPage";
 import LoginPage from "./pages/auth/LoginPage";
 import SetupPage from "./pages/auth/SetupPage";
 import AccountFindPage from "./pages/auth/AccountFindPage";
@@ -20,7 +20,7 @@ function AppRouter() {
         }
       />
       <Route path="/api/auth/login" element={<LoginPage />} />
-      <Route path="/api/auth/signup" element={<RegisterPage />} />
+      <Route path="/api/auth/signup" element={<SignupPage />} />
       <Route path="/api/auth/setup" element={<SetupPage />} />
       <Route path="/api/auth/signup" element={<TodayWordCard />} />
       <Route path="/api/auth/find" element={<AccountFindPage />} />

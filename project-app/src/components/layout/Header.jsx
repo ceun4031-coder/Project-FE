@@ -74,14 +74,14 @@ export default function Header() {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    onClick={() => navigate("/auth/login")}
+                                    onClick={() => navigate("/api/auth/login")}
                                 >
                                     로그인
                                 </Button>
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => navigate("/auth/register")}
+                                    onClick={() => navigate("/api/auth/signup")}
                                 >
                                     회원가입
                                 </Button>
