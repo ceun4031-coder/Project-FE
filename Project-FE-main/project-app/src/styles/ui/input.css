@@ -1,0 +1,246 @@
+/* src/styles/ui/input.css */
+
+/* ─────────────────────────────── */
+/* 기본 인풋 스타일 (Base)        */
+/* ─────────────────────────────── */
+.input {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+
+  background: var(--surface-1);
+  color: var(--color-text);
+  border: 1px solid var(--border-subtle);
+
+  font-size: 0.95rem;
+  padding: 8px 16px;
+
+  outline: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+/* placeholder */
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ─────────────────────────────── */
+/* Interaction: hover / focus / active
+   - disabled / readonly 는 제외      */
+/* ─────────────────────────────── */
+.input:hover:not(:disabled):not(.input--readonly):not([readonly]) {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.input:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+.input:active:not(:disabled):not(.input--readonly):not([readonly]) {
+  border-color: var(--primary-500);
+}
+
+/* ─────────────────────────────── */
+/* Disabled                        */
+/* ─────────────────────────────── */
+.input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+
+  background: var(--disabled-bg) !important;
+  color: var(--disabled-text) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+.input:disabled::placeholder {
+  color: var(--disabled-text) !important;
+}
+
+/* ─────────────────────────────── */
+/* Readonly                        */
+/* ─────────────────────────────── */
+.input--readonly,
+.input[readonly] {
+  background: var(--surface-1);
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+/* readonly 는 hover/focus/active 에도 변화 없음 */
+.input--readonly:hover,
+.input[readonly]:hover,
+.input--readonly:focus,
+.input[readonly]:focus,
+.input--readonly:focus-visible,
+.input[readonly]:focus-visible,
+.input--readonly:active,
+.input[readonly]:active {
+  background: var(--surface-1);
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+
+.input--readonly::placeholder,
+.input[readonly]::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ─────────────────────────────── */
+/* Size                            */
+/* ─────────────────────────────── */
+.input--sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.input--md {
+  padding: 8px 16px;
+}
+
+.input--lg {
+  padding: 10px 20px;
+  font-size: 1rem;
+}
+
+/* ─────────────────────────────── */
+/* Full Width                      */
+/* ─────────────────────────────── */
+.input--full {
+  width: 100%;
+}
+
+/* ─────────────────────────────── */
+/* Status: Error / Warning / Success / Info
+   - 기존 느낌 유지: 텍스트 색 기본, 
+     배경+테두리만 상태 색상 톤 적용      */
+/* ─────────────────────────────── */
+
+/* 에러 (폼 검증 실패 등) */
+.input--error {
+  border-color: var(--color-error);      /* danger-500 */
+  background: var(--color-error-bg);     /* danger-50 */
+}
+
+.input--error:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 2px var(--danger-100);
+}
+
+/* 경고 (주의) */
+.input--warning {
+  border-color: var(--color-warning);    /* warning-500 */
+  background: var(--color-warning-bg);   /* warning-50 */
+}
+
+.input--warning:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
+  border-color: var(--color-warning);
+  box-shadow: 0 0 0 2px var(--warning-100);
+}
+
+/* 유효값 (성공) */
+.input--success {
+  border-color: var(--color-success);    /* success-500 */
+  background: var(--color-success-bg);   /* success-50 */
+}
+
+.input--success:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 2px var(--success-100);
+}
+
+/* 안내용 (정보) */
+.input--info {
+  border-color: var(--color-info);       /* info-500 */
+  background: var(--color-info-bg);      /* info-50 */
+}
+
+.input--info:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 2px var(--info-100);
+}
+
+/* ─────────────────────────────── */
+/* Search 전용 스타일 (옵션)       */
+/* 헤더 검색바 등에서 재사용       */
+/* ─────────────────────────────── */
+.input--search {
+  background: var(--surface-2);
+  border-color: var(--border-subtle);
+}
+
+.input--search::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input--search:hover:not(:disabled):not(.input--readonly):not([readonly]) {
+  background: var(--surface-3);
+}
+
+/* ─────────────────────────────── */
+/* Icon padding (좌/우 아이콘)     */
+/* ─────────────────────────────── */
+.input--with-left {
+  padding-left: 40px;
+}
+
+.input--with-right {
+  padding-right: 40px;
+}
+
+/* ─────────────────────────────── */
+/* Icon Wrapper / Icon 스타일      */
+/* 인풋 + 아이콘을 감싸는 래퍼 */
+.input-wrapper {
+  position: relative;
+}
+
+/* 공통 아이콘 스타일 (기본은 장식용) */
+.input-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* 방향별 위치 */
+.input-icon--left {
+  left: 16px;
+}
+
+.input-icon--right {
+  right: 16px;
+}
+
+/* 클릭 가능한 아이콘 (버튼용) */
+.input-icon-button {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* 래퍼 hover / focus 상태에서 아이콘 색 살짝 변경 */
+.input-wrapper:hover .input-icon {
+  color: var(--neutral-600);
+}
+
+.input-wrapper:focus-within .input-icon {
+  color: var(--primary-500);
+}
