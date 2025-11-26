@@ -1,9 +1,9 @@
 // src/api/authApi.js
 import httpClient from "./httpClient";
-import { 
-  setAccessToken, 
+import {
+  setAccessToken,
   setRefreshToken,
-  clearTokens 
+  clearTokens,
 } from "../utils/storage";
 
 const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === "true";
@@ -21,6 +21,7 @@ const MOCK_USERS = [
  * 로그인
  * ------------------------------ */
 export async function login({ email, password }) {
+  // 모킹 모드
   if (USE_MOCK_AUTH) {
     const user = MOCK_USERS.find(
       (u) => u.email === email && u.password === password
@@ -36,8 +37,12 @@ export async function login({ email, password }) {
     }
 
     const fakeAccessToken = `mock-access-token-${user.email}`;
-    setAccessToken(fakeAccessToken);
+    const fakeRefreshToken = `mock-refresh-token-${user.email}`;
 
+    setAccessToken(fakeAccessToken);
+    setRefreshToken(fakeRefreshToken);
+
+    // 모킹 모드에서는 기존처럼 user 반환
     return { user };
   }
 
@@ -47,11 +52,16 @@ export async function login({ email, password }) {
     password,
   });
 
-  const { accessToken, refreshToken, user } = res.data;
+  // 백엔드 TokenResponse: { accessToken, refreshToken }
+  const { accessToken, refreshToken } = res.data;
 
   setAccessToken(accessToken);
   setRefreshToken(refreshToken);
 
+  // 백엔드는 user 정보를 안 내려주므로, 최소한 email 기반으로 user 객체 생성
+  const user = { email };
+
+  // 기존 호출부를 크게 안 고치고 쓰려면 { user } 형태로 반환 유지
   return { user };
 }
 
@@ -66,7 +76,7 @@ export async function signup({
   userBirth,
   preference,
   goal,
-  dailyWordGoal
+  dailyWordGoal,
 }) {
   const res = await httpClient.post("/api/auth/signup", {
     email,
@@ -76,10 +86,10 @@ export async function signup({
     userBirth,
     preference,
     goal,
-    dailyWordGoal
+    dailyWordGoal,
   });
 
-  return res.data;
+  return res.data; // "회원가입 완료"
 }
 
 /* ------------------------------
@@ -94,7 +104,7 @@ export async function logout(email) {
 
   // 3) 서버 로그아웃 요청 (실패해도 무시)
   try {
-    await httpClient.post("/api/auth/logout", { email });
+    await httpClient.post(`/api/auth/logout/${email}`);
   } catch {
     // 서버 응답 실패해도 클라이언트는 로그아웃 처리 완료 상태
   }
