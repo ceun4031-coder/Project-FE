@@ -6,6 +6,7 @@ import SetupPage from "./pages/auth/SetupPage";
 import AccountFindPage from "./pages/auth/AccountFindPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 
+import ProfilePage from "./pages/account/ProfilePage";
 function AppRouter() {
   return (
     <Routes>
@@ -23,6 +24,8 @@ function AppRouter() {
 
       {/* Dashboard */}
       <Route path="/dashboard" element={<DashboardPage />} />
+
+      <Route path="/account/profile" element={<ProfilePage/>}/>
 
     </Routes>
   );

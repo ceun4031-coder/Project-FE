@@ -1,0 +1,65 @@
+/* src/pages/account/ProfilePage.css */
+
+/* 1. 헤더 영역 스타일 */
+.profile-header {
+  text-align: center;            /* 자식 요소들 중앙 정렬 */
+  margin-bottom: var(--space-8); /* 카드와의 간격 (32px) */
+}
+
+.profile-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin-bottom: var(--space-2);
+}
+
+.profile-header p {
+  color: var(--neutral-500);
+  font-size: 1rem;
+}
+
+/* 2. 전체 레이아웃 (Grid) */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* 모바일: 1열 */
+  gap: var(--space-6);        /* 카드 사이 간격 (24px) */
+  align-items: start;         /* 높이가 달라도 상단 정렬 */
+}
+
+/* PC 화면(1024px 이상): 왼쪽 2 : 오른쪽 1 비율 */
+@media (min-width: 1024px) {
+  .profile-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* 3. 카드 내부 타이틀 */
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--neutral-800);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* 4. 폼 내부 2열 배치용 (닉네임/생년월일, 다짐/목표 등) */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+/* 태블릿(768px) 이상에서 가로 2열 배치 */
+@media (min-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* 5. 버튼 우측 정렬 */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-6); /* 버튼 위 간격 추가 */
+}
