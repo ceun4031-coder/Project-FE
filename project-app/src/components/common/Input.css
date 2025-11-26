@@ -341,4 +341,105 @@
   -webkit-appearance: none;
   cursor: pointer;
 }
+/* ─────────────────────────────── */
+/* Range Slider                    */
+/* ─────────────────────────────── */
 
+.input-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+
+  /* JS에서 넘겨주는 값: "35%" 이런 식 */
+  --range-progress: 0%;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* WebKit: track */
+.input-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(
+    to right,
+    var(--primary-400) 0%,
+    var(--primary-400) var(--range-progress),
+    var(--surface-2) var(--range-progress),
+    var(--surface-2) 100%
+  );
+}
+
+/* WebKit: thumb */
+.input-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--primary-400);
+  box-shadow: 0 0 0 1px #fff;
+  margin-top: -6px;
+}
+
+/* Firefox: track */
+.input-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(
+    to right,
+    var(--primary-400) 0%,
+    var(--primary-400) var(--range-progress),
+    var(--surface-2) var(--range-progress),
+    var(--surface-2) 100%
+  );
+}
+
+/* Firefox: thumb */
+.input-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--primary-400);
+  box-shadow: 0 0 0 1px #fff;
+}
+
+/* Hover / Focus */
+.input-range:hover:not(:disabled)::-webkit-slider-runnable-track,
+.input-range:hover:not(:disabled)::-moz-range-track {
+  border-color: var(--border-strong);
+}
+
+.input-range:focus-visible:not(:disabled)::-webkit-slider-thumb,
+.input-range:focus-visible:not(:disabled)::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+/* Disabled */
+.input-range:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.input-range:disabled::-webkit-slider-runnable-track,
+.input-range:disabled::-moz-range-track {
+  background: var(--disabled-bg);
+  border-color: transparent;
+}
+
+.input-range:disabled::-webkit-slider-thumb,
+.input-range:disabled::-moz-range-thumb {
+  background: var(--disabled-text);
+  border-color: var(--disabled-text);
+  box-shadow: none;
+}
