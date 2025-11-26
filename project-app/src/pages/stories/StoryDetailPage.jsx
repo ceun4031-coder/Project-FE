@@ -51,7 +51,7 @@ const StoryDetailPage = () => {
           <div className="back-button-icon">
             <ArrowLeft className="icon-16" />
           </div>
-          <span className="back-button-text">Back to List</span>
+          <span className="back-button-text">스토리 목록으로</span>
         </button>
 
         <div className="story-detail-nav-right">
@@ -81,17 +81,6 @@ const StoryDetailPage = () => {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="review-card">
-            <div className="review-card-overlay" />
-            <h3 className="review-card-title">Review Words</h3>
-            <p className="review-card-desc">
-              Practice these words with flashcards.
-            </p>
-            <button type="button" className="review-card-button">
-              Start Review
-            </button>
           </div>
         </aside>
 
