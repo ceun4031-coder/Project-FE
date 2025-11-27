@@ -35,7 +35,7 @@ function WordListPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getWordList(1, 100);
+        const data = await getWordList(0, 100);
         if (cancelled) return;
         setWords(Array.isArray(data.content) ? data.content : data || []);
         setError(null);

@@ -159,7 +159,7 @@ const mockDelay = (result, ms = 200) =>
 // ----------------------
 // 1. 단어 목록 조회
 // ----------------------
-export const getWordList = async (page = 1, size = 100) => {
+export const getWordList = async (page = 0, size = 100) => {
   if (USE_MOCK) {
     const start = (page - 1) * size;
     const end = start + size;
