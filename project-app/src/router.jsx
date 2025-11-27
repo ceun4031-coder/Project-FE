@@ -10,7 +10,7 @@ import WordDetailPage from "./pages/words/WordDetailPage";
 import StoryListPage from "./pages/stories/StoryListPage";
 import StoryDetailPage from "./pages/stories/StoryDetailPage";
 import StoryCreatePage from "./pages/stories/StoryCreatePage";
-
+import ProtectedRoute from "./pages/auth/ProtectedRoute";
 import ProfilePage from "./pages/account/ProfilePage";
 function AppRouter() {
   return (
@@ -29,19 +29,18 @@ function AppRouter() {
         <Route path="/auth/find" element={<AccountFindPage />} />
 
         {/* Dashboard */}
-        <Route path="/dashboard" element={<DashboardPage />} />
+         <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
 
-        {/* 단어장 리스트 */}
-        <Route path="/words" element={<WordListPage />} />
-        <Route path="/words/:id" element={<WordDetailPage />} />
+          <Route path="/words" element={<WordListPage />} />
+          <Route path="/words/:id" element={<WordDetailPage />} />
 
-        {/* Story */}
-        <Route path="/story/list" element={<StoryListPage />} />
-        <Route path="/story/:id" element={<StoryDetailPage />} />
-        <Route path="/story/create" element={<StoryCreatePage />} />
+          <Route path="/story/list" element={<StoryListPage />} />
+          <Route path="/story/:id" element={<StoryDetailPage />} />
+          <Route path="/story/create" element={<StoryCreatePage />} />
 
-        <Route path="/account/profile" element={<ProfilePage />} />
-
+          <Route path="/account/profile" element={<ProfilePage />} />
+        </Route>
       </Routes>
     </AuthProvider>
   );

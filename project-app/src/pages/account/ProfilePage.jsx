@@ -7,8 +7,7 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import { Calendar } from "lucide-react";
 
-// [목업 스위치] 
-const USE_MOCK = false;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 const ProfilePage = () => {
   // 2. 닉네임 변경 시 전역 상태(헤더 등)도 같이 업데이트하기 위해 가져옴

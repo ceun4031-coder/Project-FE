@@ -1,0 +1,221 @@
+/* 카드 전체 */
+.word-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 16px 10px; /* 아래쪽 패딩 약간 줄이고, 힌트 영역에 여유 */
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.word-card:hover {
+  border-color: #cbd5f5;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.word-card.expanded {
+  border-color: #4f46e5;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.18);
+}
+
+/* 상단 영역 */
+.word-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.word-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.word-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.word-text {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+/* 제목 옆 펼치기 아이콘 */
+.expand-icon {
+  font-size: 12px;
+  color: #9ca3af;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.word-card:hover .expand-icon {
+  color: #6b7280;
+}
+
+.expand-icon.open {
+  transform: rotate(180deg);
+}
+
+/* 메타 정보 */
+.word-meta {
+  margin-top: 4px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.badge.pos {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.badge.domain {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge.level {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* 우측 액션 영역 */
+.word-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+/* 즐겨찾기 아이콘 버튼 */
+.fav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.fav-icon:hover {
+  transform: translateY(-0.5px);
+  border-color: #facc15;
+}
+
+.fav-icon.on {
+  background: #fef3c7;
+  border-color: #facc15;
+  color: #b45309;
+}
+
+/* 학습 상태 토글 버튼 */
+.status-toggle-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.status-toggle-btn:hover {
+  transform: translateY(-0.5px);
+}
+
+.status-toggle-btn.learning {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.status-toggle-btn.done {
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+/* 확장 영역 */
+.word-card-body {
+  margin-top: 2px;
+}
+
+.word-meaning {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0 0 4px;
+}
+
+.word-example {
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* 펼치기/접기 힌트 영역 */
+.card-expand-hint {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #9ca3af;
+  pointer-events: none; /* 클릭은 상위 카드에 위임 */
+}
+
+.word-card:hover .card-expand-hint {
+  color: #6b7280;
+}
+
+.card-expand-hint .hint-icon {
+  font-size: 10px;
+  transition: transform 0.15s ease;
+}
+
+.card-expand-hint.open .hint-icon {
+  transform: translateY(-1px);
+}
+
+/* 반응형: 작은 화면에서 우측 버튼들을 가로 정렬 */
+@media (max-width: 640px) {
+  .word-card {
+    padding: 12px 14px 8px;
+  }
+
+  .word-card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .word-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}

@@ -21,75 +21,140 @@
   color: var(--neutral-600);
   margin-bottom: 32px;
 }
-
 /* ===============================
-   ⭐ 전체 단어 / 즐겨찾기 (타이틀 아래 오른쪽)
+   상단 통계 + 뷰 필터
 =============================== */
 .stats-row {
   display: flex;
-  justify-content: flex-end;      /* 🔥 오른쪽 정렬 */
+  justify-content: flex-end; /* 오른쪽 정렬 */
   margin-bottom: 24px;
 }
 
 .stats-boxes {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* 전체 단어 / 즐겨찾기 카드 */
+/* 버튼 형태의 카드 */
 .stats-card {
-  background: var(--surface-1);
-  border-radius: var(--radius-md);
+  background: #ffffff;
+  border-radius: var(--radius-md, 10px);
   padding: 8px 14px;
-  width: 135px;
-  border: 1px solid var(--border-subtle);
+  min-width: 135px;
+  border: 1px solid var(--border-subtle, #e5e7eb);
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-soft, 0 4px 10px rgba(15, 23, 42, 0.08));
   cursor: pointer;
-  transition: 0.25s ease;
+  transition: 0.2s ease;
+  outline: none;
 }
 
-/* 클릭 시 강조 */
+/* 버튼 기본 리셋 */
+.stats-card {
+  font: inherit;
+  color: inherit;
+}
+
+/* 비활성 상태는 약간 흐리게 */
+.stats-card:not(.active) {
+  opacity: 0.85;
+}
+
 .stats-card:hover {
-  border-color: var(--primary-400);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
 }
 
+/* 키보드 포커스 */
+.stats-card:focus-visible {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* 공통 아이콘 박스 */
 .stats-icon-box {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 18px;
 }
 
+/* 각 모드별 기본 색상 */
 .stats-icon-box.purple {
-  background: var(--primary-100);
-  color: var(--primary-600);
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
 .stats-icon-box.yellow {
-  background: var(--warning-100);
-  color: var(--warning-600);
+  background: #fef9c3;
+  color: #ca8a04;
+}
+
+.stats-icon-box.blue {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.stats-icon-box.green {
+  background: #dcfce7;
+  color: #15803d;
 }
 
 .stats-text {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .stats-label {
-  font-size: 13px;
-  color: var(--neutral-700);
+  font-size: 12px;
+  color: var(--neutral-700, #4b5563);
 }
 
 .stats-count {
   font-size: 16px;
   font-weight: 700;
-  color: var(--primary-700);
+}
+
+/* ===============================
+   모드별 활성 상태 강조
+=============================== */
+
+/* 전체 단어 활성 */
+.stats-card.mode-all.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* 즐겨찾기 활성 */
+.stats-card.mode-favorite.active {
+  border-color: #eab308;
+  background: #fef9c3;
+}
+
+/* 학습중 활성 */
+.stats-card.mode-learning.active {
+  border-color: #0ea5e9;
+  background: #e0f2fe;
+}
+
+/* 학습완료 활성 */
+.stats-card.mode-completed.active {
+  border-color: #22c55e;
+  background: #dcfce7;
+}
+
+/* 활성 상태에서는 텍스트 색도 살짝 강조 */
+.stats-card.active .stats-label {
+  color: #111827;
+}
+
+.stats-card.active .stats-count {
+  color: #111827;
 }
 
 /* ===============================
@@ -201,10 +266,55 @@
 =============================== */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
 }
-/* ... 기존 스타일 유지 ... */
+
+/* 태블릿 이하 */
+@media (max-width: 1024px) {
+  .filter-search-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .search-container {
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .stats-row {
+    justify-content: flex-start;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 640px) {
+  .wordlist-wrapper {
+    padding: 48px 16px 24px;
+  }
+
+  .stats-boxes {
+    width: 100%;
+  }
+
+  .stats-card {
+    flex: 1;
+  }
+
+  .filter-row {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dropdown-box {
+    flex: 1;
+    min-width: 120px;
+  }
+}
 
 /* 필터가 선택되었을 때 버튼 스타일 (Active State) */
 .dropdown-btn.selected {
