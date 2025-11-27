@@ -7,6 +7,8 @@ import Input from "../../components/common/Input";
 import Logo from "../../assets/images/StoryLex-logo.svg";
 import { findEmail, resetPassword } from "../../api/authApi";
 
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+
 export default function AccountFindPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -49,6 +51,16 @@ export default function AccountFindPage() {
       return;
     }
 
+    // 📌 [MOCK 처리] 이메일 찾기 가로채기
+    if (USE_MOCK) {
+      console.log(`🔥 [Mock] 이메일 찾기 요청: 이름=${name}, 생년월일=${birth}`);
+      setTimeout(() => {
+        // 성공 시뮬레이션
+        alert(`목업 모드: 회원님의 이메일은 mock***@test.com 입니다.`);
+      }, 1000);
+      return;
+    }
+
     try {
       const { email } = await findEmail(name, birth);
       alert(`회원님의 이메일은 ${email} 입니다.`);
@@ -69,7 +81,17 @@ export default function AccountFindPage() {
       alert("이름과 이메일을 입력해주세요.");
       return;
     }
-
+// 📌 [MOCK 처리] 비밀번호 재설정 가로채기
+    if (USE_MOCK) {
+      console.log(`🔥 [Mock] 비밀번호 재설정 요청: 이름=${name}, 이메일=${email}`);
+      setTimeout(() => {
+        // 성공 시뮬레이션
+        alert("목업 모드: 임시 비밀번호가 이메일로 발송되었습니다. (로그인 페이지로 이동)");
+        navigate("/auth/login");
+      }, 1000);
+      return;
+    }
+    
     try {
       const { message } = await resetPassword(name, email);
       alert(message || "임시 비밀번호가 이메일로 발송되었습니다.");

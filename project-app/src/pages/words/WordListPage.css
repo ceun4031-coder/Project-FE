@@ -1,0 +1,347 @@
+/* ===============================
+   기본 레이아웃
+=============================== */
+.wordlist-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 60px;
+  position: relative;
+}
+
+/* 타이틀 */
+.page-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.page-sub {
+  text-align: center;
+  color: var(--neutral-600);
+  margin-bottom: 32px;
+}
+/* ===============================
+   상단 통계 + 뷰 필터
+=============================== */
+.stats-row {
+  display: flex;
+  justify-content: flex-end; /* 오른쪽 정렬 */
+  margin-bottom: 24px;
+}
+
+.stats-boxes {
+  display: flex;
+  gap: 10px;
+}
+
+/* 버튼 형태의 카드 */
+.stats-card {
+  background: #ffffff;
+  border-radius: var(--radius-md, 10px);
+  padding: 8px 14px;
+  min-width: 135px;
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-soft, 0 4px 10px rgba(15, 23, 42, 0.08));
+  cursor: pointer;
+  transition: 0.2s ease;
+  outline: none;
+}
+
+/* 버튼 기본 리셋 */
+.stats-card {
+  font: inherit;
+  color: inherit;
+}
+
+/* 비활성 상태는 약간 흐리게 */
+.stats-card:not(.active) {
+  opacity: 0.85;
+}
+
+.stats-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+/* 키보드 포커스 */
+.stats-card:focus-visible {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* 공통 아이콘 박스 */
+.stats-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+}
+
+/* 각 모드별 기본 색상 */
+.stats-icon-box.purple {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.stats-icon-box.yellow {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+
+.stats-icon-box.blue {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.stats-icon-box.green {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.stats-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.stats-label {
+  font-size: 12px;
+  color: var(--neutral-700, #4b5563);
+}
+
+.stats-count {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ===============================
+   모드별 활성 상태 강조
+=============================== */
+
+/* 전체 단어 활성 */
+.stats-card.mode-all.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* 즐겨찾기 활성 */
+.stats-card.mode-favorite.active {
+  border-color: #eab308;
+  background: #fef9c3;
+}
+
+/* 학습중 활성 */
+.stats-card.mode-learning.active {
+  border-color: #0ea5e9;
+  background: #e0f2fe;
+}
+
+/* 학습완료 활성 */
+.stats-card.mode-completed.active {
+  border-color: #22c55e;
+  background: #dcfce7;
+}
+
+/* 활성 상태에서는 텍스트 색도 살짝 강조 */
+.stats-card.active .stats-label {
+  color: #111827;
+}
+
+.stats-card.active .stats-count {
+  color: #111827;
+}
+
+/* ===============================
+   필터 + 검색창 (같은 줄)
+=============================== */
+.filter-search-row {
+  display: flex;
+  justify-content: space-between;   /* 왼쪽 필터 / 오른쪽 검색 */
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+/* 왼쪽 필터 */
+.filter-row {
+  display: flex;
+  gap: 12px;
+}
+
+/* 드롭다운 버튼 */
+.dropdown-btn {
+  padding: 8px 14px;
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dropdown-btn .arrow {
+  font-size: 12px;
+  color: var(--neutral-500);
+  transition: transform 0.2s ease;
+}
+
+.dropdown-btn.open .arrow {
+  transform: rotate(180deg);
+}
+
+/* 드롭다운 메뉴 */
+.dropdown-box {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 42px;
+  width: 120px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  z-index: 20;
+}
+
+.dropdown-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background: var(--primary-50);
+}
+
+/* ===============================
+   검색창 (오른쪽)
+=============================== */
+.search-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--neutral-500);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 260px;
+  height: 40px;
+  padding-left: 38px;
+  padding-right: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+  color: var(--neutral-800);
+  font-size: 14px;
+}
+
+.search-input:focus {
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 3px var(--primary-50);
+  outline: none;
+}
+
+/* ===============================
+   카드 그리드
+=============================== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+/* 태블릿 이하 */
+@media (max-width: 1024px) {
+  .filter-search-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .search-container {
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .stats-row {
+    justify-content: flex-start;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 640px) {
+  .wordlist-wrapper {
+    padding: 48px 16px 24px;
+  }
+
+  .stats-boxes {
+    width: 100%;
+  }
+
+  .stats-card {
+    flex: 1;
+  }
+
+  .filter-row {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dropdown-box {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* 필터가 선택되었을 때 버튼 스타일 (Active State) */
+.dropdown-btn.selected {
+  background-color: #eff6ff;
+  color: #3b82f6;
+  border-color: #3b82f6;
+  font-weight: 600;
+}
+
+/* 필터 초기화 버튼 (결과 없을 때) */
+.reset-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+}
+.reset-btn:hover {
+  background-color: #e5e7eb;
+}
+
+/* 로딩 및 에러 메시지 스타일 */
+.loading-msg, .error-msg, .empty-msg {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.1rem;
+  color: #6b7280;
+}

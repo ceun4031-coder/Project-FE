@@ -1,0 +1,173 @@
+/* 컨테이너 / 카드 */
+.detail-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 60px 16px;
+}
+
+.detail-card {
+  width: 100%;
+  max-width: 640px;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid #eee;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* 헤더 */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.detail-title-block h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.detail-meaning {
+  font-size: 16px;
+  color: #666;
+  margin-top: 8px;
+}
+
+/* 즐겨찾기 버튼 */
+.fav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.fav-btn[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* 태그 */
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.tag {
+  background: #f1f3ff;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+}
+
+.tag.category {
+  background: #e6f7ff;
+}
+
+.tag.level {
+  background: #fff2d9;
+}
+
+/* 학습 상태 */
+.detail-status-row {
+  margin-top: 20px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.status-done {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* 예문 */
+.example-box {
+  margin-top: 28px;
+}
+
+.example-box h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.example-text {
+  font-style: italic;
+  color: #444;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 15px;
+  border: 1px solid #eee;
+}
+
+/* 버튼 영역 */
+.button-row {
+  margin-top: 32px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+.primary-btn {
+  background: #5c6cff;
+  color: #ffffff;
+}
+
+.primary-btn[disabled] {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.secondary-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* 로딩 / 에러 */
+.detail-loading,
+.detail-error {
+  padding: 60px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.detail-error button {
+  margin-top: 16px;
+}
+
+/* 반응형 */
+@media (max-width: 640px) {
+  .detail-card {
+    padding: 24px 20px;
+  }
+
+  .detail-title-block h2 {
+    font-size: 24px;
+  }
+}

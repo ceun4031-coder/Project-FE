@@ -11,6 +11,9 @@ import Illustration from "../../assets/images/login.svg";
 import "./SetupPage.css";
 import { signup as signupApi } from "../../api/authApi";
 
+// 📌 MOCK 모드 상수 정의
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+
 const MIN_LEVEL = 5;
 const MAX_LEVEL = 50;
 
@@ -27,7 +30,15 @@ const FIELD_OPTIONS = [
 export default function SetupPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const basicInfo = location.state?.basicInfo;
+  
+  // 📌 MOCK 모드일 경우, 이전 페이지에서 데이터가 안 넘어왔더라도 테스트용 더미 데이터를 사용
+  const basicInfo = location.state?.basicInfo || (USE_MOCK ? {
+    email: "mock@test.com",
+    password: "password123!",
+    nickname: "MockUser",
+    userName: "홍길동",
+    userBirth: "2000-01-01"
+  } : null);
 
   const [level, setLevel] = useState(20);
   const [selected, setSelected] = useState([]);
@@ -36,6 +47,7 @@ export default function SetupPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // basicInfo가 없으면 회원가입 페이지로 리다이렉트 (MOCK 모드면 위에서 더미 데이터를 넣었으므로 통과됨)
     if (!basicInfo) {
       navigate("/auth/signup", { replace: true });
     }
@@ -61,6 +73,29 @@ export default function SetupPage() {
     setSubmitting(true);
     setError("");
 
+    // 📌 [MOCK 처리] API 호출 대신 콘솔 로그 찍고 성공 처리
+    if (USE_MOCK) {
+      const mockPayload = {
+        email: basicInfo.email,
+        password: basicInfo.password,
+        nickname: basicInfo.nickname,
+        userName: basicInfo.userName,
+        userBirth: basicInfo.userBirth,
+        preference: overridePreference ?? (selected.length ? selected.join(",") : null),
+        goal: overrideGoal ?? (goal || null),
+        dailyWordGoal: overrideDailyWordGoal ?? (level ? Number(level) : 20),
+      };
+
+      console.log("🔥 [Mock] 회원가입 최종 요청 데이터:", mockPayload);
+
+      setTimeout(() => {
+        alert("목업 모드: 회원가입이 완료되었습니다. (로그인 페이지로 이동)");
+        setSubmitting(false);
+        navigate("/auth/login", { replace: true });
+      }, 1000); // 1초 지연 효과
+      
+      return; // 실제 API 호출 방지
+    }
     try {
       await signupApi({
         email: basicInfo.email,

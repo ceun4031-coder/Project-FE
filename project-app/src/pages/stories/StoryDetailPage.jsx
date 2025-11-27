@@ -1,6 +1,5 @@
-// src/pages/stories/StoryDetailPage.jsx
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom"; // useParams 추가
 import {
   ArrowLeft,
   ChevronRight,
@@ -9,32 +8,72 @@ import {
   Hash,
   Quote,
 } from "lucide-react";
+import { getStoryDetail } from "../../api/storyApi"; // API 함수 임포트
 import "./StoryDetailPage.css";
 
 const StoryDetailPage = () => {
-  const location = useLocation();
+  const { id } = useParams(); // URL의 :id 가져오기
   const navigate = useNavigate();
-  const story = location.state?.story;
+  const location = useLocation();
+
+  // 상태 관리
+  const [story, setStory] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // 데이터 불러오기
+  useEffect(() => {
+    const fetchStory = async () => {
+      try {
+        setLoading(true);
+        // 1. 만약 목록에서 넘어온 데이터가 있다면 그걸 먼저 씀 (최적화)
+        if (location.state?.story) {
+           setStory(location.state.story);
+        } 
+        // 2. 없다면(새로고침/직접접속) API 호출
+        else {
+           const data = await getStoryDetail(id);
+           setStory(data);
+        }
+      } catch (error) {
+        console.error("스토리 로딩 실패:", error);
+        alert("스토리를 불러올 수 없습니다.");
+        navigate("/story/list"); // 에러 시 목록으로 튕기기
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStory();
+  }, [id, location.state, navigate]);
 
   const handleBack = () => {
-    // 뒤로 가기 또는 리스트로 이동
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/story/list");
+      // 스토리 목록 페이지 경로가 /stories 라면 수정 필요
+      navigate("/stories"); 
     }
   };
 
+  // 로딩 중 화면
+  if (loading) {
+    return (
+      <div className="story-detail-container" style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh' }}>
+        <p>Loading Story... ⏳</p>
+      </div>
+    );
+  }
+
+  // 데이터 없음 (에러) 화면
   if (!story) {
-    // 잘못 직접 진입했을 때 대비
     return (
       <div className="story-detail-empty">
         <div className="story-detail-empty-inner">
-          <p>잘못된 접근입니다. 스토리 목록에서 다시 선택해 주세요.</p>
+          <p>스토리 정보를 찾을 수 없습니다.</p>
           <button
             type="button"
             className="story-detail-empty-button"
-            onClick={() => navigate("/story/list")}
+            onClick={() => navigate("/stories")}
           >
             스토리 목록으로
           </button>
@@ -51,7 +90,7 @@ const StoryDetailPage = () => {
           <div className="back-button-icon">
             <ArrowLeft className="icon-16" />
           </div>
-          <span className="back-button-text">Back to List</span>
+          <span className="back-button-text">목록으로</span>
         </button>
 
         <div className="story-detail-nav-right">
@@ -73,7 +112,7 @@ const StoryDetailPage = () => {
           </div>
 
           <div className="word-list">
-            {story.words.map((word, idx) => (
+            {story.words && story.words.map((word, idx) => (
               <div key={idx} className="word-card">
                 <div className="word-card-inner">
                   <span className="word-card-text">{word}</span>
@@ -81,17 +120,6 @@ const StoryDetailPage = () => {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="review-card">
-            <div className="review-card-overlay" />
-            <h3 className="review-card-title">Review Words</h3>
-            <p className="review-card-desc">
-              Practice these words with flashcards.
-            </p>
-            <button type="button" className="review-card-button">
-              Start Review
-            </button>
           </div>
         </aside>
 
@@ -117,13 +145,18 @@ const StoryDetailPage = () => {
           <div className="story-body">
             {/* English Content */}
             <div className="story-content">
-              <p className="story-content-text">{story.content}</p>
+              {/* 줄바꿈 처리를 위해 split map 사용 */}
+              {story.content.split('\n').map((line, i) => (
+                 <p key={i} className="story-content-text" style={{ minHeight: line ? 'auto' : '1rem'}}>{line}</p>
+              ))}
             </div>
 
             {/* Korean Translation */}
             <div className="translation-card">
               <div className="translation-label">KOREAN</div>
-              <p className="translation-text">{story.translation}</p>
+              <p className="translation-text">
+                {story.translation}
+              </p>
             </div>
           </div>
         </section>
