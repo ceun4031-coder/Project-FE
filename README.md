@@ -254,7 +254,7 @@
   - **Method**: `GET`
   - **URL**: `/words`
   - **Params**:
-      - `page`: **1부터 시작** (백엔드 내부 변환 필요 시 유의)
+      - `page`: **0부터 시작** (백엔드 내부 변환 필요 시 유의)
       - `size`: 100 (고정)
 
 **Request Example**
@@ -279,7 +279,7 @@
   ],
   "totalPages": 1,
   "totalElements": 12,
-  "page": 1,
+  "page": 0,
   "size": 100
 }
 ```
