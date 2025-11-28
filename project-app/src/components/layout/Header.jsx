@@ -1,7 +1,7 @@
 // src/components/layout/Header.jsx
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { CircleUser } from "lucide-react";
+import userIcon from "../../assets/images/common/user-icon.svg";
 
 import Button from "../common/Button";
 import StoryLexLogo from "../../assets/images/StoryLex-logo.svg";
@@ -152,10 +152,12 @@ export default function Header() {
                   aria-label="계정 메뉴 열기"
                 >
                   {/* 오른쪽 사용자 계정 아이콘 svg */}
-                  <CircleUser
+                  <img
+                    src={userIcon}
+                    alt="user icon"
                     className="header-profile-icon"
-                    strokeWidth={2.4}
                   />
+
                 </button>
 
                 {isAccountMenuOpen && (

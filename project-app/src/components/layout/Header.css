@@ -125,7 +125,6 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
   flex-shrink: 0;
 }
 
@@ -138,21 +137,11 @@
 
 /* 프로필 아이콘 버튼 – 사이트 톤에 맞는 보라 아이콘 */
 .header-profile {
-  width: 40px;
-  height: 40px;
   border-radius: 50%;
-
   border: 1px solid rgba(76, 68, 184, 0.12);
-  background: linear-gradient(
-    135deg,
-    var(--primary-500),
-    var(--primary-400)
-  );
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
@@ -165,9 +154,8 @@
 }
 
 .header-profile-icon {
-  width: 22px;
-  height: 22px;
-  color: var(--neutral-50); /* 흰색 아이콘 느낌 */
+  width: 40px;
+  height: 40px;
 }
 
 .header-profile:hover {
@@ -191,7 +179,7 @@
   top: calc(100% + 8px);
   right: 0;
 
-  min-width: 180px;
+  min-width: 160px;
   padding: 6px;
 
   background-color: var(--surface-1);
@@ -259,8 +247,4 @@
     height: 36px;
   }
 
-  .header-profile-icon {
-    width: 20px;
-    height: 20px;
-  }
 }
