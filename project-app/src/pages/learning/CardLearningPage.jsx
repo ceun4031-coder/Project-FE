@@ -1,7 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLearningEngine } from './hooks/useLearningEngine';
 import { Flashcard } from './components/Flashcard';
-import { ProgressBar } from './components/ProgressBar';
 import './CardLearningPage.css';
 
 export default function CardLearningPage() {

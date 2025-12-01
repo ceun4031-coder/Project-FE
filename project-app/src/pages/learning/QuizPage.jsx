@@ -1,339 +1,254 @@
-import React, { useState } from 'react';
-import { useSearchParams as useRealSearchParams, useNavigate as useRealNavigate } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import clsx from "clsx"; 
 
-// ==========================================
-// [REAL IMPORTS] 실제 환경용 파일들
-// 실제 컴포넌트가 없다면 이 부분에서 에러가 날 수 있으니, 
-// 파일 경로가 맞는지 확인해 주세요.
-// ==========================================
-import { useLearningEngine as useRealLearningEngine } from './hooks/useLearningEngine';
-import { QuizQuestion as RealQuizQuestion } from './components/QuizQuestion';
-import { ProgressBar as RealProgressBar } from './components/ProgressBar';
-import './QuizPage.css';
+import Button from "../../components/common/Button";
+import "./QuizPage.css";
+// API 모듈 import
+import { fetchQuizzes, submitQuizResult } from "../../api/quizApi";
 
-// ------------------------------------------------------------
-// ⚙️ ENV FLAG: 목업 모드 사용 여부 결정
-// .env 파일에 VITE_USE_MOCK=true 가 있으면 목업 모드로 동작
-// ------------------------------------------------------------
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+const QuizPage = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-// ==========================================
-// [MOCK DEFINITIONS] 가짜 데이터 및 컴포넌트
-// USE_MOCK이 true일 때만 사용됩니다.
-// ==========================================
+  // 1️⃣ URL 파라미터 파싱 및 레벨 검증
+  const source = searchParams.get("source"); 
+  const limit = searchParams.get("limit") || 10;
+  
+  // 'all' 레벨은 없으므로, 'all'이거나 값이 없으면 기본값 '1'로 설정
+  const rawLevel = searchParams.get("level");
+  const level = (rawLevel === "all" || !rawLevel) ? "1" : rawLevel;
 
-// 가짜 데이터
-const DUMMY_QUESTIONS = [
-  {
-    id: 1,
-    question: "[MOCK] What is the definition of 'Serendipity'?",
-    choices: [
-      { id: 'a', text: "A sudden misfortune" },
-      { id: 'b', text: "Finding something good without looking for it" },
-      { id: 'c', text: "A type of coffee" },
-      { id: 'd', text: "Programming logic" }
-    ],
-    correctId: 'b'
-  },
-  {
-    id: 2,
-    question: "[MOCK] Which hook is used for side effects in React?",
-    choices: [
-      { id: 'a', text: "useState" },
-      { id: 'b', text: "useEffect" },
-      { id: 'c', text: "useContext" },
-      { id: 'd', text: "useReducer" }
-    ],
-    correctId: 'b'
-  }
-];
+  // 모드 판별
+  const isWrongMode = source === "wrong-note";
 
-// 가짜 Router Hooks
-const useMockSearchParams = () => [new URLSearchParams("source=test&limit=5")]; // 테스트 시 source=wrong-note 로 바꿔보세요
-const useMockNavigate = () => (path) => console.log(`[MockNav] Navigating to: ${path}`);
-
-// ✨ [수정됨] 가짜 ProgressBar: color prop 추가
-const MockProgressBar = ({ current, total, color }) => {
-  const percentage = Math.min((current / total) * 100, 100);
-  const barColor = color || '#4f46e5'; // 전달받은 색상이 없으면 기본 파란색
-
-  return (
-    <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', margin: '12px 0' }}>
-      <div style={{ 
-        width: `${percentage}%`, 
-        height: '100%', 
-        background: barColor, // 동적 색상 적용
-        borderRadius: '4px', 
-        transition: 'width 0.3s' 
-      }} />
-    </div>
-  );
-};
-
-// 가짜 QuizQuestion
-const MockQuizQuestion = ({ question, selectedChoiceId, isAnswered, isCorrect, onSelect }) => {
-  return (
-    <div className="quiz-options-grid" style={{ display: 'grid', gap: '10px' }}>
-      {question.choices.map((choice) => {
-        let borderColor = '#e5e7eb';
-        let bgColor = '#fff';
-        if (isAnswered) {
-          if (choice.id === question.correctId) { borderColor = '#22c55e'; bgColor = '#dcfce7'; }
-          else if (choice.id === selectedChoiceId) { borderColor = '#ef4444'; bgColor = '#fee2e2'; }
-        } else if (selectedChoiceId === choice.id) {
-          borderColor = '#4f46e5';
-        }
-        return (
-          <button
-            key={choice.id}
-            onClick={() => !isAnswered && onSelect(choice.id)}
-            style={{ padding: '16px', border: `2px solid ${borderColor}`, background: bgColor, borderRadius: '12px', textAlign: 'left', cursor: isAnswered ? 'default' : 'pointer' }}
-          >
-            {choice.text}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
-// 가짜 useLearningEngine Hook
-const useMockLearningEngine = ({ limit }) => {
-  const [index, setIndex] = useState(0);
-  const [selectedChoiceId, setSelectedChoiceId] = useState(null);
-  const [isAnswered, setIsAnswered] = useState(false);
+  // 상태 관리
+  const [questions, setQuestions] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState(null);
   const [score, setScore] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  const [wrongAnswerLogs, setWrongAnswerLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const currentQuestion = DUMMY_QUESTIONS[index];
-  const isCorrect = isAnswered && selectedChoiceId === currentQuestion.correctId;
+  // 2️⃣ 퀴즈 데이터 가져오기
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log(`📡 데이터 요청: 모드=${source}, 문항수=${limit}, 난이도=${level}`);
+        
+        const data = await fetchQuizzes({ 
+          source, 
+          limit: Number(limit), 
+          level 
+        });
 
-  const answerQuestion = (choiceId) => {
-    setSelectedChoiceId(choiceId);
-    setIsAnswered(true);
-    if (choiceId === currentQuestion.correctId) {
-      setScore(prev => prev + 1);
+        if (!data || data.length === 0) {
+          throw new Error("풀 수 있는 문제가 없습니다.");
+        }
+
+        setQuestions(data);
+      } catch (err) {
+        console.error("❌ 퀴즈 로드 실패:", err);
+        setError("문제를 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [source, limit, level]);
+
+  // 정답 선택 핸들러
+  const handleOptionClick = (index) => {
+    if (selectedOption !== null) return; 
+
+    setSelectedOption(index);
+    if (index === questions[currentIndex].answer) {
+      setScore((prev) => prev + 1);
+    }
+  };
+
+  // 3️⃣ 다음 문제 이동 및 결과 전송
+  const handleNext = async () => {
+    if (currentIndex + 1 < questions.length) {
+      setCurrentIndex((prev) => prev + 1);
+      setSelectedOption(null);
     } else {
-      setWrongAnswerLogs(prev => [...prev, { wrongWordId: currentQuestion.id }]);
+      const isLastAnswerCorrect = questions[currentIndex].answer === selectedOption;
+      const finalScore = score + (isLastAnswerCorrect ? 1 : 0);
+      
+      try {
+        await submitQuizResult({
+          mode: isWrongMode ? 'wrong' : 'normal',
+          score: finalScore,
+          total: questions.length,
+          timestamp: new Date().toISOString()
+        });
+        console.log("✅ 결과 전송 완료");
+      } catch (err) {
+        console.error("❌ 결과 전송 실패:", err);
+      }
+
+      setIsFinished(true);
     }
   };
 
-  const goNext = () => {
-    if (index < DUMMY_QUESTIONS.length - 1) {
-      setIndex(prev => prev + 1);
-      setIsAnswered(false);
-      setSelectedChoiceId(null);
-    }
-  };
+  // ─── 화면 렌더링 ───
 
-  const goPrev = () => {
-    if (index > 0) {
-      setIndex(prev => prev - 1);
-      setIsAnswered(false);
-      setSelectedChoiceId(null);
-    }
-  };
+  // 로딩
+  if (isLoading) {
+    return <div className="loading-screen">퀴즈를 불러오는 중입니다...</div>;
+  }
 
-  const finishQuiz = () => setIsFinished(true);
+  // 에러
+  if (error) {
+    return (
+      <div className="error-screen">
+        <AlertCircle size={48} className="mb-4" color="var(--danger-500)" />
+        <h3>오류 발생</h3>
+        <p className="mt-12">{error}</p>
+        <div className="mt-24">
+          <Button variant="secondary" size="md" onClick={() => navigate(-1)}>
+            뒤로 가기
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  return {
-    items: DUMMY_QUESTIONS,
-    currentIndex: index,
-    current: currentQuestion,
-    total: DUMMY_QUESTIONS.length,
-    loading: false,
-    error: null,
-    isFinished,
-    goNext,
-    goPrev,
-    finishQuiz,
-    selectedChoiceId,
-    isAnswered,
-    isCorrect,
-    score,
-    wrongAnswerLogs,
-    answerQuestion,
-  };
-};
-
-
-// ==========================================
-// [SELECTOR] Real vs Mock 결정
-// ==========================================
-const useSearchParams = USE_MOCK ? useMockSearchParams : useRealSearchParams;
-const useNavigate = USE_MOCK ? useMockNavigate : useRealNavigate;
-const useLearningEngine = USE_MOCK ? useMockLearningEngine : useRealLearningEngine;
-const QuizQuestion = USE_MOCK ? MockQuizQuestion : RealQuizQuestion;
-const ProgressBar = USE_MOCK ? MockProgressBar : RealProgressBar;
-
-
-// ==========================================
-// [MAIN COMPONENT] QuizPage
-// ==========================================
-export default function QuizPage() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  const source = searchParams.get('source') || 'quiz';
-  const clusterId = searchParams.get('clusterId') || undefined;
-  const wordIdsParam = searchParams.get('wordIds');
-  const wordIds = wordIdsParam ? wordIdsParam.split(',').map((x) => Number(x)) : undefined;
-  const limit = Number(searchParams.get('limit') || 10);
-
-  // ✨ [수정됨] 오답 노트 모드인지 확인 및 색상 결정
-  const isWrongNoteMode = source === 'wrong-note' || source === 'wrong_note';
-  const progressColor = isWrongNoteMode ? '#f59e0b' : '#4f46e5'; 
-  // #f59e0b: 오렌지(경고), #4f46e5: 인디고(기본)
-
-  const {
-    currentIndex,
-    current,
-    total,
-    loading,
-    error,
-    isFinished,
-    goNext,
-    goPrev,
-    finishQuiz,
-    selectedChoiceId,
-    isAnswered,
-    isCorrect,
-    score,
-    wrongAnswerLogs,
-    answerQuestion,
-  } = useLearningEngine({
-    mode: 'mcq',
-    source,
-    wordIds,
-    clusterId,
-    limit,
-  });
-
-  const handleNext = () => {
-    if (currentIndex === total - 1) {
-      finishQuiz();
-    } else {
-      goNext();
-    }
-  };
-
-  const handleRetry = () => {
-      // Mock 모드일 때 window.reload, 실제일 때 navigate(0) 사용 등 분기 가능하지만
-      // navigate(0)은 react-router v6에서 지원 안 할 수 있으므로 window.location.reload()가 안전할 수 있음
-      window.location.reload(); 
-  };
-  const handleGoWrongNote = () => navigate('/learning/wrong-notes');
-  const handleCreateStoryFromWrong = () => {
-    const wrongIds = wrongAnswerLogs.map((l) => l.wrongWordId).join(',');
-    navigate(`/stories/create?wrongWordIds=${encodeURIComponent(wrongIds)}`);
-  };
-
-  if (loading) return <div className="quiz-page--loading">로딩 중...</div>;
-  if (error) return <div className="quiz-page--error">오류가 발생했습니다.</div>;
+  // 테마 클래스 (보라/주황)
+  const themeClass = isWrongMode ? "theme-orange" : "";
 
   return (
-    <div className="page-container">
-      <div className="quiz-page-wrapper">
-
-        {/* 1. 상단 정보 카드 */}
-        <section className="quiz-header-card">
-          <div className="score-group">
-            <div className="score-icon-box">
-              <Trophy size={20} strokeWidth={2.5} />
-            </div>
-            <div className="score-text-wrapper">
-              <span className="label-mini">Current Score</span>
-              <span className="score-value">{score}</span>
-            </div>
-          </div>
-
-          <div className="progress-group">
-            <span className="label-mini">Question</span>
-            <span className="progress-value">
-              {Math.min(currentIndex + 1, total)} <span>/ {total}</span>
+    <div className={`quiz-page-wrapper ${themeClass}`}>
+      <div className="quiz-container">
+        
+        {/* 헤더 영역 */}
+        <header className="quiz-header">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(-1)} 
+            aria-label="뒤로 가기"
+            style={{ padding: '8px' }} 
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          
+          <div className="quiz-title">
+            {isWrongMode ? "오답 퀴즈" : "실전 퀴즈"}
+            <span className="quiz-badge">
+              {isWrongMode ? "복습" : `Lv.${level}`}
             </span>
           </div>
-        </section>
+          <div style={{ width: '40px' }}></div>
+        </header>
 
-        {/* 2. 진행바 (ProgressBar) */}
-        <div style={{ marginBottom: '24px' }}>
-          {/* ✨ [수정됨] color prop 전달 */}
-          <ProgressBar 
-            current={currentIndex + 1} 
-            total={total} 
-            color={progressColor} 
-          />
-        </div>
-
-        {/* 3. 메인 문제 카드 */}
-        <main className="quiz-main-card">
-          {isFinished ? (
-            // 결과 화면
-            <div className="result-view">
-              <h2>Quiz Completed!</h2>
-              {USE_MOCK && <p style={{color: 'red', fontSize: '12px'}}>* MOCK MODE RESULT *</p>}
-              <p className="label-mini" style={{ marginBottom: '24px' }}>최종 점수</p>
-              <div className="score">
-                {score} <span style={{ fontSize: '1.5rem', color: 'var(--neutral-400)' }}>/ {total}</span>
+        {/* 퀴즈 진행 화면 */}
+        {!isFinished ? (
+          <div className="quiz-content">
+            {/* 진행 상태 바 */}
+            <div className="progress-area">
+              <div className="progress-track">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+                />
               </div>
-
-              <div className="result-actions">
-                <button className="btn-primary" onClick={handleRetry}>다시 풀기</button>
-                <button className="btn-primary" style={{ background: 'var(--warning-500)' }} onClick={handleGoWrongNote}>오답 노트</button>
+              <div className="progress-text">
+                {currentIndex + 1} / {questions.length}
               </div>
-              {wrongAnswerLogs.length > 0 && (
-                <button
-                  className="nav-btn"
-                  style={{ marginTop: '20px', textDecoration: 'underline' }}
-                  onClick={handleCreateStoryFromWrong}
+            </div>
+
+            {/* 문제 텍스트 */}
+            <div className="question-section">
+              <h2 className="question-text">{questions[currentIndex].question}</h2>
+            </div>
+
+            {/* 보기 버튼 영역 */}
+            <div className="options-grid">
+              {questions[currentIndex].options.map((option, idx) => {
+                const currentQ = questions[currentIndex];
+                
+                const cardClass = clsx(
+                  "option-card", 
+                  {
+                    "correct": selectedOption !== null && idx === currentQ.answer,
+                    "wrong": selectedOption !== null && idx === selectedOption && idx !== currentQ.answer,
+                    "disabled": selectedOption !== null && idx !== currentQ.answer && idx !== selectedOption
+                  }
+                );
+
+                return (
+                  <button
+                    key={idx}
+                    className={cardClass}
+                    onClick={() => handleOptionClick(idx)}
+                    disabled={selectedOption !== null}
+                  >
+                    <span className="option-number">{idx + 1}</span>
+                    <span className="option-text">{option}</span>
+                    
+                    {selectedOption !== null && idx === currentQ.answer && (
+                      <CheckCircle2 className="result-icon correct" size={20} />
+                    )}
+                    {selectedOption !== null && idx === selectedOption && idx !== currentQ.answer && (
+                      <XCircle className="result-icon wrong" size={20} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* 다음 버튼 */}
+            <div className="mt-24">
+              {selectedOption !== null && (
+                <Button 
+                  variant="primary" 
+                  full 
+                  size="lg" 
+                  onClick={handleNext}
                 >
-                  이 오답들로 스토리 생성하기
-                </button>
+                  {currentIndex + 1 === questions.length ? "결과 보기" : "다음 문제"}
+                </Button>
               )}
             </div>
-          ) : (
-            // 문제 풀이 화면
-            <>
-              <div className="question-section">
-                <span className="question-label">DEFINITION</span>
-                <h2 className="question-text">
-                  {current.question}
-                </h2>
-
-                <div className="quiz-options-container">
-                  <QuizQuestion
-                    question={current}
-                    selectedChoiceId={selectedChoiceId}
-                    isAnswered={isAnswered}
-                    isCorrect={isCorrect}
-                    onSelect={answerQuestion}
-                  />
-                </div>
+          </div>
+        ) : (
+          /* 결과 화면 */
+          <div className="result-section">
+            <div className="score-circle">
+              <div style={{display:'flex', flexDirection:'column', alignItems:'center', lineHeight:1}}>
+                <span className="score-number">{score}</span>
+                <span className="score-total">/ {questions.length}</span>
               </div>
-
-              <footer className="quiz-footer-actions">
-                <button
-                  className="nav-btn"
-                  onClick={goPrev}
-                  disabled={currentIndex === 0}
-                >
-                  Prev
-                </button>
-                <button
-                  className="nav-btn"
-                  onClick={handleNext}
-                  disabled={!isAnswered && total > 0}
-                  style={{ color: 'var(--primary-600)' }}
-                >
-                  {currentIndex === total - 1 ? 'Finish' : 'Next'}
-                </button>
-              </footer>
-            </>
-          )}
-        </main>
+            </div>
+            <h3>
+              {score === questions.length ? "완벽해요! 🎉" : "수고하셨어요!"}
+            </h3>
+            <p className="result-msg">
+              {isWrongMode 
+                ? "틀린 문제를 다시 한번 확인해보세요." 
+                : "오늘의 학습 목표를 달성했습니다."}
+            </p>
+            
+            <Button 
+              variant="primary" 
+              full 
+              size="lg" 
+              onClick={() => navigate(-1)}
+            >
+              학습 홈으로 이동
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default QuizPage;

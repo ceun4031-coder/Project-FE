@@ -168,11 +168,11 @@ function LearningHomePage() {
             </header>
 
             <div className="zone-cards">
-              {/* 메인 액션 */}
+              {/* 메인 액션 (수정됨: wrong-notes -> wrong-note) */}
               <button
                 type="button"
                 className="action-card primary"
-                onClick={() => navigate(`/learning/quiz?${buildParams("wrong-notes")}`)}
+                onClick={() => navigate(`/learning/quiz?${buildParams("wrong-note")}`)} 
               >
                 <div className="card-content">
                   <div className="card-badge">집중 복습</div>
@@ -187,11 +187,11 @@ function LearningHomePage() {
                 </div>
               </button>
 
-              {/* 서브 액션 */}
+              {/* 서브 액션 (수정됨: wrong-notes -> wrong-note) */}
               <button
                 type="button"
                 className="action-card secondary"
-                onClick={() => navigate(`/learning/card?${buildParams("wrong-notes")}`)}
+                onClick={() => navigate(`/learning/card?${buildParams("wrong-note")}`)}
               >
                 <div className="card-icon-small">
                   <Layers size={22} aria-hidden="true" />
