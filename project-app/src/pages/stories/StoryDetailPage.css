@@ -1,3 +1,5 @@
+/* src/pages/story/StoryDetailPage.css */
+
 /* =========================================
    1. 페이지 레이아웃 & 네비게이션
    ========================================= */
@@ -17,7 +19,7 @@
   color: var(--neutral-500);
 }
 
-/* 네비게이션 바 */
+/* 상단 네비게이션 (생성 페이지와 동일) */
 .story-nav {
   display: flex;
   justify-content: space-between;
@@ -38,7 +40,9 @@
   padding: 8px 0;
   transition: color 0.2s;
 }
-.nav-back-btn:hover { color: var(--primary-600); }
+.nav-back-btn:hover {
+  color: var(--primary-600);
+}
 
 .nav-badge {
   background-color: var(--primary-100);
@@ -49,7 +53,6 @@
   font-weight: 700;
   letter-spacing: 0.05em;
 }
-
 
 /* =========================================
    2. 메인 레이아웃 (Grid 시스템)
@@ -63,12 +66,11 @@
 @media (min-width: 900px) {
   .story-layout {
     display: grid;
-    /* 사이드바 고정 너비, 본문 나머지 채움 */
-    grid-template-columns: 280px 1fr; 
+    grid-template-columns: 320px 1fr; /* 생성 페이지와 동일 */
     align-items: start;
+    gap: 32px;                        /* 생성 페이지와 동일 */
   }
 }
-
 
 /* =========================================
    3. 좌측 사이드바 (단어장)
@@ -76,130 +78,194 @@
 .vocab-sidebar {
   background: var(--surface-1);
   border: 1px solid var(--border-subtle);
-  border-radius: 20px;
-  padding: 20px;
-  /* 데스크탑에서 스크롤 따라오게 하려면 아래 주석 해제 */
-  /* position: sticky; top: 20px; */
-  height: fit-content;
-  max-height: 80vh; 
+  border-radius: 24px; /* 생성 오답노트와 동일 */
+  padding: 32px;       /* 생성 오답노트와 동일 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+
+  min-height: 640px;
+  max-height: 80vh;
+
   display: flex;
   flex-direction: column;
 }
 
+/* 헤더: 타이틀 + 뱃지 */
 .vocab-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.vocab-icon {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: var(--primary-100);
-  color: var(--primary-600);
-  display: flex; align-items: center; justify-content: center;
+.vocab-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
 }
 
-.vocab-title-wrap h3 {
-  font-size: 1rem; font-weight: 700; color: var(--neutral-900); margin: 0;
-}
-.vocab-title-wrap p {
-  font-size: 0.8rem; color: var(--neutral-500); margin: 2px 0 0 0;
+/* 설명 문구 */
+.vocab-desc {
+  font-size: 0.9rem;
+  color: var(--neutral-500);
+  margin-top: 0;
+  margin-bottom: 16px;
+  line-height: 1.5;
 }
 
-/* 단어 리스트 (스크롤) */
+/* 리스트 */
 .vocab-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  padding-right: 4px; /* 스크롤바 공간 */
+  padding: 4px;
+  margin: 0 -4px;
 }
 
-/* 미니 단어 카드 스타일 */
+.vocab-list::-webkit-scrollbar {
+  width: 6px;
+}
+.vocab-list::-webkit-scrollbar-thumb {
+  background-color: var(--neutral-300);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* 단어 카드 *//* 단어 카드 (상세 전용) */
 .mini-word-card {
-  background: #f8f9fa;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 10px 12px;
-  transition: all 0.2s;
+  background: #f8f9fa;             
+  border-radius: 16px;
+  padding: 12px 14px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
+
 .mini-word-card:hover {
-  background: white;
+  background: #ffffff;
   border-color: var(--primary-200);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  transform: translateX(2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
 }
+
 
 .mini-word-header {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   margin-bottom: 4px;
 }
 .mini-word-text {
-  font-size: 0.95rem; font-weight: 700; color: var(--neutral-800);
+  font-weight: 700;
+  color: var(--neutral-800);
 }
 .mini-word-pos {
-  font-size: 0.65rem; font-weight: 600;
-  background: #dcd6ff; color: #5f3dc4;
-  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary-600);
 }
 .mini-word-meaning {
-  font-size: 0.85rem; color: var(--neutral-600); margin: 0;
-  line-height: 1.4;
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  margin: 0;
 }
 
 .vocab-empty {
-  text-align: center; color: var(--neutral-400); font-size: 0.9rem; margin-top: 20px;
+  font-size: 0.9rem;
+  color: var(--neutral-400);
 }
-
 
 /* =========================================
    4. 우측 메인 (스토리 본문)
    ========================================= */
 .story-main {
   background: var(--surface-1);
-  border-radius: 24px;
+  border-radius: 24px;  /* 생성 builder-main과 동일 */
   border: 1px solid var(--border-subtle);
-  padding: 40px;
+  padding: 32px;        /* 생성 builder-main과 동일 */
   position: relative;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+
+  min-height: 640px;    /* 생성 builder-main과 동일 */
 }
 
 /* 배경 장식 아이콘 */
 .bg-quote-icon {
   position: absolute;
-  top: 30px; right: 30px;
-  width: 80px; height: 80px;
+  top: 30px;
+  right: 30px;
+  width: 80px;
+  height: 80px;
   color: var(--neutral-100);
   pointer-events: none;
 }
-
 .story-main-header {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
   position: relative;
 }
 
+/* 상단 작은 라벨 (영어 스토리) */
+.story-main-label-row {
+  margin-bottom: 10px;
+}
+
+.story-main-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--neutral-50);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--neutral-600);
+}
+
+/* 제목을 살짝 줄여서 부담감 줄이기 */
 .story-main-title {
-  font-size: 2.2rem;
-  font-weight: 800;
+  font-size: 1.9rem;          /* 기존 2.2rem → 1.9rem */
+  font-weight: 700;
   color: var(--neutral-900);
-  margin: 0 0 12px 0;
-  line-height: 1.2;
+  margin: 0 0 8px 0;
+  line-height: 1.25;
+}
+
+/* 설명 텍스트 */
+.story-main-subtitle {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  color: var(--neutral-500);
+  line-height: 1.5;
 }
 
 .story-meta-row {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 0.9rem; color: var(--neutral-500);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;       /* 살짝 작게 */
+  color: var(--neutral-500);
 }
-.meta-item { display: flex; align-items: center; gap: 6px; }
-.meta-divider { font-weight: 700; color: var(--neutral-300); }
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.meta-divider {
+  font-weight: 700;
+  color: var(--neutral-300);
+}
 
 /* 본문 텍스트 */
 .story-article {
-  font-family: 'Inter', sans-serif; /* 영문 가독성 */
+  font-family: "Inter", sans-serif;
 }
 
 .en-paragraph {
@@ -209,21 +275,23 @@
   margin-bottom: 20px;
 }
 
-/* --- [하이라이트 효과] --- */
+/* 하이라이트 */
+/* 기본 하이라이트 */
 .highlighted-word {
-  background-color: rgba(108, 92, 231, 0.15); /* 연한 보라색 배경 */
-  color: var(--primary-600); /* 글자색 강조 */
+  background-color: rgba(162, 149, 255, 0.15);
+  color: var(--primary-600);
   font-weight: 700;
   padding: 0 4px;
   border-radius: 4px;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
-.highlighted-word:hover {
-  background-color: rgba(108, 92, 231, 0.25);
-  cursor: text;
+
+/* 왼쪽 카드 호버 시 붙여줄 클래스 */
+.highlighted-word--active {
+  background-color: rgba(108, 92, 231, 0.35);
+  box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.25);
 }
+
 
 /* 구분선 */
 .story-divider {
@@ -241,8 +309,11 @@
 }
 
 .ko-label {
-  font-size: 0.8rem; font-weight: 700; color: var(--primary-600);
-  text-transform: uppercase; margin-bottom: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-600);
+  text-transform: uppercase;
+  margin-bottom: 8px;
 }
 
 .ko-paragraph {
@@ -255,8 +326,17 @@
 
 /* 모바일 대응 */
 @media (max-width: 640px) {
-  .story-main { padding: 24px 20px; }
-  .story-main-title { font-size: 1.6rem; }
-  .en-paragraph { font-size: 1.05rem; }
-  .vocab-sidebar { max-height: 300px; } /* 모바일에선 사이드바 높이 제한 */
+  .story-main {
+    padding: 24px;
+  }
+  .story-main-title {
+    font-size: 1.6rem;
+  }
+  .en-paragraph {
+    font-size: 1.05rem;
+  }
+  .vocab-sidebar {
+    max-height: 300px;
+    padding: 20px;
+  }
 }

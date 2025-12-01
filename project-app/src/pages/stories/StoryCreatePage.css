@@ -1,412 +1,436 @@
-/* ───────────────────────────────────────────
-   StoryCreatePage (AI 스토리 스튜디오)
-   구조는 그대로, Web UX 기준으로 정리한 CSS
-   ─────────────────────────────────────────── */
+/* src/pages/story/StoryCreatePage.css */
 
-/* 메인 컨테이너 */
-.workbench-container {
-  max-width: 1080px;
-  margin: 40px auto;
-  padding: 0 16px;
-  font-family: "Pretendard", "Malgun Gothic", -apple-system,
-    BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-  color: #111827;
-  box-sizing: border-box;
+/* =========================================
+   1. 페이지 레이아웃 & 네비게이션 (상세와 통일)
+   ========================================= */
+.story-create-page {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-10);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* 헤더 */
-.wb-header {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.wb-header h2 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.wb-header p {
-  margin-top: 8px;
-  margin-bottom: 0;
-  font-size: 1rem;
-  color: #6b7280;
-}
-
-/* 2단 그리드 레이아웃 */
-.wb-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-   align-items: flex-start; 
-}
-
-/* 패널 공통 */
-.panel {
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-
-  /* 기존 height: 100% 제거 */
-  height: 600px;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* 패널 상단 헤더 */
-.panel-header {
-  padding: 18px 22px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+/* 상단 네비게이션 (Detail과 동일 스타일) */
+.story-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--space-5);
 }
 
-.panel-header h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #111827;
+.nav-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--neutral-600);
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+.nav-back-btn:hover {
+  color: var(--primary-600);
 }
 
-/* 배지 */
-.count-badge,
-.limit-badge {
-  background: #f3f4f6;
-  padding: 6px 14px;
+.nav-badge {
+  background-color: var(--primary-100);
+  color: var(--primary-600);
+  padding: 6px 12px;
   border-radius: 999px;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: #4b5563;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
-.limit-badge.full {
-  background: #fee2e2;
-  color: #b91c1c;
+.nav-badge--small {
+  font-size: 0.8rem;
 }
 
-/* ───────────────────────────────
-   LEFT PANEL (오답 노트)
-   ─────────────────────────────── */
+/* =========================================
+   2. 메인 레이아웃 (2컬럼) - 상세와 통일
+   ========================================= */
+.create-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
 
-.source-panel .word-list {
- flex: 0 0 auto;          /* 남는 공간 채우지 않도록 */
-  max-height: 600px;       /* 단어가 많아지면 이 높이까지만 커지고 스크롤 */
-  padding: 18px 20px 20px;
+@media (min-width: 900px) {
+  .create-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr; /* 상세와 동일 */
+    align-items: start;
+    gap: 32px; /* 상세와 동일 */
+  }
+}
+
+/* =========================================
+   3. 좌측 패널: 오답 노트 (Sidebar)
+   ========================================= */
+.mistake-sidebar {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px; 
+  padding: 32px;
+
+  min-height: 640px;
+  max-height: 80vh;
 
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
-
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
-/* 스크롤바 (웹킷) */
-.source-panel .word-list::-webkit-scrollbar {
-  width: 8px;
-}
-.source-panel .word-list::-webkit-scrollbar-thumb {
-  background-color: #d1d5db;
-  border-radius: 999px;
-}
-.source-panel .word-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* 단어 카드 */
-.word-card {
-  position: relative;
+.mistake-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  padding: 14px 18px;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  cursor: pointer;
-
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+  margin-bottom: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.word-card:hover:not(.disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-  border-color: #6366f1;
-  background-color: #f9fafb;
-}
-
-.word-card.disabled {
-  opacity: 0.6;
-  cursor: default;
-  background: #f9fafb;
-}
-
-/* 단어 정보 */
-.word-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.word-text {
+.mistake-header h3 {
+  font-size: 1.1rem;
   font-weight: 700;
-  font-size: 1rem;
-  color: #111827;
+  color: var(--neutral-900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
 }
 
-.word-meaning {
+.mistake-desc {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--neutral-500);
+  margin-top: 0;
+  margin-bottom: 16px;
+  line-height: 1.5;
 }
 
-/* 선택됨 오버레이 */
-.selected-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  background: rgba(99, 102, 241, 0.06);
+/* 리스트 영역 */
+.mistake-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+  margin: 0 -4px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4f46e5;
-  font-weight: 700;
-  font-size: 0.95rem;
-  pointer-events: none;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* ───────────────────────────────
-   RIGHT PANEL (Builder)
-   ─────────────────────────────── */
+.mistake-list::-webkit-scrollbar {
+  width: 6px;
+}
+.mistake-list::-webkit-scrollbar-thumb {
+  background-color: var(--neutral-300);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
 
-.builder-panel {
+/* 단어 카드 스타일 */
+.mistake-card {
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mistake-card:hover:not(.disabled) {
+  background: #ffffff;
+  border-color: var(--primary-300);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.mistake-card.disabled {
+  opacity: 0.5;
+  cursor: default;
+  background: var(--neutral-100);
+}
+
+/* 선택 토글된 상태 */
+.mistake-card.is-selected {
+  border-color: var(--primary-300);
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.card-word {
+  font-weight: 700;
+  color: var(--neutral-800);
+  font-size: 1rem;
+}
+
+.card-meaning {
+  font-size: 0.9rem;
+  color: var(--neutral-500);
+}
+
+.selected-mark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--primary-100);
+  color: var(--primary-600);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* 오답 리스트 하단: '최근 N개 + 전체 보기' */
+.mistake-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.mistake-more-text {
+  color: var(--neutral-500);
+}
+
+.mistake-more-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-600);
+  cursor: pointer;
+}
+.mistake-more-btn:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   4. 우측 패널: 스토리 빌더 (Main)
+   ========================================= */
+.builder-main {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+
+  min-height: 640px;
+
   display: flex;
   flex-direction: column;
 }
-
-/* 선택된 단어 영역 */
-.selected-area {
-  flex: 1;
-  padding: 20px 22px;
-  border-bottom: 1px dashed #e5e7eb;
-  background: #ffffff;
-  overflow-y: auto;
+.builder-header {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* 빈 상태 */
-.empty-state {
-  height: 100%;
-  min-height: 140px;
+.builder-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.builder-heading-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+}
+
+.builder-heading-icon {
+  color: var(--primary-500);
+}
+
+.builder-heading-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.builder-heading-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+}
+
+/* 선택 개수 뱃지 경고 상태 */
+.nav-badge--small {
+  font-size: 0.8rem;
+}
+
+.nav-badge--alert {
+  background-color: var(--danger-50);
+  color: var(--danger-600);
+}
+/* =========================================
+   5. 선택된 단어 섹션
+   ========================================= */
+/* 선택된 단어 섹션 */
+.selected-words {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+
+.selected-words-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.selected-words-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selected-words-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+  margin: 0;
+}
+
+.selected-words-caption {
+  font-size: 0.8rem;
+  color: var(--neutral-400);
+  margin: 0;
+}
+
+/* 칩 영역 박스 */
+.chips-container {
+  flex: 1;
+  background: var(--neutral-50);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px dashed var(--border-strong);
+}
+
+/* 칩 영역 비어 있을 때 안내 문구 */
+.chips-empty {
   text-align: center;
-  color: #9ca3af;
+  padding: 32px 8px;
   font-size: 0.9rem;
   line-height: 1.6;
+  color: var(--neutral-400);
 }
 
-/* 선택된 단어 칩 영역 */
-.chips-wrapper {
+/* 전체 해제 버튼 */
+.chips-clear-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--neutral-400);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.chips-clear-btn:hover {
+  color: var(--neutral-600);
+}
+
+/* 칩 리스트 */
+.chips-wrap {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-/* 칩 기본 */
-.chip {
+/* 단어 칩 */
+.word-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  height: 32px;
+  padding: 0 14px;
   border-radius: 999px;
-  font-size: 0.9rem;
   font-weight: 600;
-  border-width: 1px;
-  border-style: solid;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* 오답 소스에서 온 단어 */
-.chip.mistake {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+.word-chip.mistake {
+  color: var(--primary-600);
+  border-color: var(--primary-200);
+}
+.word-chip.custom {
+  color: var(--secondary-600);
+  border-color: var(--secondary-300);
 }
 
-/* 직접 입력 단어 */
-.chip.custom {
-  background: #fdf2f8;
-  color: #be185d;
-  border-color: #f9a8d4;
-}
-
-/* 칩 내 X 버튼 */
-.chip button {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border-radius: 999px;
+.chip-remove {
+  background: none;
   border: none;
-  background: rgba(255, 255, 255, 0.7);
-  color: inherit;
-  font-size: 0.9rem;
-  line-height: 1;
+  padding: 0;
+  color: var(--neutral-400);
   cursor: pointer;
   display: flex;
-  align-items: center;
-  justify-content: center;
+}
+.chip-remove:hover {
+  color: var(--danger-500);
 }
 
-/* 컨트롤 영역 (직접입력 + 옵션) */
-.controls-area {
-  padding: 20px 22px 18px;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+/* =========================================
+   6. 컨트롤 폼 영역
+   ========================================= */
+.control-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
 }
 
-/* 입력 그룹 */
-.input-group {
-  margin-bottom: 16px;
-}
-
-.input-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #374151;
-}
-
-/* input, select 공통 스타일 */
-.input-group input,
-.input-group select {
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  font-size: 0.9rem;
-  color: #111827;
-  background: #ffffff;
-  box-sizing: border-box;
-  outline: none;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.input-group input:focus,
-.input-group select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
-  background-color: #f9fafb;
-}
-
-/* 옵션 2컬럼 */
-.options-grid {
+.form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 16px;
 }
 
-/* 생성 버튼 */
-.generate-full-btn {
-  width: calc(100% - 44px);
-  margin: 0 22px 22px;
-  padding: 14px 16px;
-
-  border: none;
-  border-radius: 999px;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ffffff;
-
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
-  transition:
-    transform 0.1s ease,
-    box-shadow 0.1s ease,
-    filter 0.15s ease,
-    opacity 0.15s ease;
-}
-
-.generate-full-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 9px 24px rgba(79, 70, 229, 0.45);
-  filter: brightness(1.03);
-}
-
-.generate-full-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 5px 14px rgba(79, 70, 229, 0.3);
-}
-
-.generate-full-btn:disabled {
-  background: #cbd5e1;
-  box-shadow: none;
-  cursor: not-allowed;
-  transform: none;
-  opacity: 0.9;
-}
-
-/* ───────────────────────────────
-   반응형
-   ─────────────────────────────── */
-
-/* 태블릿 이하: 패널 세로 스택 */
-@media (max-width: 1024px) {
-  .wb-grid {
-    grid-template-columns: 1fr;
-    height: auto;
-    min-height: 0;
-  }
-
-  .panel {
-    min-height: 0;
-  }
-
-  .selected-area {
-    max-height: 220px;
-  }
-}
-
-/* 모바일: 여백 및 폰트 살짝 축소 */
+/* =========================================
+   7. 모바일
+   ========================================= */
 @media (max-width: 640px) {
-  .workbench-container {
-    margin: 24px auto;
-    padding: 0 12px;
+  .story-create-page {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
-  .wb-header h2 {
-    font-size: 1.6rem;
+  .mistake-sidebar {
+    max-height: 300px;
+    padding: 20px;
   }
 
-  .panel-header {
-    padding: 14px 16px;
+  .builder-main {
+    padding: 24px;
   }
 
-  .source-panel .word-list,
-  .selected-area,
-  .controls-area {
-    padding: 14px 16px;
-  }
-
-  .generate-full-btn {
-    width: calc(100% - 32px);
-    margin: 0 16px 16px;
+  .form-row {
+    grid-template-columns: 1fr;
   }
 }
-
-

@@ -13,14 +13,14 @@ import { useAuth } from "../../context/AuthContext";
 const AUTH_NAV_ITEMS = [
   { to: "/dashboard", label: "대시보드" },
   { to: "/words", label: "단어장" },
-  { to: "/story/list", label: "AI 스토리" },
+  { to: "/stories", label: "AI 스토리" },
   { to: "/learning", label: "학습하기" },
 ];
 
 // 비로그인 사용자 네비
 const GUEST_NAV_ITEMS = [
   { to: "/", label: "홈" },
-  { to: "/story/list", label: "AI 스토리" },
+  { to: "/stories", label: "AI 스토리" },
 ];
 
 const AUTH_HOME_PATH = "/dashboard";

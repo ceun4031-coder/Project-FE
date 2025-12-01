@@ -40,9 +40,10 @@ function AppRouter() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/words" element={<WordListPage />} />
         <Route path="/words/:id" element={<WordDetailPage />} />
-        <Route path="/story/list" element={<StoryListPage />} />
-        <Route path="/story/:id" element={<StoryDetailPage />} />
-        <Route path="/story/create" element={<StoryCreatePage />} />
+        {/* ai 스토리 */}
+        <Route path="/stories" element={<StoryListPage />} />
+        <Route path="/stories/:id" element={<StoryDetailPage />} />
+        <Route path="/stories/create" element={<StoryCreatePage />} />
         <Route path="/account/profile" element={<ProfilePage />} />
 
    {/* 학습하기 홈 (방식 선택 페이지) */}

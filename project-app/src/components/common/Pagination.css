@@ -1,0 +1,101 @@
+/* src/components/common/Pagination.css */
+
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px; /* 섹션과의 간격 */
+  padding: 16px 0;
+}
+
+/* 이전/다음 화살표 버튼 */
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle, #e9ecef);
+  background-color: var(--surface-1, #ffffff);
+  color: var(--neutral-600, #495057);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--primary-50, #f3f0ff);
+  color: var(--primary-600, #5f3dc4);
+  border-color: var(--primary-200, #d0bfff);
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* 숫자 리스트 래퍼 */
+.pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 숫자 버튼 */
+.pagination-number {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: none;
+  background-color: transparent;
+  color: var(--neutral-600, #495057);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-number:hover {
+  background-color: var(--neutral-100, #f8f9fa);
+  color: var(--neutral-900, #212529);
+}
+
+/* 활성화된 숫자 (현재 페이지) */
+.pagination-number.active {
+  background-color: var(--primary-500, #6c5ce7);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+.pagination-number.active:hover {
+  background-color: var(--primary-600, #5f3dc4);
+}
+
+/* 말줄임표 (...) */
+.pagination-ellipsis {
+  color: var(--neutral-400, #adb5bd);
+  font-size: 0.9rem;
+  padding: 0 4px;
+  user-select: none;
+}
+
+/* 반응형: 모바일에서는 숫자 간격을 조금 줄이거나 크기를 조정 */
+@media (max-width: 640px) {
+  .pagination-container {
+    gap: 8px;
+  }
+  .pagination-number {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+}
