@@ -1,234 +1,278 @@
-/* src/pages/learning/QuizPage.css */
+/* src/pages/QuizPage/QuizPage.css */
 
-/* 전체 페이지 레이아웃 */
+/* ───── Theme Mapping ───── */
 .quiz-page-wrapper {
-  padding-top: var(--space-6);
-  padding-bottom: var(--space-10);
-  max-width: 600px; /* 집중도를 위해 폭을 이미지 비율처럼 조정 */
-  margin: 0 auto;
+  /* 기본: 보라색 (Primary) */
+  --theme-color: var(--primary-500);
+  --theme-color-hover: var(--primary-600);
+  --theme-bg-subtle: var(--primary-100);
+  --theme-text: var(--primary-600);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--neutral-100);
+  padding: var(--space-4);
+}
+
+.quiz-page-wrapper.theme-orange {
+  /* 오답 모드: 주황색 (Warning) */
+  --theme-color: var(--warning-500);
+  --theme-color-hover: var(--warning-600);
+  --theme-bg-subtle: var(--warning-50);
+  --theme-text: var(--warning-600);
+}
+
+/* [중요] Button 컴포넌트 스타일 오버라이드 
+  QuizPage 내부의 Primary 버튼은 전역 색상 대신
+  현재 페이지의 테마 색상(--theme-color)을 따릅니다.
+*/
+.quiz-page-wrapper .btn--primary {
+  background-color: var(--theme-color);
+  color: #fff;
+  border: none;
+}
+
+.quiz-page-wrapper .btn--primary:hover:not(:disabled) {
+  background-color: var(--theme-color-hover);
+  box-shadow: var(--shadow-soft);
+}
+
+/* ───── Layout / Container ───── */
+.quiz-container {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-6);
+  border: 1px solid var(--border-subtle);
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 24px; /* 카드 사이 간격 */
 }
 
-/* 로딩/에러 */
-.quiz-page--loading,
-.quiz-page--error {
-  max-width: 600px;
-  margin: 80px auto;
-  text-align: center;
-  color: var(--neutral-500);
-  font-weight: 500;
-}
-/* 문제 텍스트 스타일 */
-.question-text {
-  font-size: 2rem;       /* 글자 크기 키움 */
-  font-weight: 800;      /* 아주 굵게 */
-  color: var(--neutral-900);
-  line-height: 1.4;
-  margin: 16px 0 32px 0; /* 위아래 여백 확보 */
-  word-break: keep-all;  /* 한글 단어 끊김 방지 */
-}
-
-/* =========================================
-   1. 상단 정보 카드 (Score & Progress)
-   ========================================= */
-.quiz-header-card {
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: 24px; /* 둥근 모서리 통일 */
-  padding: 20px 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  
+/* ───── Header ───── */
+.quiz-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: var(--space-6);
+  position: relative;
 }
 
-/* 왼쪽: 현재 점수 */
-.score-group {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.score-icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--primary-100);
-  color: var(--primary-600);
+.quiz-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+  pointer-events: none;
+  
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: var(--space-2);
 }
 
-.score-text-wrapper {
-  display: flex;
-  flex-direction: column;
-}
-
-.label-mini {
-  font-size: 0.8rem;
+.quiz-badge {
+  font-size: 0.75rem;
+  background-color: var(--theme-bg-subtle);
+  color: var(--theme-color);
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
   font-weight: 600;
-  color: var(--neutral-500);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
 }
 
-.score-value {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--neutral-900);
-  line-height: 1.1;
+/* ───── Progress Bar ───── */
+.progress-area {
+  margin-bottom: var(--space-8);
 }
 
-/* 오른쪽: 문항 진행도 */
-.progress-group {
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: var(--neutral-200);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--theme-color);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+}
+
+.progress-text {
   text-align: right;
-  display: flex;
-  flex-direction: column;
-}
-
-.progress-value {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--primary-500); /* 강조 컬러 */
-  line-height: 1.1;
-}
-
-.progress-value span {
-  font-size: 1rem;
-  color: var(--neutral-400);
-  font-weight: 600;
-}
-
-/* =========================================
-   2. 메인 문제 카드
-   ========================================= */
-.quiz-main-card {
-  background: var(--surface-1);
-  border-radius: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-  
-  padding: 40px 32px;
-  min-height: 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 문제 텍스트 영역 */
-.question-section {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.question-label {
-  display: block;
   font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--neutral-400);
-  margin-bottom: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  color: var(--neutral-500);
+  margin-top: var(--space-2);
+  font-weight: 500;
+}
+
+/* ───── Question ───── */
+.question-section {
+  margin-bottom: var(--space-10);
+  min-height: 80px;
 }
 
 .question-text {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--neutral-900);
+  font-size: 1.35rem;
+  font-weight: 700;
   line-height: 1.4;
+  color: var(--neutral-900);
   word-break: keep-all;
 }
 
-/* 퀴즈 선택지 영역 (QuizQuestion 컴포넌트 내부 스타일링) */
-/* 주의: QuizQuestion 내부의 버튼들이 button 태그라고 가정하고 스타일링합니다 */
-.quiz-options-container {
+/* ───── Options (Card Style) ───── */
+.options-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: 100%;
+  gap: var(--space-3);
 }
 
-.quiz-option-btn {
-  width: 100%;
-  padding: 18px 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--neutral-700);
-  background: #ffffff;
-  border: 1px solid var(--border-strong);
-  border-radius: 16px; /* 이미지처럼 둥근 사각형 */
+.option-card {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  text-align: left;
+  position: relative;
+  width: 100%;
+  
+  /* 버튼 기본 스타일 리셋 */
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
 }
 
-.quiz-option-btn:hover:not(:disabled) {
-  border-color: var(--primary-400);
-  background: var(--primary-50);
-  color: var(--primary-700);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+.option-card:hover:not(:disabled) {
+  border-color: var(--theme-color);
+  background-color: var(--theme-bg-subtle);
 }
 
-.quiz-option-btn.selected {
-  background: var(--primary-500);
-  color: #ffffff;
-  border-color: var(--primary-500);
+.option-number {
+  font-weight: 700;
+  color: var(--theme-color);
+  margin-right: var(--space-3);
+  min-width: 20px;
 }
 
-/* 정답/오답 피드백 스타일 (필요 시) */
-.quiz-option-btn.correct {
-  background: var(--success-500);
-  color: white;
+.option-text {
+  font-size: 1rem;
+  color: var(--neutral-700);
+  font-weight: 500;
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* 정답/오답 상태 */
+.option-card.correct {
+  background-color: var(--success-50);
   border-color: var(--success-500);
 }
-.quiz-option-btn.wrong {
-  background: var(--danger-500);
-  color: white;
+.option-card.correct .option-text,
+.option-card.correct .option-number {
+  color: var(--success-600);
+  font-weight: 700;
+}
+
+.option-card.wrong {
+  background-color: var(--danger-50);
   border-color: var(--danger-500);
+  animation: shake 0.4s;
+}
+.option-card.wrong .option-text,
+.option-card.wrong .option-number {
+  color: var(--danger-600);
+  font-weight: 700;
 }
 
-/* 푸터 (이전/다음 버튼) - 필요하다면 하단에 작게 배치 */
-.quiz-footer-actions {
-  margin-top: auto;
-  padding-top: 32px;
-  display: flex;
-  justify-content: space-between;
+.option-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--neutral-100);
 }
 
-.nav-btn {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--neutral-500);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: color 0.2s;
-}
-.nav-btn:hover:not(:disabled) {
-  color: var(--primary-600);
-  background: var(--neutral-50);
-}
-.nav-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-/* =====================
-   결과 화면 (카드 내부)
-   ===================== */
-.result-view {
+/* ───── Result Section ───── */
+.result-section {
   text-align: center;
-  padding: 20px 0;
+  padding: var(--space-10) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.result-view h2 { font-size: 2rem; margin-bottom: 8px; }
-.result-view .score { font-size: 3rem; font-weight: 800; color: var(--primary-500); margin-bottom: 32px; }
-.result-actions { display: flex; gap: 12px; justify-content: center; }
-.btn-primary { 
-  background: var(--neutral-900); color: white; padding: 14px 24px; border-radius: 12px; font-weight: 600; 
+
+.score-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 6px solid var(--theme-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  color: var(--theme-color);
+  background-color: var(--surface-1);
+  box-shadow: var(--shadow-soft);
+}
+
+.score-number {
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.score-total {
+  font-size: 1.125rem;
+  color: var(--neutral-500);
+  margin-top: 12px;
+  margin-left: 4px;
+}
+
+.result-section h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin-bottom: var(--space-2);
+}
+
+.result-msg {
+  color: var(--neutral-500);
+  margin-bottom: var(--space-10);
+  font-size: 1rem;
+}
+
+/* ───── Utils ───── */
+.result-icon { margin-left: var(--space-2); }
+.result-icon.correct { color: var(--success-500); }
+.result-icon.wrong { color: var(--danger-500); }
+
+.loading-screen, .error-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: var(--neutral-600);
+  background-color: var(--neutral-100);
+}
+.error-screen h3 {
+  margin-top: var(--space-4);
+  color: var(--danger-500);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
