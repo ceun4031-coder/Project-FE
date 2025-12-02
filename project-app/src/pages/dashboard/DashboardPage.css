@@ -1,526 +1,434 @@
-/* ========== 레이아웃 & 공통 ========== */
+/* src/pages/Dashboard/DashboardPage.css */
 
-/* 대시보드 페이지 컨테이너 (이 페이지에만 적용되도록 .mt-24까지 포함) */
-.page-container.mt-24 {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 1.5rem 3rem;
-}
-
-/* 진입 애니메이션 */
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* 로딩 스피너 */
-.dashboard-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 60vh;
-  color: #6b7280;
+/* --------------------------------------------------------
+   1. Header
+   -------------------------------------------------------- */
+.dashboard-header.center-header {
   text-align: center;
+  margin-top: 32px;
+  margin-bottom: 40px;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #6366f1;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* 에러 메시지 */
-.error-banner {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  padding: 12px 14px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  text-align: center;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-/* ========== 헤더 ========== */
-
-.dashboard-header {
-  margin-bottom: 32px;
-  display: flex;
-  justify-content: center;
-  text-align: center;
-}
-
-.sub-greeting {
-  font-size: 0.95rem;
-  color: #6b7280;
-  margin-bottom: 4px;
-}
-
-.main-greeting {
-  font-size: 1.8rem;
+.greeting-title {
+  font-size: 1.875rem;
   font-weight: 700;
-  color: #111827;
-  margin: 0;
+  color: var(--neutral-900);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.02em;
 }
 
 .highlight-text {
-  color: #6366f1;
+  color: var(--primary-500);
 }
 
-/* ========== 공통 카드 스타일 ========== */
+/* --------------------------------------------------------
+   2. Layout (Grid Ratio 2.5 : 1)
+   -------------------------------------------------------- */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
 
-.card {
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 24px 22px;
-  box-shadow:
-    0 4px 6px -1px rgba(15, 23, 42, 0.08),
-    0 2px 4px -1px rgba(15, 23, 42, 0.04);
-  border: 1px solid #f3f4f6;
-  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+@media (min-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 2.5fr 1fr; 
+    align-items: stretch;
+  }
+}
+
+.column-left, .column-right {
   display: flex;
   flex-direction: column;
+  gap: 24px;
 }
 
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 10px 20px -5px rgba(15, 23, 42, 0.14),
-    0 4px 8px -2px rgba(15, 23, 42, 0.08);
+/* --------------------------------------------------------
+   3. Card Common (Renamed to prevent conflict)
+   -------------------------------------------------------- */
+/* [변경] .card -> .dashboard-card */
+.dashboard-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle, #e5e5f0);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  overflow: hidden; 
+  transition: box-shadow 0.2s ease;
 }
 
-.card-top {
+/* --------------------------------------------------------
+   4. Status Overview Card
+   -------------------------------------------------------- */
+.status-overview-card {
+  display: flex;
+  flex-direction: row;
+  padding: 32px 40px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 160px;
+}
+
+.status-section.progress-section {
+  flex: 1.8;
+  padding-right: 48px;
+}
+
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.card-top h3 {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #374151;
+.section-header h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--neutral-900);
   margin: 0;
 }
 
-.card-desc {
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin-top: auto;
-  line-height: 1.5;
-}
-
-/* ========== 그리드 레이아웃 ========== */
-
-.dashboard-grid {
-  display: grid;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-/* 상단: 오늘의 목표 / 연속학습 / 누적단어 */
-.top-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* 하단: 차트 / AI 배너 */
-.bottom-grid {
-  grid-template-columns: 2fr 1fr;
-  align-items: stretch;
-}
-
-/* ========== 오늘의 목표 카드 ========== */
-
-.goal-badge {
-  background-color: #e0e7ff;
-  color: #4338ca;
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.goal-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.goal-numbers {
-  font-size: 1.6rem;
+.percent-badge {
+  background-color: var(--primary-100);
+  color: var(--primary-600);
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 20px;
   font-weight: 700;
-  margin-bottom: 12px;
-  color: #111827;
+}
+
+.progress-info {
+  margin-bottom: 16px;
   display: flex;
   align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
-.goal-numbers .divider {
-  color: #9ca3af;
-  font-size: 1.2rem;
-  margin: 0 4px;
+.current-num {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--neutral-900);
 }
 
-.goal-numbers .total {
-  font-size: 0.95rem;
-  color: #6b7280;
+.total-num {
+  font-size: 1rem;
+  color: var(--neutral-500);
   font-weight: 500;
 }
 
 .progress-bar-bg {
   width: 100%;
   height: 10px;
-  background-color: #f3f4f6;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 10px;
+  background-color: var(--neutral-200);
+  border-radius: 10px;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1, #818cf8);
-  border-radius: 999px;
-  transition: width 0.8s ease-out;
+  background-color: var(--primary-500);
+  border-radius: 10px;
+  transition: width 0.8s ease;
 }
 
-/* ========== 연속 학습 카드 ========== */
-
-.streak-card .card-top span {
-  font-size: 1.5rem;
+.vertical-divider {
+  width: 1px;
+  height: 70px;
+  background-color: var(--neutral-200);
+  margin: 0 24px;
 }
 
-.streak-content {
+.status-section.center-align {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
-}
-
-.streak-days {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #111827;
-  margin-bottom: 12px;
-}
-
-/* 버튼 그룹 컨테이너 */
-.streak-actions {
-  display: flex;
-  flex-direction: column;
+  justify-content: center;
   gap: 8px;
-  width: 100%;
-  margin-top: 4px;
 }
 
-/* 학습 시작 버튼 (Primary) */
-.action-btn-primary {
-  background-color: #6366f1;
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 12px;
+.status-section .label {
   font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.18s ease-out, box-shadow 0.18s ease-out,
-    transform 0.08s ease-out;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+  color: var(--neutral-500);
 }
 
-.action-btn-primary:hover {
-  background-color: #4f46e5;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.45);
-  transform: translateY(-1px);
+.status-section .value-text {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--neutral-900);
 }
 
-.action-btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.35);
-}
-
-/* 오답 복습 버튼 (Secondary / Danger) */
-.action-btn-secondary {
-  background-color: #fee2e2;
-  color: #dc2626;
-  border: none;
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.18s ease-out, transform 0.08s ease-out;
-}
-
-.action-btn-secondary:hover {
-  background-color: #fecaca;
-  transform: translateY(-1px);
-}
-
-.action-btn-secondary:active {
-  transform: translateY(0);
-}
-
-/* ========== 누적 학습 카드 ========== */
-
-.total-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.total-count {
-  font-size: 2.1rem;
-  font-weight: 800;
-  color: #111827;
-  margin-bottom: 6px;
-}
-
-/* ========== 주간 학습 차트 ========== */
-
-.weekly-chart-card {
-  min-height: 300px;
-}
-
-.legend {
-  display: flex;
-  gap: 12px;
-  font-size: 0.8rem;
-}
-
-.legend-item {
+.streak-container {
   display: flex;
   align-items: center;
-  color: #4b5563;
+  gap: 6px;
 }
-
-.legend-item::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  margin-right: 4px;
+.streak-icon {
+  font-size: 1.4rem;
+  line-height: 1;
 }
-
-.legend-item.learned::before { background-color: #6366f1; }
-.legend-item.wrong::before { background-color: #f87171; }
-
-.chart-container {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  height: 220px;
-  margin-top: 10px;
-}
-
-.empty-chart {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-  font-size: 0.9rem;
-  background-color: #f9fafb;
-  border-radius: 10px;
-  border: 1px dashed #e5e7eb;
-}
-
-.bars-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  width: 100%;
-  height: 100%;
-  padding-bottom: 22px; /* 날짜 라벨 공간 */
-}
-
-.daily-bar-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-  position: relative;
-}
-
-.bars-area {
-  display: flex;
-  gap: 4px;
-  align-items: flex-end;
-  height: 100%;
-  width: 60%;
-  justify-content: center;
-}
-
-.bar {
-  width: 12px;
-  border-radius: 6px 6px 0 0;
-  transition: height 0.5s ease-out;
-  min-height: 4px;
-}
-
-.bar-learned { background-color: #6366f1; }
-.bar-wrong { background-color: #f87171; }
-
-.day-label {
-  position: absolute;
-  bottom: -20px;
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-/* ========== AI 스토리 배너 카드 ========== */
-
-.ai-banner-card {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #bae6fd;
-  position: relative;
-  overflow: hidden;
-}
-
-.ai-content h3 {
-  color: #0369a1;
-  margin-bottom: 8px;
-  font-size: 1.15rem;
-}
-
-.ai-content p {
-  color: #0c4a6e;
-  font-size: 0.9rem;
-  margin-bottom: 20px;
-  line-height: 1.55;
-}
-
-.btn-text {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #0284c7;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
-.btn-text:hover {
-  text-decoration: underline;
-}
-
-.ai-deco {
-  position: absolute;
-  bottom: 10px;
-  right: 16px;
-  font-size: 3rem;
-  opacity: 0.3;
-  transform: rotate(-15deg);
-}
-
-/* ========== 반응형 ========== */
-
-@media (max-width: 1024px) {
-  .page-container.mt-24 {
-    padding: 0 1.25rem 2.5rem;
-  }
-
-  .top-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .bottom-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .weekly-chart-card {
-    min-height: 260px;
-  }
+.streak-value {
+  color: var(--warning-600, #d97706);
 }
 
 @media (max-width: 768px) {
-  .dashboard-header {
-    margin-bottom: 24px;
+  .status-overview-card {
+    flex-direction: column;
+    gap: 32px;
+    align-items: stretch;
   }
-
-  .main-greeting {
-    font-size: 1.5rem;
-  }
-
-  .dashboard-grid {
-    gap: 18px;
-  }
-
-  .top-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .card {
-    padding: 20px 18px;
-    border-radius: 16px;
-  }
-
-  .streak-days {
-    font-size: 1.9rem;
-  }
-
-  .total-count {
-    font-size: 1.9rem;
-  }
-
-  .chart-container {
-    height: 190px;
-  }
-
-  .bars-area {
-    width: 72%;
-  }
-
-  .day-label {
-    font-size: 0.72rem;
+  .vertical-divider { display: none; }
+  .status-section.progress-section {
+    padding-right: 0;
+    border-bottom: 1px solid var(--neutral-200);
+    padding-bottom: 24px;
   }
 }
 
-@media (max-width: 480px) {
-  .page-container.mt-24 {
-    padding: 0 1rem 2.25rem;
-  }
+/* --------------------------------------------------------
+   5. Chart Card
+   -------------------------------------------------------- */
+.chart-card {
+  flex: 1;
+  min-height: 380px;
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+}
 
-  .card-top {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
 
-  .streak-actions {
-    flex-direction: column;
-  }
+.card-header-row h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
 
-  .action-btn-primary,
-  .action-btn-secondary {
-    font-size: 0.85rem;
-    padding: 9px 10px;
-  }
+.chart-legend {
+  display: flex;
+  gap: 16px;
+}
 
-  .ai-deco {
-    font-size: 2.4rem;
-    right: 10px;
-  }
+.legend-item {
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.learned { background-color: var(--primary-500); }
+.dot.wrong { background-color: #FF8BA7; }
+
+.chart-body {
+  flex: 1;
+  display: flex;
+  gap: 40px;
+}
+
+.bars-container {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.daily-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.bar-wrapper {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 200px;
+}
+
+.v-bar {
+  width: 12px;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.5s ease;
+}
+.bar-blue { background-color: var(--primary-500); }
+.bar-red { background-color: #FF8BA7; }
+
+.date-label {
+  font-size: 0.8rem;
+  color: var(--neutral-500);
+  margin-top: 8px;
+}
+
+.chart-summary {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 110px;
+  padding-bottom: 24px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--neutral-600);
+}
+.summary-row strong { font-weight: 700; color: var(--neutral-900); }
+
+/* --------------------------------------------------------
+   6. Dashboard Action Card (Renamed)
+   -------------------------------------------------------- */
+/* [변경] .action-card -> .dashboard-action-card */
+.dashboard-action-card {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* LearningHome의 .action-card와 스타일 충돌 방지 */
+  background: #ffffff; 
+  cursor: default;
+}
+
+.action-text h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--neutral-900);
+}
+.action-text p {
+  color: var(--neutral-500);
+  font-size: 0.95rem;
+}
+
+.mini-calendar {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.calendar-day {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--neutral-400);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.calendar-day.checked {
+  background-color: var(--primary-500);
+  color: #fff;
+}
+
+.start-btn {
+  background-color: var(--primary-500);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 10px rgba(108, 92, 231, 0.25);
+}
+
+.start-btn:hover {
+  background-color: var(--primary-600);
+}
+
+/* --------------------------------------------------------
+   7. Wrong Ranking Card
+   -------------------------------------------------------- */
+.wrong-ranking-card {
+  padding: 32px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wrong-ranking-card h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--neutral-900);
+}
+
+.ranking-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.word-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.word-en { 
+  font-weight: 700; 
+  color: var(--neutral-900); 
+  font-size: 1rem;
+}
+.word-ko { 
+  font-size: 0.85rem; 
+  color: var(--neutral-500); 
+  margin-top: 2px;
+}
+
+.word-count {
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  font-weight: 500;
+}
+
+.divider-line {
+  height: 1px;
+  background-color: var(--neutral-200);
+  margin: 24px 0;
+}
+
+.wrong-review-btn {
+  width: 100%;
+  background-color: var(--warning-500, #f59e0b);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+  margin-top: auto;
+}
+
+.wrong-review-btn:hover {
+  background-color: var(--warning-600, #d97706);
 }
