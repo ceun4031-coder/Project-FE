@@ -1,114 +1,209 @@
-// src/pages/wrongnote/WrongNotePage.jsx (경로는 프로젝트 구조에 맞게)
-import { useNavigate } from 'react-router-dom';
-import { useWrongNoteStore } from './hooks/useWrongNoteStore';
-import { WrongNoteItem } from './components/WrongNoteItem';
-import './WrongNotePage.css';
+// src/pages/wrongnote/WrongNotePage.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getWrongList } from "../../api/wrongApi";
+import Pagination from "../../components/common/Pagination";
+import { WrongNoteItem } from "./components/WrongNoteItem";
+import "./WrongNotePage.css";
+
+const PAGE_SIZE = 10;
+
+// 공통 헬퍼: 스토리 사용 여부
+const isUsedInStory = (item) =>
+  item?.isUsedInStory === "Y" ||
+  item?.isUsedInStory === "y" ||
+  item?.isUsedInStory === true;
+
+// 공통 헬퍼: 오답 횟수
+const getWrongCount = (item) =>
+  item?.totalWrong ?? item?.wrongCount ?? item?.wrong ?? 0;
+
+// 공통 헬퍼: 마지막 오답 일시
+const getLastWrongTime = (item) => {
+  const raw = item?.lastWrongAt || item?.wrongAt || item?.wrong_at;
+  if (!raw) return 0;
+  const t = new Date(raw).getTime();
+  return Number.isNaN(t) ? 0 : t;
+};
 
 export default function WrongNotePage() {
   const navigate = useNavigate();
-  const {
-    items,
-    filters,
-    setFilters,
-    pagination,
-    setPage,
-    loading,
-    error,
-    selectedIds,
-    toggleSelect,
-    clearSelection,
-    refresh,
-  } = useWrongNoteStore();
 
-  // 필터 변경 시 page를 1로 초기화
-  const handleChangeFilter = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
+  // 전체 오답 원본 리스트
+  const [rawItems, setRawItems] = useState([]);
+
+  // 필터 상태 (스토리 사용 여부 + 정렬)
+  const [filters, setFilters] = useState({
+    isUsedInStory: "",
+    sortBy: "latest", // latest | oldest | mostWrong
+  });
+
+  // UI 상태
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // 선택된 wrongWordId 리스트
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  // 0-based 페이지 인덱스 (0,1,2,…)
+  const [page, setPage] = useState(0);
+
+  // ====== 데이터 로딩 ======
+  const refresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getWrongList();
+      setRawItems(Array.isArray(data) ? data : []);
+      setSelectedIds([]);
+      setPage(0);
+    } catch (e) {
+      console.error("오답 목록 조회 실패:", e);
+      setError("오답 기록을 불러오는 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ⬇⬇⬇ 핵심 수정: source=wrong-notes → source=wrong-note 로 통일 ⬇⬇⬇
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  // ====== 필터 변경 ======
+  const handleChangeFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setPage(0);
+  };
+
+  // ====== 필터 + 정렬 로직 ======
+  const processedItems = useMemo(() => {
+    const { isUsedInStory: usedFilter, sortBy } = filters;
+
+    // 1) 필터링 (스토리 사용 여부만)
+    const filtered = rawItems.filter((item) => {
+      const used = isUsedInStory(item);
+
+      if (usedFilter === "Y") {
+        return used;
+      }
+      if (usedFilter === "N") {
+        return !used;
+      }
+      return true; // 전체
+    });
+
+    // 2) 정렬
+    const sorted = [...filtered].sort((a, b) => {
+      const aDate = getLastWrongTime(a);
+      const bDate = getLastWrongTime(b);
+
+      const aWrong = getWrongCount(a);
+      const bWrong = getWrongCount(b);
+
+      switch (sortBy) {
+        case "oldest":
+          // 오래된순
+          return aDate - bDate;
+        case "mostWrong":
+          // 많이 틀린순 (동점이면 최신순)
+          if (bWrong !== aWrong) return bWrong - aWrong;
+          return bDate - aDate;
+        case "latest":
+        default:
+          // 최신순
+          return bDate - aDate;
+      }
+    });
+
+    return sorted;
+  }, [rawItems, filters]);
+
+  // ====== 페이지네이션 계산 ======
+  const totalPages = useMemo(
+    () => Math.ceil(processedItems.length / PAGE_SIZE) || 0,
+    [processedItems.length]
+  );
+
+  const pagedItems = useMemo(() => {
+    const start = page * PAGE_SIZE;
+    return processedItems.slice(start, start + PAGE_SIZE);
+  }, [processedItems, page]);
+
+  // page가 totalPages 범위를 넘어가면 조정
+  useEffect(() => {
+    if (page > 0 && page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, totalPages]);
+
+  // ====== 선택 관련 ======
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
+  const selectedCount = selectedIds.length;
+
+  // ====== 상단 액션 ======
   const handleReviewAsQuiz = () => {
-    if (selectedIds.length === 0) return;
-    const ids = selectedIds.join(',');
+    if (selectedCount === 0) return;
+    const ids = selectedIds.join(",");
     navigate(
       `/learning/quiz?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`
     );
   };
 
   const handleReviewAsCard = () => {
-    if (selectedIds.length === 0) return;
-    const ids = selectedIds.join(',');
+    if (selectedCount === 0) return;
+    const ids = selectedIds.join(",");
     navigate(
       `/learning/card?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`
     );
   };
 
+  // 스토리에 사용되지 않은 단어만 사용
   const handleCreateStory = () => {
-    if (selectedIds.length === 0) return;
-    const ids = selectedIds.join(',');
-    navigate(
-      `/stories/create?wrongWordIds=${encodeURIComponent(ids)}`
+    if (selectedCount === 0) return;
+
+    const candidateItems = rawItems.filter(
+      (item) => selectedIds.includes(item.wrongWordId) && !isUsedInStory(item)
     );
+
+    if (candidateItems.length === 0) {
+      alert("스토리에 사용되지 않은 단어를 선택해 주세요.");
+      return;
+    }
+
+    const ids = candidateItems.map((i) => i.wrongWordId).join(",");
+    navigate(`/stories/create?wrongWordIds=${encodeURIComponent(ids)}`);
   };
-  // ⬆⬆⬆ 여기까지 경로/쿼리 통일 ⬆⬆⬆
 
   const handleRowClick = (item) => {
-    // TODO: 상세 모달 or 단어 상세 페이지로 연결
-    // 예: navigate(`/words/${item.wordId}`);
+    // 필요하면 단어 상세 페이지로 연결
+    // navigate(`/words/${item.wordId}`);
   };
 
   return (
     <div className="wrongnote-page">
       <header className="wrongnote-header">
-        <h1>오답 노트</h1>
-        <p className="wrongnote-header__subtitle">
-          틀렸던 단어들을 모아서 다시 학습합니다.
-        </p>
-      </header>
+        <div className="wrongnote-header__main">
+          <h1>오답 노트</h1>
+          <p className="wrongnote-header__subtitle">
+            틀렸던 단어들을 모아서 다시 학습합니다.
+          </p>
+        </div>
 
-      {/* 필터 영역 */}
-      <section className="wrongnote-filters">
-        <div className="wrongnote-filter-group">
-          {/* 시작일/종료일은 있어도 되고, 백엔드에서 쿼리 없으면 무시해도 됩니다 */}
+        {/* 헤더 우측 필터 드롭다운 2개 */}
+        <div className="wrongnote-header__filters">
           <label>
-            시작일
-            <input
-              type="date"
-              value={filters.fromDate || ''}
-              onChange={(e) => handleChangeFilter('fromDate', e.target.value)}
-            />
-          </label>
-          <label>
-            종료일
-            <input
-              type="date"
-              value={filters.toDate || ''}
-              onChange={(e) => handleChangeFilter('toDate', e.target.value)}
-            />
-          </label>
-
-          {/* TAG 필터: DDL에서는 TAG 컬럼을 지웠지만
-             백엔드에서 `tag`를 쿼리 파라미터로 받아서 계산해줄 수도 있으니
-             일단 그대로 두고, 필요 없으면 통째로 UI에서 제거하면 됩니다. */}
-          <label>
-            TAG
-            <select
-              value={filters.tag}
-              onChange={(e) => handleChangeFilter('tag', e.target.value)}
-            >
-              <option value="">전체</option>
-              <option value="quiz">퀴즈</option>
-              <option value="card">카드</option>
-              <option value="exam">모의고사</option>
-            </select>
-          </label>
-
-          {/* 스토리 사용 여부 (DDL의 IS_USED_IN_STORY 컬럼과 매핑) */}
-          <label>
-            스토리 사용 여부
+            <span>스토리 사용 여부</span>
             <select
               value={filters.isUsedInStory}
               onChange={(e) =>
-                handleChangeFilter('isUsedInStory', e.target.value)
+                handleChangeFilter("isUsedInStory", e.target.value)
               }
             >
               <option value="">전체</option>
@@ -117,113 +212,134 @@ export default function WrongNotePage() {
             </select>
           </label>
 
-          <button type="button" onClick={refresh} disabled={loading}>
-            필터 적용
-          </button>
+          <label>
+            <span>정렬</span>
+            <select
+              value={filters.sortBy}
+              onChange={(e) => handleChangeFilter("sortBy", e.target.value)}
+            >
+              <option value="latest">최신순</option>
+              <option value="oldest">오래된순</option>
+              <option value="mostWrong">많이 틀린순</option>
+            </select>
+          </label>
         </div>
-      </section>
-
-      {/* 상단 액션 버튼 */}
-      <section className="wrongnote-actions">
-        <button
-          type="button"
-          disabled={selectedIds.length === 0}
-          onClick={handleReviewAsQuiz}
-        >
-          선택 단어 퀴즈로 복습
-        </button>
-        <button
-          type="button"
-          disabled={selectedIds.length === 0}
-          onClick={handleReviewAsCard}
-        >
-          선택 단어 카드로 복습
-        </button>
-        <button
-          type="button"
-          disabled={selectedIds.length === 0}
-          onClick={handleCreateStory}
-        >
-          선택 오답으로 AI 스토리 생성
-        </button>
-        {selectedIds.length > 0 && (
-          <button type="button" onClick={clearSelection}>
-            선택 해제
-          </button>
-        )}
-      </section>
+      </header>
 
       {/* 리스트 영역 */}
       <section className="wrongnote-list">
         {loading && (
           <div className="wrongnote-list__loading">로딩 중...</div>
         )}
-        {error && (
-          <div className="wrongnote-list__error">
-            오답 기록을 불러오는 중 오류 발생
-          </div>
-        )}
-        {!loading && !error && items.length === 0 && (
+        {error && <div className="wrongnote-list__error">{error}</div>}
+        {!loading && !error && processedItems.length === 0 && (
           <div className="wrongnote-list__empty">오답 기록이 없습니다.</div>
         )}
 
-        {!loading && !error && items.length > 0 && (
-          <table className="wrongnote-table">
-            <thead>
-              <tr>
-                <th />
-                <th>단어</th>
-                <th>뜻</th>
-                <th>마지막 오답</th>
-                <th>정답/오답</th>
-                <th>상태</th>
-                <th>TAG</th>
-                <th>스토리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <WrongNoteItem
-                  key={item.wrongWordId}
-                  item={item}
-                  selected={selectedIds.includes(item.wrongWordId)}
-                  onToggleSelect={(e) => {
-                    e.stopPropagation();
-                    toggleSelect(item.wrongWordId);
-                  }}
-                  onClick={() => handleRowClick(item)}
-                />
-              ))}
-            </tbody>
-          </table>
-        )}
+        {!loading && !error && processedItems.length > 0 && (
+          <>
+            <table className="wrongnote-table">
+              <thead>
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={
+                        pagedItems.length > 0 &&
+                        pagedItems.every((item) =>
+                          selectedIds.includes(item.wrongWordId)
+                        )
+                      }
+                      onChange={(e) => {
+                        const { checked } = e.target;
+                        setSelectedIds((prev) => {
+                          if (checked) {
+                            const idsToAdd = pagedItems
+                              .map((i) => i.wrongWordId)
+                              .filter((id) => !prev.includes(id));
+                            return [...prev, ...idsToAdd];
+                          } else {
+                            const pageIds = pagedItems.map(
+                              (i) => i.wrongWordId
+                            );
+                            return prev.filter(
+                              (id) => !pageIds.includes(id)
+                            );
+                          }
+                        });
+                      }}
+                    />
+                  </th>
+                  <th>단어</th>
+                  <th>뜻</th>
+                  <th>난이도</th>
+                  <th>마지막 오답</th>
+                  <th>오답 횟수</th>
+                  <th>스토리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedItems.map((item) => (
+                  <WrongNoteItem
+                    key={item.wrongWordId}
+                    item={item}
+                    selected={selectedIds.includes(item.wrongWordId)}
+                    onToggleSelect={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(item.wrongWordId);
+                    }}
+                    onClick={() => handleRowClick(item)}
+                  />
+                ))}
+              </tbody>
+            </table>
 
-        {/* 단순 페이지네이션 */}
-        {pagination.total > pagination.pageSize && (
-          <div className="wrongnote-pagination">
-            <button
-              type="button"
-              disabled={pagination.page <= 1}
-              onClick={() => setPage(pagination.page - 1)}
-            >
-              이전
-            </button>
-            <span>
-              {pagination.page} /{" "}
-              {Math.ceil(pagination.total / pagination.pageSize)}
-            </span>
-            <button
-              type="button"
-              disabled={
-                pagination.page >=
-                Math.ceil(pagination.total / pagination.pageSize)
-              }
-              onClick={() => setPage(pagination.page + 1)}
-            >
-              다음
-            </button>
-          </div>
+            <div className="wrongnote-pagination">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={setPage}
+              />
+            </div>
+          </>
         )}
+      </section>
+
+      {/* 하단 액션 바 */}
+      <section className="wrongnote-actions">
+        <div className="wrongnote-actions__left">
+          <span className="wrongnote-selected-count">
+            선택된 단어 {selectedCount}개
+          </span>
+        </div>
+        <div className="wrongnote-actions__right">
+          <button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={handleReviewAsQuiz}
+          >
+            선택 단어 퀴즈
+          </button>
+          <button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={handleReviewAsCard}
+          >
+            선택 단어 카드
+          </button>
+          <button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={handleCreateStory}
+          >
+            선택 단어로 스토리 만들기
+          </button>
+          {selectedCount > 0 && (
+            <button type="button" onClick={clearSelection}>
+              선택 해제
+            </button>
+          )}
+        </div>
       </section>
     </div>
   );

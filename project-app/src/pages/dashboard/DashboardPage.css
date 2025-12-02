@@ -227,7 +227,7 @@
 
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.learned { background-color: var(--primary-500); }
-.dot.wrong { background-color: #FF8BA7; }
+.dot.wrong { background-color:var(--warning-500);}
 
 .chart-body {
   flex: 1;
@@ -258,12 +258,12 @@
 }
 
 .v-bar {
-  width: 12px;
+  width: 36px;
   border-radius: 6px 6px 0 0;
   transition: height 0.5s ease;
 }
 .bar-blue { background-color: var(--primary-500); }
-.bar-red { background-color: #FF8BA7; }
+.bar-red { background-color:var(--warning-500);}
 
 .date-label {
   font-size: 0.8rem;

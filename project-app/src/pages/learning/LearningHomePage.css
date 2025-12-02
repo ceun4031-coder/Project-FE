@@ -118,7 +118,7 @@
 
 .control-group select {
   padding: 8px 16px;
-  border-radius: 12px;
+  border-radius: 999px;
   border: 1px solid var(--border-subtle);
   background: var(--surface-1);
   font-size: 0.95rem;

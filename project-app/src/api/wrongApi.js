@@ -83,9 +83,18 @@ export const deleteWrongLog = async (wordId) => {
  *
  * @returns {Promise<Array>}
  */
+// src/api/wrongApi.js
+
 export const getWrongList = async () => {
   if (USE_MOCK) {
     console.log("[Mock] 내 오답 목록 조회");
+
+    // n일 전 ISO 문자열
+    const daysAgo = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return d.toISOString();
+    };
 
     return [
       {
@@ -93,7 +102,10 @@ export const getWrongList = async () => {
         wordId: 101,
         word: "ambiguous",
         meaning: "애매모호한",
-        wrongAt: new Date().toISOString(),
+        wordLevel: 1,
+        wrongAt: daysAgo(0),
+        totalCorrect: 1,
+        totalWrong: 3,
         isUsedInStory: "N",
       },
       {
@@ -101,8 +113,121 @@ export const getWrongList = async () => {
         wordId: 102,
         word: "mitigate",
         meaning: "완화하다",
-        wrongAt: new Date().toISOString(),
+        wordLevel: 2,
+        wrongAt: daysAgo(1),
+        totalCorrect: 0,
+        totalWrong: 4,
         isUsedInStory: "Y",
+      },
+      {
+        wrongWordId: 3,
+        wordId: 103,
+        word: "scrutinize",
+        meaning: "세밀히 조사하다",
+        wordLevel: 3,
+        wrongAt: daysAgo(2),
+        totalCorrect: 2,
+        totalWrong: 5,
+        isUsedInStory: "N",
+      },
+      {
+        wrongWordId: 4,
+        wordId: 104,
+        word: "fluctuate",
+        meaning: "변동하다",
+        wordLevel: 2,
+        wrongAt: daysAgo(3),
+        totalCorrect: 3,
+        totalWrong: 3,
+        isUsedInStory: "N",
+      },
+      {
+        wrongWordId: 5,
+        wordId: 105,
+        word: "coherent",
+        meaning: "일관된",
+        wordLevel: 1,
+        wrongAt: daysAgo(4),
+        totalCorrect: 5,
+        totalWrong: 2,
+        isUsedInStory: "Y",
+      },
+      {
+        wrongWordId: 6,
+        wordId: 106,
+        word: "feasible",
+        meaning: "실현 가능한",
+        wordLevel: 2,
+        wrongAt: daysAgo(5),
+        totalCorrect: 1,
+        totalWrong: 6,
+        isUsedInStory: "N",
+      },
+      {
+        wrongWordId: 7,
+        wordId: 107,
+        word: "alleviate",
+        meaning: "완화시키다",
+        wordLevel: 2,
+        wrongAt: daysAgo(6),
+        totalCorrect: 0,
+        totalWrong: 2,
+        isUsedInStory: "N",
+      },
+      {
+        wrongWordId: 8,
+        wordId: 108,
+        word: "abstract",
+        meaning: "추상적인",
+        wordLevel: 1,
+        wrongAt: daysAgo(7),
+        totalCorrect: 4,
+        totalWrong: 1,
+        isUsedInStory: "Y",
+      },
+      {
+        wrongWordId: 9,
+        wordId: 109,
+        word: "disrupt",
+        meaning: "방해하다",
+        wordLevel: 3,
+        wrongAt: daysAgo(8),
+        totalCorrect: 2,
+        totalWrong: 7,
+        isUsedInStory: "N",
+      },
+      {
+        wrongWordId: 10,
+        wordId: 110,
+        word: "plausible",
+        meaning: "그럴듯한",
+        wordLevel: 3,
+        wrongAt: daysAgo(9),
+        totalCorrect: 0,
+        totalWrong: 1,
+        isUsedInStory: "Y",
+      },
+      {
+        wrongWordId: 11,
+        wordId: 111,
+        word: "tedious",
+        meaning: "지루한",
+        wordLevel: 1,
+        wrongAt: daysAgo(10),
+        totalCorrect: 3,
+        totalWrong: 3,
+        isUsedInStory: "N",
+      },
+      {
+        wrongWordId: 12,
+        wordId: 112,
+        word: "inevitable",
+        meaning: "피할 수 없는",
+        wordLevel: 2,
+        wrongAt: daysAgo(11),
+        totalCorrect: 1,
+        totalWrong: 5,
+        isUsedInStory: "N",
       },
     ];
   }

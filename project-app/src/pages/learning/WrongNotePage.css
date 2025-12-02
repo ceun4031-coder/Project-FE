@@ -1,39 +1,95 @@
+/* ===========================
+   공통 레이아웃
+   =========================== */
+
 .wrongnote-page {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 20px 16px 32px;
+  padding: 32px 24px 40px;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.wrongnote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   gap: 16px;
 }
 
-/* 헤더 */
+.wrongnote-header__main {
+  flex: 1 1 auto;
+}
+
+/* 기존 h1 / subtitle 스타일은 그대로 사용 */
 .wrongnote-header h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #111827;
 }
 
 .wrongnote-header__subtitle {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: #64748b;
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+  color: #9ca3af;
 }
 
-/* 필터 영역 */
+/* 헤더 우측 필터 드롭다운 2개 */
+
+.wrongnote-header__filters {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.wrongnote-header__filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.wrongnote-header__filters select {
+  min-width: 150px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.88rem;
+  color: #111827;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.wrongnote-header__filters select:focus {
+  border-color: var(--primary-400, #818cf8);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
+  background: #ffffff;
+}
+
+/* ===========================
+   필터 카드 (상단 옵션 영역)
+   =========================== */
+
 .wrongnote-filters {
   margin-top: 8px;
-  background-color: #f8fafc;
-  border-radius: 12px;
-  padding: 12px 14px;
-  border: 1px solid #e2e8f0;
+  background: #f9fafb;
+  border-radius: 20px;
+  padding: 16px 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.04);
 }
 
 .wrongnote-filter-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
   align-items: flex-end;
 }
 
@@ -41,93 +97,92 @@
   display: flex;
   flex-direction: column;
   font-size: 0.8rem;
-  color: #64748b;
+  color: #6b7280;
   gap: 4px;
 }
 
+/* 인풋/셀렉트 스타일 – 학습하기 페이지 상단 옵션 느낌 */
+
 .wrongnote-filter-group input[type="date"],
 .wrongnote-filter-group select {
-  min-width: 140px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  min-width: 150px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   font-size: 0.88rem;
+  color: #111827;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
 }
+
+.wrongnote-filter-group input[type="date"]:focus,
+.wrongnote-filter-group select:focus {
+  border-color: var(--primary-400, #818cf8);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
+  background: #ffffff;
+}
+
+/* 다시 불러오기 버튼 – 상단 네이비/퍼플 CTA 느낌 */
 
 .wrongnote-filter-group button {
-  padding: 7px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #0f172a;
-  color: #f9fafb;
-  font-size: 0.86rem;
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.06s ease,
-    box-shadow 0.12s ease;
-}
-
-.wrongnote-filter-group button:hover {
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
-  transform: translateY(-1px);
-}
-
-/* 상단 액션 버튼 */
-.wrongnote-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.wrongnote-actions button {
-  padding: 7px 12px;
+  padding: 8px 16px;
   border-radius: 999px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  color: #0f172a;
+  border: none;
+  background: #020617;
+  color: #f9fafb;
   font-size: 0.86rem;
+  font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
   transition:
     background-color 0.15s ease,
-    border-color 0.15s ease,
     transform 0.06s ease,
-    box-shadow 0.12s ease;
+    box-shadow 0.12s ease,
+    opacity 0.12s ease;
 }
 
-.wrongnote-actions button:hover:not(:disabled) {
-  background-color: #0f172a;
-  color: #f9fafb;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+.wrongnote-filter-group button:hover:not(:disabled) {
+  background: #0f172a;
   transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.3);
 }
 
-.wrongnote-actions button:disabled {
-  opacity: 0.55;
+.wrongnote-filter-group button:disabled {
+  opacity: 0.6;
   cursor: default;
+  box-shadow: none;
 }
 
-/* 리스트 */
+/* ===========================
+   리스트 카드
+   =========================== */
+
 .wrongnote-list {
   margin-top: 4px;
   background-color: #ffffff;
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 0;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.04);
   overflow: hidden;
 }
 
 .wrongnote-list__loading,
 .wrongnote-list__error,
 .wrongnote-list__empty {
-  padding: 24px 16px;
+  padding: 28px 20px;
   text-align: center;
   font-size: 0.95rem;
-  color: #64748b;
+  color: #9ca3af;
 }
 
 /* 테이블 */
+
 .wrongnote-table {
   width: 100%;
   border-collapse: collapse;
@@ -135,72 +190,155 @@
 }
 
 .wrongnote-table thead {
-  background-color: #f8fafc;
+  background-color: #f9fafb;
 }
 
 .wrongnote-table th,
 .wrongnote-table td {
-  padding: 8px 10px;
+  padding: 10px 14px;
   text-align: left;
 }
 
 .wrongnote-table th {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: #64748b;
-  border-bottom: 1px solid #e2e8f0;
+  color: #9ca3af;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.wrongnote-table td {
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
 }
 
 .wrongnote-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* 페이지네이션 */
-.wrongnote-pagination {
-  padding: 10px 12px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.86rem;
-  color: #64748b;
-  border-top: 1px solid #e2e8f0;
+/* 행 hover – 살짝 하이라이트 */
+
+.wrongnote-table tbody tr:hover {
+  background-color: #f9fafb;
 }
 
-.wrongnote-pagination button {
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+/* 체크박스 */
+
+.wrongnote-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+/* 난이도/스토리 뱃지 */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge--used {
+  background-color: rgba(251, 146, 60, 0.12); /* 오렌지 계열 */
+  color: #ea580c;
+}
+
+.badge--unused {
+  background-color: rgba(148, 163, 184, 0.12);
+  color: #6b7280;
+}
+.wrongnote-actions {
+  margin-top: 16px;
+  background: #f9fafb;
+  border-radius: 20px;
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.03);
+}
+
+.wrongnote-actions__left {
+  font-size: 0.86rem;
+  color: #6b7280;
+}
+
+.wrongnote-selected-count {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.wrongnote-actions__right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 공통 버튼 스타일 (pill) – 세 버튼 모두 동일하게 보이게 */
+
+.wrongnote-actions button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
   background-color: #ffffff;
-  color: #0f172a;
-  font-size: 0.84rem;
+  color: #111827;
+  font-size: 0.86rem;
+  font-weight: 500;
   cursor: pointer;
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
     transform 0.06s ease,
-    box-shadow 0.12s ease;
+    box-shadow 0.12s ease,
+    color 0.12s ease,
+    opacity 0.12s ease;
 }
 
-.wrongnote-pagination button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.wrongnote-pagination button:not(:disabled):hover {
-  background-color: #0f172a;
+.wrongnote-actions button:not(:disabled):hover {
+  background-color: #111827;
   color: #f9fafb;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.25);
   transform: translateY(-1px);
 }
 
-/* 반응형 */
+.wrongnote-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+  background-color: #ffffff;
+}
+
+/* ===========================
+   반응형
+   =========================== */
+
 @media (max-width: 768px) {
+  .wrongnote-page {
+    padding: 20px 12px 28px;
+  }
+
   .wrongnote-filter-group {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .wrongnote-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wrongnote-actions__right {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  /* 모바일에서는 테이블을 카드형으로 전환해도 되지만
+     필요 없으면 아래 블록은 제거해도 된다. */
   .wrongnote-table thead {
     display: none;
   }
@@ -214,15 +352,20 @@
   }
 
   .wrongnote-table tr {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 6px 0;
   }
 
   .wrongnote-table td {
-    padding: 6px 12px;
+    padding: 6px 14px;
     font-size: 0.9rem;
   }
 
   .wrongnote-table td:first-child {
     padding-top: 10px;
+  }
+
+  .wrongnote-pagination {
+    justify-content: center;
   }
 }

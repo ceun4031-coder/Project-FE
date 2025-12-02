@@ -1,78 +1,72 @@
 // src/pages/wrongnote/components/WrongNoteItem.jsx
-// import './WrongNoteItem.css';
 
 export function WrongNoteItem({ item, selected, onToggleSelect, onClick }) {
-  // 백엔드 응답 이름이 조금씩 달라도 버틸 수 있게 방어적으로 처리
-  const word = item.word || item.wordText || '';
-  const meaning = item.meaning || item.korean || item.meaningKo || '';
+  const word = item.word || item.wordText || "";
+  const meaning = item.meaning || item.korean || item.meaningKo || "";
+
+  // 난이도(raw)
+  const rawLevel =
+    item.wordLevel ??
+    item.level ??
+    item.difficultyLevel ??
+    item.difficulty ??
+    null;
+
+  const getLevelLabel = (lv) => {
+    if (lv == null) return "-";
+
+    const n = Number(lv);
+    if (Number.isNaN(n)) return lv; // 문자열(EASY/HARD 등)은 그대로
+
+    if (n <= 1) return "초급";
+    if (n === 2) return "중급";
+    if (n >= 3) return "고급";
+    return `Lv.${n}`;
+  };
+
+  const levelLabel = getLevelLabel(rawLevel);
 
   // 마지막 오답 일시
   const rawLastWrongAt = item.lastWrongAt || item.wrongAt || item.wrong_at;
-  let lastWrongAtDisplay = '-';
+  let lastWrongAtDate = "-";
+  let lastWrongAtFull = "";
+
   if (rawLastWrongAt) {
     const d = new Date(rawLastWrongAt);
-    lastWrongAtDisplay = Number.isNaN(d.getTime())
-      ? rawLastWrongAt
-      : d.toLocaleString('ko-KR');
+    if (!Number.isNaN(d.getTime())) {
+      // 리스트에는 날짜만
+      lastWrongAtDate = d.toLocaleDateString("ko-KR"); // 예: 2025. 12. 2.
+      // 툴팁/타이틀로 전체 일시
+      lastWrongAtFull = d.toLocaleString("ko-KR");
+    } else {
+      lastWrongAtDate = rawLastWrongAt;
+      lastWrongAtFull = rawLastWrongAt;
+    }
   }
 
-  // 정답/오답 횟수
-  const totalCorrect =
-    item.totalCorrect ??
-    item.correctCount ??
-    item.correct ??
-    0;
-
+  // 오답 횟수
   const totalWrong =
-    item.totalWrong ??
-    item.wrongCount ??
-    item.wrong ??
-    0;
+    item.totalWrong ?? item.wrongCount ?? item.wrong ?? 0;
 
-  // 학습 상태 (STUDY_LOG.STATUS 등)
-  const status =
-    item.status ||
-    item.studyStatus ||
-    item.learningStatus ||
-    '';
-
-  // TAG 컬럼은 DDL에서 삭제됐지만,
-  // 백엔드에서 파생값으로 내려줄 수도 있으니 있으면 표시, 없으면 '-'
-  const tag =
-    item.tag ||
-    item.sourceType ||
-    item.origin ||
-    '';
-
-  // 스토리 사용 여부 (Y/N 또는 boolean 대응)
+  // 스토리 사용 여부
   const used =
-    item.isUsedInStory === 'Y' ||
-    item.isUsedInStory === 'y' ||
+    item.isUsedInStory === "Y" ||
+    item.isUsedInStory === "y" ||
     item.isUsedInStory === true;
 
   return (
-    <tr
-      className="wrongnote-item"
-      onClick={onClick}
-    >
+    <tr className="wrongnote-item" onClick={onClick}>
       <td>
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={onToggleSelect}
-        />
+        <input type="checkbox" checked={selected} onChange={onToggleSelect} />
       </td>
       <td>{word}</td>
       <td>{meaning}</td>
-      <td>{lastWrongAtDisplay}</td>
-      <td>
-        {totalCorrect} / {totalWrong}
-      </td>
-      <td>{status || '-'}</td>
-      <td>{tag || '-'}</td>
+      <td>{levelLabel}</td>
+      <td title={lastWrongAtFull || undefined}>{lastWrongAtDate}</td>
+      <td>{totalWrong}회</td>
       <td>
         {used ? (
-          <span className="badge badge--used">스토리에 사용됨</span>
+          <span className="badge badge--used">사용됨</span>
         ) : (
           <span className="badge badge--unused">미사용</span>
         )}

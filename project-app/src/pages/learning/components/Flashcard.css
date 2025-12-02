@@ -14,7 +14,6 @@
   background-color: var(--surface-1);
   border-radius: 28px;
   box-shadow:
-    0 20px 60px rgba(15, 23, 42, 0.35),
     0 0 0 1px rgba(15, 23, 42, 0.06);
   padding: 40px 32px;
   cursor: pointer;
