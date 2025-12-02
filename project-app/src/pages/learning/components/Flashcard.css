@@ -1,65 +1,112 @@
-.flashcard-wrapper {
+/* src/pages/learning/components/Flashcard.css */
+
+.flashcard-shell {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  justify-content: center;
+  margin-top: var(--space-2);
 }
 
-/* 카드 flip 애니메이션 */
+/* 카드 본체 */
 .flashcard {
-  width: 100%;
-  max-width: 420px;
-  height: 240px;
-  position: relative;
-  perspective: 1000px;
+  width: min(100%, 820px);
+  min-height: 260px;
+  background-color: var(--surface-1);
+  border-radius: 28px;
+  box-shadow:
+    0 20px 60px rgba(15, 23, 42, 0.35),
+    0 0 0 1px rgba(15, 23, 42, 0.06);
+  padding: 40px 32px;
   cursor: pointer;
-}
-
-.flashcard__face {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  backface-visibility: hidden;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  box-sizing: border-box;
-  transition: transform 0.36s ease;
+  transition:
+    transform 0.15s ease-out,
+    box-shadow 0.15s ease-out,
+    background-color 0.15s ease-out;
+  overflow: hidden; /* 내부 텍스트 스크롤 방지 */
 }
 
-.flashcard__face--front {
-  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
-  color: #0f172a;
-  transform: rotateY(0deg);
+.flashcard:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 26px 70px rgba(15, 23, 42, 0.4),
+    0 0 0 1px rgba(108, 92, 231, 0.16); /* primary-500 기반 */
 }
 
-.flashcard__face--back {
-  background: #ffffff;
-  color: #0f172a;
-  transform: rotateY(180deg);
-  border: 1px solid #e2e8f0;
+/* 플립 상태일 때 살짝 톤 변경 */
+.flashcard--flipped {
+  background-color: var(--neutral-100);
 }
 
-.flashcard--flipped .flashcard__face--front {
-  transform: rotateY(-180deg);
-}
-
-.flashcard--flipped .flashcard__face--back {
-  transform: rotateY(0deg);
-}
-
-.flashcard__text {
-  font-size: 1.4rem;
-  font-weight: 600;
+/* 내부 컨텐츠 영역 */
+.flashcard-inner {
   text-align: center;
-  line-height: 1.5;
+  width: 100%;
+  max-height: 100%;
+  overflow: hidden; /* 텍스트 스크롤 방지 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 힌트 텍스트 */
-.flashcard__hint {
-  font-size: 0.85rem;
-  color: #94a3b8;
+.flashcard-inner--empty {
+  color: var(--neutral-500);
+  font-size: 0.95rem;
+}
+
+/* 앞면: 단어 */
+.flashcard-inner--front .flashcard-word {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+  letter-spacing: 0.02em;
+  word-break: keep-all;
+}
+
+.flashcard-helper {
+  margin-top: 16px;
+  font-size: 0.95rem;
+  color: var(--neutral-300);
+}
+
+/* 뒷면: 뜻 */
+.flashcard-inner--back .flashcard-meaning {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
+
+.flashcard-subword {
+  margin-top: 10px;
+  font-size: 1rem;
+  color: var(--neutral-500);
+}
+
+.flashcard-helper-back {
+  margin-top: 18px;
+  font-size: 0.9rem;
+  color: var(--neutral-300);
+}
+
+/* 반응형 */
+@media (max-width: 640px) {
+  .flashcard {
+    padding: 28px 20px;
+    border-radius: 20px;
+    min-height: 220px;
+  }
+
+  .flashcard-inner--front .flashcard-word {
+    font-size: 2rem;
+  }
+
+  .flashcard-inner--back .flashcard-meaning {
+    font-size: 1.4rem;
+  }
 }

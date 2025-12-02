@@ -120,26 +120,27 @@ const ProfilePage = () => {
   };
 
   // C. 비밀번호 변경 요청
-  const submitPassword = async (e) => {
-    e.preventDefault();
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert("새 비밀번호가 일치하지 않습니다.");
-      return;
-    }
+const submitPassword = async (e) => {
+  e.preventDefault();
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    alert("새 비밀번호가 일치하지 않습니다.");
+    return;
+  }
 
-    // --- [MOCK MODE] ---
-    if (USE_MOCK) {
-        console.log("📢 [MOCK] 비밀번호 변경 요청");
-        alert("(가짜) 비밀번호가 변경되었습니다.");
-        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-        return;
-    }
+  // --- [MOCK MODE] ---
+  if (USE_MOCK) {
+    console.log("📢 [MOCK] 비밀번호 변경 요청");
+    alert("(가짜) 비밀번호가 변경되었습니다.");
+    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    return;
+  }
     // -------------------
 
     try {
       await changePassword({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
+         currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+      confirmNewPassword: passwordForm.confirmPassword,
       });
       alert("비밀번호가 변경되었습니다.");
       setPasswordForm({

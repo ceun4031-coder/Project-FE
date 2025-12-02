@@ -1,81 +1,526 @@
-/* pages/componets/Dashboard.css */
+/* ========== 레이아웃 & 공통 ========== */
 
-.dashboard-header .greeting {
-  font-size: 1.5rem;
+/* 대시보드 페이지 컨테이너 (이 페이지에만 적용되도록 .mt-24까지 포함) */
+.page-container.mt-24 {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+/* 진입 애니메이션 */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 로딩 스피너 */
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  color: #6b7280;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 에러 메시지 */
+.error-banner {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* ========== 헤더 ========== */
+
+.dashboard-header {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.sub-greeting {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.main-greeting {
+  font-size: 1.8rem;
   font-weight: 700;
-  color: var(--neutral-900);
-  margin-bottom: var(--space-2);
+  color: #111827;
+  margin: 0;
 }
 
-.dashboard-header .highlight {
-  color: var(--primary-500);
+.highlight-text {
+  color: #6366f1;
 }
 
-.dashboard-header .sub-text {
-  color: var(--neutral-500);
+/* ========== 공통 카드 스타일 ========== */
+
+.card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px 22px;
+  box-shadow:
+    0 4px 6px -1px rgba(15, 23, 42, 0.08),
+    0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  border: 1px solid #f3f4f6;
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 그리드 레이아웃 */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 10px 20px -5px rgba(15, 23, 42, 0.14),
+    0 4px 8px -2px rgba(15, 23, 42, 0.08);
 }
 
-/* 태블릿 이상부터 2열로 배치 */
-@media (min-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-6);
-  }
-}
-
-/* 카드 내부 스타일 */
-.card-header {
+.card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
+  gap: 8px;
+}
+
+.card-top h3 {
+  font-size: 1.05rem;
   font-weight: 600;
-  color: var(--neutral-700);
+  color: #374151;
+  margin: 0;
 }
 
-.goal-text {
-  color: var(--primary-500);
-  font-size: 0.9rem;
+.card-desc {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: auto;
+  line-height: 1.5;
+}
+
+/* ========== 그리드 레이아웃 ========== */
+
+.dashboard-grid {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* 상단: 오늘의 목표 / 연속학습 / 누적단어 */
+.top-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* 하단: 차트 / AI 배너 */
+.bottom-grid {
+  grid-template-columns: 2fr 1fr;
+  align-items: stretch;
+}
+
+/* ========== 오늘의 목표 카드 ========== */
+
+.goal-badge {
+  background-color: #e0e7ff;
+  color: #4338ca;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.goal-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.goal-numbers {
+  font-size: 1.6rem;
   font-weight: 700;
+  margin-bottom: 12px;
+  color: #111827;
+  display: flex;
+  align-items: baseline;
 }
 
-.big-number-box {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--neutral-900);
-  margin-bottom: var(--space-3);
+.goal-numbers .divider {
+  color: #9ca3af;
+  font-size: 1.2rem;
+  margin: 0 4px;
 }
 
-.big-number-box .total {
-  font-size: 1rem;
-  color: var(--neutral-400);
-  font-weight: 400;
+.goal-numbers .total {
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-/* 프로그레스 바 */
-.progress-bg {
+.progress-bar-bg {
   width: 100%;
-  height: 12px;
-  background-color: var(--neutral-200);
-  border-radius: var(--radius-pill);
+  height: 10px;
+  background-color: #f3f4f6;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  border-radius: 999px;
+  transition: width 0.8s ease-out;
+}
+
+/* ========== 연속 학습 카드 ========== */
+
+.streak-card .card-top span {
+  font-size: 1.5rem;
+}
+
+.streak-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.streak-days {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+/* 버튼 그룹 컨테이너 */
+.streak-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* 학습 시작 버튼 (Primary) */
+.action-btn-primary {
+  background-color: #6366f1;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.18s ease-out, box-shadow 0.18s ease-out,
+    transform 0.08s ease-out;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+}
+
+.action-btn-primary:hover {
+  background-color: #4f46e5;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.45);
+  transform: translateY(-1px);
+}
+
+.action-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.35);
+}
+
+/* 오답 복습 버튼 (Secondary / Danger) */
+.action-btn-secondary {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.18s ease-out, transform 0.08s ease-out;
+}
+
+.action-btn-secondary:hover {
+  background-color: #fecaca;
+  transform: translateY(-1px);
+}
+
+.action-btn-secondary:active {
+  transform: translateY(0);
+}
+
+/* ========== 누적 학습 카드 ========== */
+
+.total-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.total-count {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+/* ========== 주간 학습 차트 ========== */
+
+.weekly-chart-card {
+  min-height: 300px;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  color: #4b5563;
+}
+
+.legend-item::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 4px;
+}
+
+.legend-item.learned::before { background-color: #6366f1; }
+.legend-item.wrong::before { background-color: #f87171; }
+
+.chart-container {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  height: 220px;
+  margin-top: 10px;
+}
+
+.empty-chart {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  background-color: #f9fafb;
+  border-radius: 10px;
+  border: 1px dashed #e5e7eb;
+}
+
+.bars-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 22px; /* 날짜 라벨 공간 */
+}
+
+.daily-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.bars-area {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 100%;
+  width: 60%;
+  justify-content: center;
+}
+
+.bar {
+  width: 12px;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.5s ease-out;
+  min-height: 4px;
+}
+
+.bar-learned { background-color: #6366f1; }
+.bar-wrong { background-color: #f87171; }
+
+.day-label {
+  position: absolute;
+  bottom: -20px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* ========== AI 스토리 배너 카드 ========== */
+
+.ai-banner-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  position: relative;
   overflow: hidden;
 }
 
-.progress-fill {
-  height: 100%;
-  background-color: var(--primary-500);
-  border-radius: var(--radius-pill);
-  transition: width 0.3s ease;
+.ai-content h3 {
+  color: #0369a1;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
 }
 
-.desc-text {
-  color: var(--neutral-600);
-  line-height: 1.6;
+.ai-content p {
+  color: #0c4a6e;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  line-height: 1.55;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0284c7;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.btn-text:hover {
+  text-decoration: underline;
+}
+
+.ai-deco {
+  position: absolute;
+  bottom: 10px;
+  right: 16px;
+  font-size: 3rem;
+  opacity: 0.3;
+  transform: rotate(-15deg);
+}
+
+/* ========== 반응형 ========== */
+
+@media (max-width: 1024px) {
+  .page-container.mt-24 {
+    padding: 0 1.25rem 2.5rem;
+  }
+
+  .top-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .weekly-chart-card {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    margin-bottom: 24px;
+  }
+
+  .main-greeting {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-grid {
+    gap: 18px;
+  }
+
+  .top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 20px 18px;
+    border-radius: 16px;
+  }
+
+  .streak-days {
+    font-size: 1.9rem;
+  }
+
+  .total-count {
+    font-size: 1.9rem;
+  }
+
+  .chart-container {
+    height: 190px;
+  }
+
+  .bars-area {
+    width: 72%;
+  }
+
+  .day-label {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container.mt-24 {
+    padding: 0 1rem 2.25rem;
+  }
+
+  .card-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .streak-actions {
+    flex-direction: column;
+  }
+
+  .action-btn-primary,
+  .action-btn-secondary {
+    font-size: 0.85rem;
+    padding: 9px 10px;
+  }
+
+  .ai-deco {
+    font-size: 2.4rem;
+    right: 10px;
+  }
 }

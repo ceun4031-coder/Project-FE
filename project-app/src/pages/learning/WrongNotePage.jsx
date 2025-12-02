@@ -1,3 +1,4 @@
+// src/pages/wrongnote/WrongNotePage.jsx (경로는 프로젝트 구조에 맞게)
 import { useNavigate } from 'react-router-dom';
 import { useWrongNoteStore } from './hooks/useWrongNoteStore';
 import { WrongNoteItem } from './components/WrongNoteItem';
@@ -19,30 +20,39 @@ export default function WrongNotePage() {
     refresh,
   } = useWrongNoteStore();
 
+  // 필터 변경 시 page를 1로 초기화
   const handleChangeFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
+  // ⬇⬇⬇ 핵심 수정: source=wrong-notes → source=wrong-note 로 통일 ⬇⬇⬇
   const handleReviewAsQuiz = () => {
     if (selectedIds.length === 0) return;
     const ids = selectedIds.join(',');
-    navigate(`/learning/quiz?source=wrong-notes&wrongWordIds=${encodeURIComponent(ids)}`);
+    navigate(
+      `/learning/quiz?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`
+    );
   };
 
   const handleReviewAsCard = () => {
     if (selectedIds.length === 0) return;
     const ids = selectedIds.join(',');
-    navigate(`/learning/card?source=wrong-notes&wrongWordIds=${encodeURIComponent(ids)}`);
+    navigate(
+      `/learning/card?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`
+    );
   };
 
   const handleCreateStory = () => {
     if (selectedIds.length === 0) return;
     const ids = selectedIds.join(',');
-    navigate(`/stories/create?wrongWordIds=${encodeURIComponent(ids)}`);
+    navigate(
+      `/stories/create?wrongWordIds=${encodeURIComponent(ids)}`
+    );
   };
+  // ⬆⬆⬆ 여기까지 경로/쿼리 통일 ⬆⬆⬆
 
   const handleRowClick = (item) => {
-    // 상세 모달 or 단어 상세 페이지로 연결
+    // TODO: 상세 모달 or 단어 상세 페이지로 연결
     // 예: navigate(`/words/${item.wordId}`);
   };
 
@@ -55,8 +65,10 @@ export default function WrongNotePage() {
         </p>
       </header>
 
+      {/* 필터 영역 */}
       <section className="wrongnote-filters">
         <div className="wrongnote-filter-group">
+          {/* 시작일/종료일은 있어도 되고, 백엔드에서 쿼리 없으면 무시해도 됩니다 */}
           <label>
             시작일
             <input
@@ -73,6 +85,10 @@ export default function WrongNotePage() {
               onChange={(e) => handleChangeFilter('toDate', e.target.value)}
             />
           </label>
+
+          {/* TAG 필터: DDL에서는 TAG 컬럼을 지웠지만
+             백엔드에서 `tag`를 쿼리 파라미터로 받아서 계산해줄 수도 있으니
+             일단 그대로 두고, 필요 없으면 통째로 UI에서 제거하면 됩니다. */}
           <label>
             TAG
             <select
@@ -85,23 +101,29 @@ export default function WrongNotePage() {
               <option value="exam">모의고사</option>
             </select>
           </label>
+
+          {/* 스토리 사용 여부 (DDL의 IS_USED_IN_STORY 컬럼과 매핑) */}
           <label>
             스토리 사용 여부
             <select
               value={filters.isUsedInStory}
-              onChange={(e) => handleChangeFilter('isUsedInStory', e.target.value)}
+              onChange={(e) =>
+                handleChangeFilter('isUsedInStory', e.target.value)
+              }
             >
               <option value="">전체</option>
               <option value="N">스토리 미사용</option>
               <option value="Y">스토리 사용됨</option>
             </select>
           </label>
-          <button type="button" onClick={refresh}>
+
+          <button type="button" onClick={refresh} disabled={loading}>
             필터 적용
           </button>
         </div>
       </section>
 
+      {/* 상단 액션 버튼 */}
       <section className="wrongnote-actions">
         <button
           type="button"
@@ -131,10 +153,15 @@ export default function WrongNotePage() {
         )}
       </section>
 
+      {/* 리스트 영역 */}
       <section className="wrongnote-list">
-        {loading && <div className="wrongnote-list__loading">로딩 중...</div>}
+        {loading && (
+          <div className="wrongnote-list__loading">로딩 중...</div>
+        )}
         {error && (
-          <div className="wrongnote-list__error">오답 기록을 불러오는 중 오류 발생</div>
+          <div className="wrongnote-list__error">
+            오답 기록을 불러오는 중 오류 발생
+          </div>
         )}
         {!loading && !error && items.length === 0 && (
           <div className="wrongnote-list__empty">오답 기록이 없습니다.</div>
@@ -171,7 +198,7 @@ export default function WrongNotePage() {
           </table>
         )}
 
-        {/* 단순 페이지네이션 예시 */}
+        {/* 단순 페이지네이션 */}
         {pagination.total > pagination.pageSize && (
           <div className="wrongnote-pagination">
             <button
@@ -182,7 +209,7 @@ export default function WrongNotePage() {
               이전
             </button>
             <span>
-              {pagination.page} /{' '}
+              {pagination.page} /{" "}
               {Math.ceil(pagination.total / pagination.pageSize)}
             </span>
             <button

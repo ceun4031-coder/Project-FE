@@ -162,7 +162,7 @@ function LearningHomePage() {
                 <CheckCircle2 size={24} aria-hidden="true" />
               </div>
               <div className="zone-text">
-                <h3>오답 정복</h3>
+                <h3>오답 학습</h3>
                 <p>틀린 문제를 복습하고 약점을 보완하세요.</p>
               </div>
             </header>

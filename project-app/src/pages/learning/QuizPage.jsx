@@ -1,11 +1,13 @@
+// src/pages/quiz/QuizPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
-import clsx from "clsx"; 
+import clsx from "clsx";
 
 import Button from "../../components/common/Button";
 import "./QuizPage.css";
-// API 모듈 import
+
+// API 모듈
 import { fetchQuizzes, submitQuizResult } from "../../api/quizApi";
 
 const QuizPage = () => {
@@ -13,12 +15,11 @@ const QuizPage = () => {
   const [searchParams] = useSearchParams();
 
   // 1️⃣ URL 파라미터 파싱 및 레벨 검증
-  const source = searchParams.get("source"); 
+  const source = searchParams.get("source"); // "quiz" | "wrong-note"
   const limit = searchParams.get("limit") || 10;
-  
-  // 'all' 레벨은 없으므로, 'all'이거나 값이 없으면 기본값 '1'로 설정
+
   const rawLevel = searchParams.get("level");
-  const level = (rawLevel === "all" || !rawLevel) ? "1" : rawLevel;
+  const level = rawLevel === "all" || !rawLevel ? "1" : rawLevel;
 
   // 모드 판별
   const isWrongMode = source === "wrong-note";
@@ -37,13 +38,16 @@ const QuizPage = () => {
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
+
       try {
-        console.log(`📡 데이터 요청: 모드=${source}, 문항수=${limit}, 난이도=${level}`);
-        
-        const data = await fetchQuizzes({ 
-          source, 
-          limit: Number(limit), 
-          level 
+        console.log(
+          `📡 데이터 요청: 모드=${source}, 문항수=${limit}, 난이도=${level}`
+        );
+
+        const data = await fetchQuizzes({
+          source,
+          limit: Number(limit),
+          level,
         });
 
         if (!data || data.length === 0) {
@@ -64,7 +68,7 @@ const QuizPage = () => {
 
   // 정답 선택 핸들러
   const handleOptionClick = (index) => {
-    if (selectedOption !== null) return; 
+    if (selectedOption !== null) return;
 
     setSelectedOption(index);
     if (index === questions[currentIndex].answer) {
@@ -74,25 +78,30 @@ const QuizPage = () => {
 
   // 3️⃣ 다음 문제 이동 및 결과 전송
   const handleNext = async () => {
+    // 아직 선택 안 했으면 무시
+    if (selectedOption === null) return;
+
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
     } else {
-      const isLastAnswerCorrect = questions[currentIndex].answer === selectedOption;
+      const isLastAnswerCorrect =
+        questions[currentIndex].answer === selectedOption;
       const finalScore = score + (isLastAnswerCorrect ? 1 : 0);
-      
+
       try {
         await submitQuizResult({
-          mode: isWrongMode ? 'wrong' : 'normal',
+          mode: isWrongMode ? "wrong" : "normal",
           score: finalScore,
           total: questions.length,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         console.log("✅ 결과 전송 완료");
       } catch (err) {
         console.error("❌ 결과 전송 실패:", err);
       }
 
+      setScore(finalScore);
       setIsFinished(true);
     }
   };
@@ -120,32 +129,30 @@ const QuizPage = () => {
     );
   }
 
-  // 테마 클래스 (보라/주황)
   const themeClass = isWrongMode ? "theme-orange" : "";
 
   return (
     <div className={`quiz-page-wrapper ${themeClass}`}>
       <div className="quiz-container">
-        
         {/* 헤더 영역 */}
         <header className="quiz-header">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate(-1)} 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
             aria-label="뒤로 가기"
-            style={{ padding: '8px' }} 
+            style={{ padding: "8px" }}
           >
             <ArrowLeft size={20} />
           </Button>
-          
+
           <div className="quiz-title">
             {isWrongMode ? "오답 퀴즈" : "실전 퀴즈"}
             <span className="quiz-badge">
               {isWrongMode ? "복습" : `Lv.${level}`}
             </span>
           </div>
-          <div style={{ width: '40px' }}></div>
+          <div style={{ width: "40px" }} />
         </header>
 
         {/* 퀴즈 진행 화면 */}
@@ -154,9 +161,13 @@ const QuizPage = () => {
             {/* 진행 상태 바 */}
             <div className="progress-area">
               <div className="progress-track">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${
+                      ((currentIndex + 1) / questions.length) * 100
+                    }%`,
+                  }}
                 />
               </div>
               <div className="progress-text">
@@ -166,22 +177,28 @@ const QuizPage = () => {
 
             {/* 문제 텍스트 */}
             <div className="question-section">
-              <h2 className="question-text">{questions[currentIndex].question}</h2>
+              <h2 className="question-text">
+                {questions[currentIndex].question}
+              </h2>
             </div>
 
             {/* 보기 버튼 영역 */}
             <div className="options-grid">
               {questions[currentIndex].options.map((option, idx) => {
                 const currentQ = questions[currentIndex];
-                
-                const cardClass = clsx(
-                  "option-card", 
-                  {
-                    "correct": selectedOption !== null && idx === currentQ.answer,
-                    "wrong": selectedOption !== null && idx === selectedOption && idx !== currentQ.answer,
-                    "disabled": selectedOption !== null && idx !== currentQ.answer && idx !== selectedOption
-                  }
-                );
+
+                const cardClass = clsx("option-card", {
+                  correct:
+                    selectedOption !== null && idx === currentQ.answer,
+                  wrong:
+                    selectedOption !== null &&
+                    idx === selectedOption &&
+                    idx !== currentQ.answer,
+                  disabled:
+                    selectedOption !== null &&
+                    idx !== currentQ.answer &&
+                    idx !== selectedOption,
+                });
 
                 return (
                   <button
@@ -192,37 +209,51 @@ const QuizPage = () => {
                   >
                     <span className="option-number">{idx + 1}</span>
                     <span className="option-text">{option}</span>
-                    
+
                     {selectedOption !== null && idx === currentQ.answer && (
-                      <CheckCircle2 className="result-icon correct" size={20} />
+                      <CheckCircle2
+                        className="result-icon correct"
+                        size={20}
+                      />
                     )}
-                    {selectedOption !== null && idx === selectedOption && idx !== currentQ.answer && (
-                      <XCircle className="result-icon wrong" size={20} />
-                    )}
+                    {selectedOption !== null &&
+                      idx === selectedOption &&
+                      idx !== currentQ.answer && (
+                        <XCircle className="result-icon wrong" size={20} />
+                      )}
                   </button>
                 );
               })}
             </div>
-            
+
             {/* 다음 버튼 */}
             <div className="mt-24">
               {selectedOption !== null && (
-                <Button 
-                  variant="primary" 
-                  full 
-                  size="lg" 
+                <Button
+                  variant="primary"
+                  full
+                  size="lg"
                   onClick={handleNext}
                 >
-                  {currentIndex + 1 === questions.length ? "결과 보기" : "다음 문제"}
+                  {currentIndex + 1 === questions.length
+                    ? "결과 보기"
+                    : "다음 문제"}
                 </Button>
               )}
             </div>
           </div>
         ) : (
-          /* 결과 화면 */
+          // 결과 화면
           <div className="result-section">
             <div className="score-circle">
-              <div style={{display:'flex', flexDirection:'column', alignItems:'center', lineHeight:1}}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  lineHeight: 1,
+                }}
+              >
                 <span className="score-number">{score}</span>
                 <span className="score-total">/ {questions.length}</span>
               </div>
@@ -231,15 +262,15 @@ const QuizPage = () => {
               {score === questions.length ? "완벽해요! 🎉" : "수고하셨어요!"}
             </h3>
             <p className="result-msg">
-              {isWrongMode 
-                ? "틀린 문제를 다시 한번 확인해보세요." 
+              {isWrongMode
+                ? "틀린 문제를 다시 한번 확인해보세요."
                 : "오늘의 학습 목표를 달성했습니다."}
             </p>
-            
-            <Button 
-              variant="primary" 
-              full 
-              size="lg" 
+
+            <Button
+              variant="primary"
+              full
+              size="lg"
               onClick={() => navigate(-1)}
             >
               학습 홈으로 이동

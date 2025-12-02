@@ -1,29 +1,37 @@
+/* src/components/today/TodayWordCard.css */
+
 .today-word-wrapper {
   position: absolute;
-  top: 24px;
-  right: 32px;
+  top: var(--space-6);
+  right: var(--space-6);
   z-index: 20;
   transform: rotate(-3deg);
+  pointer-events: none; /* 카드만 클릭 가능하게 */
 }
 
 .today-word-card {
   position: relative;
-  background: #ffffff;
+  background: var(--surface-1);
   border-radius: 20px;
-  padding: 24px 28px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-  min-width: 250px;
-  transform: scale(1.15) rotate(-3deg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-soft);
+  min-width: 260px;
+  border: 1px solid var(--border-subtle);
+
+  transform: scale(1.05) rotate(-3deg);
+  pointer-events: auto;
 }
 
+/* 상단 작은 라벨 */
 .today-word-label {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--neutral-400);
+  color: var(--neutral-500);
   margin-bottom: 6px;
 }
 
+/* 영어 단어 */
 .today-word-text {
   font-size: 26px;
   font-weight: 800;
@@ -31,11 +39,21 @@
   margin-bottom: 4px;
 }
 
-.today-word-meaning {
-  font-size: 15px;
-  color: var(--neutral-500);
+/* 난이도 표시 (옵션) */
+.today-word-level {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--neutral-600);
+  margin-bottom: 4px;
 }
 
+/* 뜻 */
+.today-word-meaning {
+  font-size: 15px;
+  color: var(--neutral-700);
+}
+
+/* 상단 뱃지 */
 .today-word-tag {
   position: absolute;
   top: -12px;
@@ -63,5 +81,23 @@
   100% {
     opacity: 1;
     transform: translateY(0) rotate(-3deg);
+  }
+}
+
+/* 반응형: 작은 화면에서는 위치를 조금 낮추고 크기 축소 */
+@media (max-width: 767px) {
+  .today-word-wrapper {
+    top: var(--space-4);
+    right: var(--space-4);
+  }
+
+  .today-word-card {
+    min-width: 220px;
+    padding: var(--space-3) var(--space-4);
+    transform: scale(1) rotate(-3deg);
+  }
+
+  .today-word-text {
+    font-size: 22px;
   }
 }

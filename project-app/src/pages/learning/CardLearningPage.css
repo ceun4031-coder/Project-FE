@@ -45,6 +45,22 @@
   color: #475569;
 }
 
+/* 진행바 */
+.card-progress {
+  width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: #e2e8f0;
+  overflow: hidden;
+}
+
+.card-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6366f1, #3b82f6);
+  transition: width 0.2s ease-out;
+}
+
 /* 본문 */
 .card-body {
   margin-top: 8px;
@@ -76,7 +92,7 @@
     box-shadow 0.12s ease;
 }
 
-/* "모르겠다"를 강조 */
+/* "모르겠다"를 강조 (일반 모드 기본) */
 .card-footer button:first-child {
   background-color: #fef2f2;
   color: #b91c1c;
@@ -157,4 +173,46 @@
     width: 100%;
     justify-content: space-between;
   }
+}
+
+/* ===========================
+   오답 모드 테마 (source=wrong-note)
+   =========================== */
+
+.card-page--wrong .card-header h1 {
+  color: #9a3412;
+}
+
+.card-page--wrong .card-header__subtitle {
+  color: #ea580c;
+}
+
+.card-page--wrong .card-progress {
+  background-color: #ffedd5;
+}
+
+.card-page--wrong .card-progress__fill {
+  background: linear-gradient(90deg, #fb923c, #f97316);
+}
+
+/* 버튼 색도 오답 복습 느낌으로 살짝 변경 */
+.card-page--wrong .card-footer button:first-child {
+  background-color: #fff7ed;
+  color: #c05621;
+  border-color: #fed7aa;
+}
+
+.card-page--wrong .card-footer button:last-child {
+  background-color: #ecfdf5;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.card-page--wrong .card-result {
+  border: 1px solid #fed7aa;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.08);
+}
+
+.card-page--wrong .card-result h2 {
+  color: #9a3412;
 }
