@@ -77,34 +77,30 @@ const QuizPage = () => {
   };
 
   // 3️⃣ 다음 문제 이동 및 결과 전송
-  const handleNext = async () => {
-    // 아직 선택 안 했으면 무시
-    if (selectedOption === null) return;
+ const handleNext = async () => {
+  if (selectedOption === null) return;
 
-    if (currentIndex + 1 < questions.length) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(null);
-    } else {
-      const isLastAnswerCorrect =
-        questions[currentIndex].answer === selectedOption;
-      const finalScore = score + (isLastAnswerCorrect ? 1 : 0);
-
-      try {
-        await submitQuizResult({
-          mode: isWrongMode ? "wrong" : "normal",
-          score: finalScore,
-          total: questions.length,
-          timestamp: new Date().toISOString(),
-        });
-        console.log("✅ 결과 전송 완료");
-      } catch (err) {
-        console.error("❌ 결과 전송 실패:", err);
-      }
-
-      setScore(finalScore);
-      setIsFinished(true);
+  if (currentIndex + 1 < questions.length) {
+    // 다음 문제로 이동
+    setCurrentIndex((prev) => prev + 1);
+    setSelectedOption(null);
+  } else {
+    // 마지막 문제 → 이미 handleOptionClick 에서 점수 계산됨
+    try {
+      await submitQuizResult({
+        mode: isWrongMode ? "wrong" : "normal",
+        score: score,               
+        total: questions.length,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("❌ 결과 전송 실패:", err);
     }
-  };
+
+    setIsFinished(true);            
+  }
+};
+
 
   // ─── 화면 렌더링 ───
 
@@ -137,15 +133,14 @@ const QuizPage = () => {
         {/* 헤더 영역 */}
         <header className="quiz-header">
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-            aria-label="뒤로 가기"
-            style={{ padding: "8px" }}
-          >
-            <ArrowLeft size={20} />
-          </Button>
-
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/learning")}
+          aria-label="뒤로 가기"
+          style={{ padding: "8px" }}
+        >
+          <ArrowLeft size={20} />
+        </Button>
           <div className="quiz-title">
             {isWrongMode ? "오답 퀴즈" : "실전 퀴즈"}
             <span className="quiz-badge">
