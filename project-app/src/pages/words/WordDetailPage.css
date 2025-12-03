@@ -1,287 +1,406 @@
+/* src/pages/words/WordDetailPage.css */
+
 /* =========================================
-   1. 페이지 레이아웃
+   1. Layout & Navigation
    ========================================= */
-.detail-page-container {
-  max-width: 1200px;
-  margin: 0 auto;
+.detail-page {
   padding-top: var(--space-8);
   padding-bottom: var(--space-10);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-
-/* 상단 뒤로가기 버튼 */
 .detail-nav {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
+
 .back-btn {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  color: #495057;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.back-btn:hover { background: #e9ecef; }
-
-
-/* =========================================
-   2. 메인 헤더 카드 (단어 + 태그 + 액션)
-   ========================================= */
-.detail-header-card {
-  background: white;
-  border-radius: 24px;
-  padding: 32px 40px;
-  border: 1px solid #f1f3f5;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-/* 좌측: 단어 타이틀 및 태그 */
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.detail-word {
-  font-size: 3rem; /* 아주 큰 폰트 */
-  font-weight: 700;
-  color: #212529;
-  margin: 0;
-  line-height: 1;
-}
-
-.detail-tags {
-  display: flex;
-  gap: 8px;
-}
-.tag {
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.tag-pos { background: #dcd6ff; color: #5f3dc4; }
-.tag-domain { background: #ede9ff; color: #6c5ce7; }
-.tag-level { background: #dbeafe; color: #2563eb; }
-
-
-/* 우측: 액션 버튼들 */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* 학습 완료 버튼 */
-.status-toggle-btn {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid #e6f7ef;
-  background: #e6f7ef;
-  color: #0ca678; /* Green */
-  transition: all 0.2s;
-}
-.status-toggle-btn:hover {
-  background: #c3fae8;
-}
-/* 학습 미완료 상태일 때 스타일 (옵션) */
-.status-toggle-btn:not(.completed) {
-  background: #f1f3f5;
-  color: #868e96;
-  border-color: #dee2e6;
-}
-
-/* 별 아이콘 */
-.fav-star-btn {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: #dee2e6;
-  cursor: pointer;
-  line-height: 1;
-  transition: transform 0.2s, color 0.2s;
-}
-.fav-star-btn:hover { transform: scale(1.1); }
-.fav-star-btn.active { color: #fcc419; }
-
-
-/* =========================================
-   3. 컨텐츠 그리드 (좌: 뜻/예문, 우: 클러스터)
-   ========================================= */
-.detail-content-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr; /* 좌측이 좀 더 넓게 */
-  gap: 24px;
-}
-
-/* 공통 카드 스타일 */
-.content-card {
-  background: white;
-  border-radius: 20px;
-  padding: 24px 32px;
-  border: 1px solid #f1f3f5;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-  margin-bottom: 20px;
-}
-
-.section-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #212529;
-  margin-bottom: 16px;
-}
-
-
-/* --- [좌측 컬럼] 뜻 & 예문 --- */
-.detail-main-col {
-  display: flex;
-  flex-direction: column;
-}
-
-/* 뜻 카드 */
-.meaning-card {
-  min-height: 120px; /* 높이 확보 */
-}
-.meaning-text {
-  font-size: 1.2rem;
-  color: #495057;
-  line-height: 1.6;
-}
-
-/* 예문 카드 */
-.example-card {
-  flex-grow: 1;
-}
-.example-content {
-  margin-bottom: 20px;
-}
-.example-en {
-  font-size: 1.05rem;
-  color: #343a40;
-  margin-bottom: 4px;
-  font-weight: 500;
-}
-.example-ko {
-  font-size: 0.95rem;
-  color: #868e96;
-}
-
-
-/* --- [우측 컬럼] 연관 단어 클러스터 --- */
-.cluster-card {
-  height: 100%; /* 우측 꽉 채우기 */
-}
-
-.cluster-header {
-  margin-bottom: 20px;
-}
-.cluster-tabs {
-  display: flex;
-  gap: 8px;
-}
-.tab {
-  padding: 4px 10px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  color: #868e96;
-  cursor: pointer;
-}
-.tab.active {
-  background: #e7f5ff; /* 연한 파랑 */
-  color: #339af0;
-  font-weight: 600;
-}
-
-/* 클러스터 그룹 */
-.cluster-group {
-  margin-bottom: 24px;
-}
-.group-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.group-header h4 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #495057;
-  margin: 0;
-}
-.add-all {
-  font-size: 0.8rem;
-  color: #adb5bd;
-  cursor: pointer;
-}
-.add-all:hover { color: #868e96; }
-
-.group-desc {
-  font-size: 0.85rem;
-  color: #adb5bd;
-  margin-bottom: 12px;
-}
-
-/* 구분선 */
-.divider {
-  height: 1px;
-  background: #f1f3f5;
-  margin: 20px 0;
-}
-
-/* 단어 칩 리스트 */
-.chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-/* 단어 칩 스타일 */
-.word-chip {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid #e9ecef;
-  border-radius: 16px;
-  background: white;
-  transition: all 0.2s;
-}
-.word-chip:hover {
-  border-color: #ced4da;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--neutral-500);
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s;
 }
 
-.chip-text { font-size: 0.9rem; font-weight: 600; color: #495057; }
-.chip-level { font-size: 0.75rem; color: #7950f2; font-weight: 600; }
-.chip-status { font-size: 0.75rem; color: #20c997; font-weight: 500; } /* 내 단어장 */
-.chip-add { font-size: 0.75rem; color: #adb5bd; cursor: pointer; }
-
+.back-btn:hover {
+  color: var(--primary-600);
+}
 
 /* =========================================
-   4. 반응형 (모바일)
+   2. Header Area
    ========================================= */
+.detail-header {
+  background-color: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 80%;
+}
+
+.detail-word-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--neutral-900);
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.detail-meaning {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--neutral-700);
+  margin: 4px 0 12px 0;
+  line-height: 1.5;
+}
+
+.detail-tags-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Tags */
+.tag {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.tag-pos { background-color: #a29bfe; color: white; }
+.tag-domain { background-color: #dfe6e9; color: #55556c; }
+.tag-level { background-color: #74b9ff; color: white; }
+
+/* Favorite Button */
+.fav-action-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--neutral-300);
+  transition: all 0.2s ease;
+}
+
+.fav-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--warning-400);
+}
+
+.fav-action-btn.active {
+  color: var(--warning-500);
+  background-color: var(--warning-50);
+  border-color: var(--warning-200);
+}
+
+.detail-separator {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin: 24px 0;
+  opacity: 0.6;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.todo {
+  background-color: var(--neutral-100);
+  color: var(--neutral-500);
+}
+
+.status-badge.done {
+  background-color: var(--success-50);
+  color: var(--success-600);
+}
+
+/* =========================================
+   3. Content Grid & Cards
+   ========================================= */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.detail-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+  height: fit-content;
+}
+
+.detail-card:last-child {
+  margin-bottom: 0;
+}
+
+.card-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--neutral-400);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* =========================================
+   4. Left Column (Example)
+   ========================================= */
+.example-box {
+  background-color: var(--neutral-50);
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 4px solid var(--primary-300);
+}
+
+.example-en {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--neutral-800);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.example-ko {
+  font-size: 0.95rem;
+  color: var(--neutral-500);
+  margin: 0;
+}
+
+.no-data-text {
+  color: var(--neutral-400);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* =========================================
+   5. Right Column (Cluster)
+   ========================================= */
+.cluster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.cluster-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--neutral-800);
+  margin: 0;
+}
+
+/* Cluster Tabs */
+.cluster-tabs {
+  display: flex;
+  background-color: var(--neutral-100);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.cluster-tab {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--neutral-500);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cluster-tab.active {
+  background-color: white;
+  color: var(--primary-600);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+/* Cluster Group & Grid */
+.cluster-group {
+  margin-bottom: 24px;
+}
+
+.cluster-group:last-child {
+  margin-bottom: 0;
+}
+
+.group-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.group-title-row h4 {
+  font-size: 0.9rem;
+  color: var(--neutral-500);
+  margin: 0;
+  font-weight: 600;
+}
+
+.text-btn-small {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: var(--primary-500);
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+}
+
+.text-btn-small:hover {
+  text-decoration: underline;
+}
+
+.chip-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Word Chip */
+.word-chip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: all 0.2s;
+}
+
+.word-chip:hover {
+  border-color: var(--primary-200);
+  background-color: var(--primary-50);
+}
+
+.chip-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chip-word {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+}
+
+.chip-lv {
+  font-size: 0.7rem;
+  color: var(--neutral-400);
+  background: var(--neutral-100);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.chip-add-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neutral-400);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip-add-btn:hover {
+  background: var(--primary-500);
+  border-color: var(--primary-500);
+  color: white;
+}
+
+.chip-check {
+  color: var(--success-500);
+  display: flex;
+  align-items: center;
+}
+
+/* =========================================
+   6. Loading & Responsive
+   ========================================= */
+.detail-loading,
+.detail-error {
+  min-height: 50vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--neutral-500);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--neutral-200);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
-  .detail-header-card {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-top-row {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-    padding: 24px;
+    gap: 16px;
   }
-  .header-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .detail-content-grid {
-    grid-template-columns: 1fr; /* 1단 레이아웃 */
+
+  .header-actions {
+    align-self: flex-end;
+    margin-top: -60px;
   }
 }
