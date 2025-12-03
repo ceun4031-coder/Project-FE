@@ -1,81 +1,434 @@
-/* pages/componets/Dashboard.css */
+/* src/pages/Dashboard/DashboardPage.css */
 
-.dashboard-header .greeting {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--neutral-900);
-  margin-bottom: var(--space-2);
+/* --------------------------------------------------------
+   1. Header
+   -------------------------------------------------------- */
+.dashboard-header.center-header {
+  text-align: center;
+  margin-top: 32px;
+  margin-bottom: 40px;
 }
 
-.dashboard-header .highlight {
+.greeting-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.02em;
+}
+
+.highlight-text {
   color: var(--primary-500);
 }
 
-.dashboard-header .sub-text {
-  color: var(--neutral-500);
-}
-
-/* 그리드 레이아웃 */
-.dashboard-grid {
+/* --------------------------------------------------------
+   2. Layout (Grid Ratio 2.5 : 1)
+   -------------------------------------------------------- */
+.dashboard-layout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-4);
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
-/* 태블릿 이상부터 2열로 배치 */
-@media (min-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-6);
+@media (min-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 2.5fr 1fr; 
+    align-items: stretch;
   }
 }
 
-/* 카드 내부 스타일 */
-.card-header {
+.column-left, .column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* --------------------------------------------------------
+   3. Card Common (Renamed to prevent conflict)
+   -------------------------------------------------------- */
+/* [변경] .card -> .dashboard-card */
+.dashboard-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle, #e5e5f0);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  overflow: hidden; 
+  transition: box-shadow 0.2s ease;
+}
+
+/* --------------------------------------------------------
+   4. Status Overview Card
+   -------------------------------------------------------- */
+.status-overview-card {
+  display: flex;
+  flex-direction: row;
+  padding: 32px 40px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 160px;
+}
+
+.status-section.progress-section {
+  flex: 1.8;
+  padding-right: 48px;
+}
+
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-4);
-  font-weight: 600;
-  color: var(--neutral-700);
+  margin-bottom: 12px;
 }
 
-.goal-text {
-  color: var(--primary-500);
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.big-number-box {
-  font-size: 2rem;
+.section-header h3 {
+  font-size: 1.125rem;
   font-weight: 700;
   color: var(--neutral-900);
-  margin-bottom: var(--space-3);
+  margin: 0;
 }
 
-.big-number-box .total {
+.percent-badge {
+  background-color: var(--primary-100);
+  color: var(--primary-600);
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.progress-info {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.current-num {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.total-num {
   font-size: 1rem;
-  color: var(--neutral-400);
-  font-weight: 400;
+  color: var(--neutral-500);
+  font-weight: 500;
 }
 
-/* 프로그레스 바 */
-.progress-bg {
+.progress-bar-bg {
   width: 100%;
-  height: 12px;
+  height: 10px;
   background-color: var(--neutral-200);
-  border-radius: var(--radius-pill);
-  overflow: hidden;
+  border-radius: 10px;
 }
 
-.progress-fill {
+.progress-bar-fill {
   height: 100%;
   background-color: var(--primary-500);
-  border-radius: var(--radius-pill);
-  transition: width 0.3s ease;
+  border-radius: 10px;
+  transition: width 0.8s ease;
 }
 
-.desc-text {
+.vertical-divider {
+  width: 1px;
+  height: 70px;
+  background-color: var(--neutral-200);
+  margin: 0 24px;
+}
+
+.status-section.center-align {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.status-section .label {
+  font-size: 0.95rem;
+  color: var(--neutral-500);
+}
+
+.status-section .value-text {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.streak-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.streak-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.streak-value {
+  color: var(--warning-600, #d97706);
+}
+
+@media (max-width: 768px) {
+  .status-overview-card {
+    flex-direction: column;
+    gap: 32px;
+    align-items: stretch;
+  }
+  .vertical-divider { display: none; }
+  .status-section.progress-section {
+    padding-right: 0;
+    border-bottom: 1px solid var(--neutral-200);
+    padding-bottom: 24px;
+  }
+}
+
+/* --------------------------------------------------------
+   5. Chart Card
+   -------------------------------------------------------- */
+.chart-card {
+  flex: 1;
+  min-height: 380px;
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.card-header-row h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+}
+
+.legend-item {
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.learned { background-color: var(--primary-500); }
+.dot.wrong { background-color:var(--warning-500);}
+
+.chart-body {
+  flex: 1;
+  display: flex;
+  gap: 40px;
+}
+
+.bars-container {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.daily-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.bar-wrapper {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 200px;
+}
+
+.v-bar {
+  width: 36px;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.5s ease;
+}
+.bar-blue { background-color: var(--primary-500); }
+.bar-red { background-color:var(--warning-500);}
+
+.date-label {
+  font-size: 0.8rem;
+  color: var(--neutral-500);
+  margin-top: 8px;
+}
+
+.chart-summary {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 110px;
+  padding-bottom: 24px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
   color: var(--neutral-600);
-  line-height: 1.6;
+}
+.summary-row strong { font-weight: 700; color: var(--neutral-900); }
+
+/* --------------------------------------------------------
+   6. Dashboard Action Card (Renamed)
+   -------------------------------------------------------- */
+/* [변경] .action-card -> .dashboard-action-card */
+.dashboard-action-card {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* LearningHome의 .action-card와 스타일 충돌 방지 */
+  background: #ffffff; 
+  cursor: default;
+}
+
+.action-text h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--neutral-900);
+}
+.action-text p {
+  color: var(--neutral-500);
+  font-size: 0.95rem;
+}
+
+.mini-calendar {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.calendar-day {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--neutral-400);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.calendar-day.checked {
+  background-color: var(--primary-500);
+  color: #fff;
+}
+
+.start-btn {
+  background-color: var(--primary-500);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 10px rgba(108, 92, 231, 0.25);
+}
+
+.start-btn:hover {
+  background-color: var(--primary-600);
+}
+
+/* --------------------------------------------------------
+   7. Wrong Ranking Card
+   -------------------------------------------------------- */
+.wrong-ranking-card {
+  padding: 32px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wrong-ranking-card h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--neutral-900);
+}
+
+.ranking-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.word-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.word-en { 
+  font-weight: 700; 
+  color: var(--neutral-900); 
+  font-size: 1rem;
+}
+.word-ko { 
+  font-size: 0.85rem; 
+  color: var(--neutral-500); 
+  margin-top: 2px;
+}
+
+.word-count {
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  font-weight: 500;
+}
+
+.divider-line {
+  height: 1px;
+  background-color: var(--neutral-200);
+  margin: 24px 0;
+}
+
+.wrong-review-btn {
+  width: 100%;
+  background-color: var(--warning-500, #f59e0b);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+  margin-top: auto;
+}
+
+.wrong-review-btn:hover {
+  background-color: var(--warning-600, #d97706);
 }

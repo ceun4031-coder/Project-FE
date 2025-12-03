@@ -1,149 +1,63 @@
 // src/pages/story/StoryListPage.jsx
-import { BookOpen, ChevronRight, Plus, Search } from "lucide-react";
-import { useState, useMemo } from "react"; // useMemo 추가
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { BookOpen, ChevronRight, Plus, Search } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import PageHeader from "../../components/common/PageHeader";
-import Pagination from "../../components/common/Pagination";
-import "./StoryListPage.css";
-
-const MOCK_STORIES = [
-    {
-    id: 1,
-    title: "First Snow in Seoul",
-    excerpt:
-      "On the first snowy morning, I finally used every word I had studied this week.",
-    date: "2025-11-26",
-    words: ["snow", "memory", "whisper", "lantern"],
-  },
-  {
-    id: 2,
-    title: "The Coffee Shop",
-    excerpt:
-      "The aroma of roasted beans filled the air as I waited for my order.",
-    date: "2025-11-26",
-    words: ["aroma", "roasted", "wait", "order"],
-  },
-  {
-    id: 3,
-    title: "Midnight Study",
-    excerpt: "It was quiet, only the sound of turning pages could be heard.",
-    date: "2025-11-25",
-    words: ["quiet", "sound", "turn", "page", "focus"],
-  },
-  {
-    id: 4,
-    title: "Morning Subway",
-    excerpt:
-      "The subway was crowded, but the announcer's calm voice made the ride bearable.",
-    date: "2025-11-24",
-    words: ["crowded", "announcer", "calm", "ride"],
-  },
-  {
-    id: 5,
-    title: "Rainy Campus",
-    excerpt:
-      "Raindrops tapped on the library window as students rushed to finish their assignments.",
-    date: "2025-11-24",
-    words: ["raindrop", "library", "assignment", "rush"],
-  },
-  {
-    id: 6,
-    title: "Sunday Market",
-    excerpt:
-      "Vendors shouted friendly greetings while customers compared fresh fruits and vegetables.",
-    date: "2025-11-23",
-    words: ["vendor", "greeting", "compare", "fresh"],
-  },
-  {
-    id: 7,
-    title: "Late-night Coding",
-    excerpt:
-      "The only light in the room came from the monitor, and the keyboard never stopped clicking.",
-    date: "2025-11-22",
-    words: ["monitor", "keyboard", "click", "debug"],
-  },
-  {
-    id: 8,
-    title: "Airport Goodbye",
-    excerpt:
-      "We waved until we could no longer recognize each other's silhouettes in the crowd.",
-    date: "2025-11-21",
-    words: ["wave", "silhouette", "crowd", "distance"],
-  },
-  {
-    id: 9,
-    title: "Library Encounter",
-    excerpt:
-      "I found my favorite book already open on the table, as if someone had been waiting for me.",
-    date: "2025-11-20",
-    words: ["favorite", "open", "table", "waiting"],
-  },
-  {
-    id: 10,
-    title: "Riverside Jogging",
-    excerpt:
-      "The cold wind brushed past my cheeks as the city lights reflected on the river.",
-    date: "2025-11-19",
-    words: ["wind", "cheek", "reflect", "river"],
-  },
-  {
-    id: 11,
-    title: "Group Presentation",
-    excerpt:
-      "My hands trembled at first, but my voice grew steady as I continued to speak.",
-    date: "2025-11-18",
-    words: ["tremble", "steady", "presentation", "speak"],
-  },
-  {
-    id: 12,
-    title: "Lost Umbrella",
-    excerpt:
-      "I realized I had left my umbrella on the bus just as the rain began to pour down.",
-    date: "2025-11-17",
-    words: ["umbrella", "bus", "realize", "pour"],
-  },
-  {
-    id: 13,
-    title: "Evening Park",
-    excerpt:
-      "Children's laughter echoed through the park while the sun slowly disappeared.",
-    date: "2025-11-16",
-    words: ["laughter", "echo", "park", "sunset"],
-  },
-  {
-    id: 14,
-    title: "New Classroom",
-    excerpt:
-      "The classroom felt unfamiliar, but the smell of new textbooks gave me a sense of excitement.",
-    date: "2025-11-15",
-    words: ["unfamiliar", "textbook", "excitement", "desk"],
-  },
-];
+import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
+import './StoryListPage.css';
+import { getStoryList } from '../../api/storyApi';
 
 const PAGE_SIZE = 6;
 
 const StoryListPage = ({ stories = [] }) => {
   const navigate = useNavigate();
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // 1. 현재 페이지 인덱스 가져오기 (URL 쿼리스트링 기준)
-  const currentPageIndex = Number(searchParams.get("page") || 0);
+  const [serverStories, setServerStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 현재 페이지 인덱스 (URL 쿼리스트링 기준)
+  const currentPageIndex = Number(searchParams.get('page') || 0);
 
   const handleSelectStory = (story) => navigate(`/stories/${story.id}`);
-  const handleCreateNew = () => navigate("/stories/create");
+  const handleCreateNew = () => navigate('/stories/create');
 
-  // 2. 전체 데이터 준비 (정렬 포함) - useMemo로 불필요한 연산 방지
+  // 서버에서 스토리 목록 로딩
+  useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        const res = await getStoryList();
+        // 응답 데이터 매핑
+        const mapped = (res || []).map((item) => ({
+          id: item.storyId,
+          title: item.title,
+          excerpt: item.storyEn?.slice(0, 120) || '',
+          date: item.createdAt?.slice(0, 10) || '',
+          words: item.keywords || [],
+        }));
+        setServerStories(mapped);
+      } catch (e) {
+        console.error('스토리 목록 로딩 실패:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStories();
+  }, []);
+
+  // 전체 데이터 준비 (MOCK_STORIES 제거됨: 서버 데이터 우선, 없으면 props 사용)
   const sourceStories = useMemo(() => {
-    const targetList = stories.length > 0 ? stories : MOCK_STORIES;
-    return [...targetList].sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [stories]);
+    const base = serverStories.length > 0 ? serverStories : stories;
+    return [...base].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [serverStories, stories]);
 
-  // 3. 검색 필터링
+  // 검색 필터링
   const filteredStories = useMemo(() => {
     if (searchValue.trim().length === 0) return sourceStories;
-    
+
     const q = searchValue.toLowerCase();
     return sourceStories.filter((story) => {
       return (
@@ -154,30 +68,27 @@ const StoryListPage = ({ stories = [] }) => {
     });
   }, [sourceStories, searchValue]);
 
-  // 4. 페이지네이션 계산
+  // 페이지네이션 계산
   const totalPages = Math.max(1, Math.ceil(filteredStories.length / PAGE_SIZE));
   const safeIndex = Math.min(Math.max(currentPageIndex, 0), totalPages - 1);
-  
-  // [핵심 수정] 항목이 늘어나지 않게 '시작'과 '끝'을 명확히 자릅니다.
+
   const startIdx = safeIndex * PAGE_SIZE;
   const endIdx = startIdx + PAGE_SIZE;
-  
+
   const pagedStories = useMemo(() => {
-    // slice(start, end)는 start부터 end '직전'까지만 반환합니다.
-    return filteredStories.slice(startIdx, endIdx); 
+    return filteredStories.slice(startIdx, endIdx);
   }, [filteredStories, startIdx, endIdx]);
 
   const hasAnyStories = sourceStories.length > 0;
   const hasFilteredStories = filteredStories.length > 0;
 
-  // 페이지 변경 핸들러
+  // 페이지 변경
   const handlePageChange = (nextIndex) => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
-      params.set("page", String(nextIndex));
+      params.set('page', String(nextIndex));
       return params;
     });
-    // 스크롤을 맨 위로 올려주는 UX 추가
     window.scrollTo(0, 0);
   };
 
@@ -185,7 +96,7 @@ const StoryListPage = ({ stories = [] }) => {
     setSearchValue(e.target.value);
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
-      params.set("page", "0"); // 검색 시 0페이지로 리셋
+      params.set('page', '0');
       return params;
     });
   };
@@ -217,13 +128,21 @@ const StoryListPage = ({ stories = [] }) => {
         </section>
 
         <section className="story-grid">
-          {hasAnyStories && !hasFilteredStories && (
+          {loading && (
+            <div className="empty-msg">
+              <p>스토리를 불러오는 중입니다... ⏳</p>
+            </div>
+          )}
+
+          {/* 데이터는 있지만 검색 결과가 없을 때 */}
+          {hasAnyStories && !hasFilteredStories && !loading && (
             <div className="empty-msg">
               <p>검색 결과가 없습니다. 🍂</p>
             </div>
           )}
 
-          {!hasAnyStories && (
+          {/* 데이터가 아예 없을 때 (첫 스토리 유도) */}
+          {!hasAnyStories && !loading && (
             <article
               className="story-card add-card"
               onClick={handleCreateNew}
@@ -240,7 +159,7 @@ const StoryListPage = ({ stories = [] }) => {
             </article>
           )}
 
-          {/* pagedStories만 렌더링하므로 6개를 초과하지 않음 */}
+          {/* 목록 렌더링 */}
           {hasFilteredStories &&
             pagedStories.map((story) => (
               <article

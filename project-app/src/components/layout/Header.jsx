@@ -32,7 +32,7 @@ const getNavClass = ({ isActive }) =>
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth(); // AuthContext 사용
+  const { user, logout } = useAuth();
 
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountRef = useRef(null);
@@ -69,9 +69,9 @@ export default function Header() {
   const handleLogoutClick = async () => {
     setIsAccountMenuOpen(false);
     try {
-      await logout(); // AuthContext.logout 안에서 토큰 제거 + 서버 로그아웃 + /auth/login 이동
+      await logout();
     } catch {
-      // 추가 처리 필요 없으면 비워두면 됨
+      // 에러 처리 필요 없으면 비워둠
     }
   };
 
@@ -79,38 +79,13 @@ export default function Header() {
     setIsAccountMenuOpen((prev) => !prev);
   };
 
-  // Auth 페이지에서는 최소 헤더
+  // Auth 페이지에서는 최소 헤더 (로고만)
   const isAuthPage = location.pathname.startsWith("/auth");
 
   if (isAuthPage) {
     return (
       <header className="header">
-        <div className="page-container">
-          <div className="header-inner">
-            <button
-              type="button"
-              className="header-logo"
-              onClick={handleLogoClick}
-            >
-              <img
-                src={StoryLexLogo}
-                alt="StoryLex 로고"
-                className="header-logo-img"
-              />
-            </button>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  const navItems = isAuthenticated ? AUTH_NAV_ITEMS : GUEST_NAV_ITEMS;
-
-  return (
-    <header className="header">
-      <div className="page-container">
         <div className="header-inner">
-          {/* 로고 */}
           <button
             type="button"
             className="header-logo"
@@ -122,84 +97,99 @@ export default function Header() {
               className="header-logo-img"
             />
           </button>
+        </div>
+      </header>
+    );
+  }
 
-          {/* 네비게이션 */}
-          <nav className="header-nav" aria-label="주요 메뉴">
-            <div className="header-nav-group">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={getNavClass}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          </nav>
+  const navItems = isAuthenticated ? AUTH_NAV_ITEMS : GUEST_NAV_ITEMS;
 
-          {/* 우측 액션 */}
-          <div className="header-actions">
-            {isAuthenticated ? (
-              <div className="header-account" ref={accountRef}>
-                <button
-                  type="button"
-                  className="header-profile"
-                  onClick={handleProfileClick}
-                  aria-haspopup="true"
-                  aria-expanded={isAccountMenuOpen}
-                  aria-label="계정 메뉴 열기"
-                >
-                  {/* 오른쪽 사용자 계정 아이콘 svg */}
-                  <img
-                    src={userIcon}
-                    alt="user icon"
-                    className="header-profile-icon"
-                  />
+  return (
+    <header className="header">
+      <div className="header-inner">
+        {/* 로고 */}
+        <button
+          type="button"
+          className="header-logo"
+          onClick={handleLogoClick}
+        >
+          <img
+            src={StoryLexLogo}
+            alt="StoryLex 로고"
+            className="header-logo-img"
+          />
+        </button>
 
-                </button>
-
-                {isAccountMenuOpen && (
-                  <div className="header-account-menu">
-                    <button
-                      type="button"
-                      className="header-account-menu-item"
-                      onClick={() => {
-                        setIsAccountMenuOpen(false);
-                        navigate("/account/profile");
-                      }}
-                    >
-                      내 정보 / 계정 설정
-                    </button>
-                    <button
-                      type="button"
-                      className="header-account-menu-item header-account-menu-item--danger"
-                      onClick={handleLogoutClick}
-                    >
-                      로그아웃
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate("/auth/login")}
-                >
-                  로그인
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate("/auth/signup")}
-                >
-                  회원가입
-                </Button>
-              </>
-            )}
+        {/* 네비게이션 */}
+        <nav className="header-nav" aria-label="주요 메뉴">
+          <div className="header-nav-group">
+            {navItems.map((item) => (
+              <NavLink key={item.to} to={item.to} className={getNavClass}>
+                {item.label}
+              </NavLink>
+            ))}
           </div>
+        </nav>
+
+        {/* 우측 액션 */}
+        <div className="header-actions">
+          {isAuthenticated ? (
+            <div className="header-account" ref={accountRef}>
+              <button
+                type="button"
+                className="header-profile"
+                onClick={handleProfileClick}
+                aria-haspopup="true"
+                aria-expanded={isAccountMenuOpen}
+                aria-label="계정 메뉴 열기"
+              >
+                <img
+                  src={userIcon}
+                  alt="user icon"
+                  className="header-profile-icon"
+                />
+              </button>
+
+              {isAccountMenuOpen && (
+                <div className="header-account-menu">
+                  <button
+                    type="button"
+                    className="header-account-menu-item"
+                    onClick={() => {
+                      setIsAccountMenuOpen(false);
+                      navigate("/account/profile");
+                    }}
+                  >
+                    내 정보 / 계정 설정
+                  </button>
+                  <button
+                    type="button"
+                    className="header-account-menu-item header-account-menu-item--danger"
+                    onClick={handleLogoutClick}
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate("/auth/login")}
+              >
+                로그인
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate("/auth/signup")}
+              >
+                회원가입
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

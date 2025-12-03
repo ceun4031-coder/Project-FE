@@ -4,98 +4,106 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  margin-top: 40px; /* 섹션과의 간격 */
+  gap: 4px; /* 기존보다 약간 줄이기 */
+  margin-top: 32px;
   padding: 16px 0;
+  width: 100%;
 }
 
-/* 이전/다음 화살표 버튼 */
-.pagination-btn {
-  display: flex;
+
+/* 공통 버튼 (화살표, 숫자 모두 크기/폰트 맞춰서 일관성) */
+.pagination-btn,
+.pagination-number {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border-subtle, #e9ecef);
-  background-color: var(--surface-1, #ffffff);
-  color: var(--neutral-600, #495057);
+  min-width: 32px;
+  height: 32px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--neutral-700, #343a40);
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  font-size: 0.85rem;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
-.pagination-btn:hover:not(:disabled) {
-  background-color: var(--primary-50, #f3f0ff);
-  color: var(--primary-600, #5f3dc4);
-  border-color: var(--primary-200, #d0bfff);
+.pagination-btn {
+  border-color: var(--border-subtle, #e9ecef);
+  background-color: var(--surface-1, #ffffff);
+}
+
+/* 호버 공통 */
+.pagination-btn:hover:not(:disabled),
+.pagination-number:hover:not(.active) {
+  background-color: var(--neutral-50, #f8f9fa);
+  color: var(--neutral-900, #212529);
+  border-color: var(--border-subtle, #e9ecef);
   transform: translateY(-1px);
 }
 
+/* 비활성화 */
 .pagination-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   background-color: transparent;
-  box-shadow: none;
+  border-color: var(--border-subtle, #e9ecef);
+  transform: none;
 }
 
-/* 숫자 리스트 래퍼 */
+/* 숫자 영역 */
 .pagination-numbers {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  margin: 0 4px;
 }
 
-/* 숫자 버튼 */
+/* 숫자 버튼 기본 */
 .pagination-number {
-  min-width: 36px;
-  height: 36px;
-  padding: 0 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: none;
-  background-color: transparent;
-  color: var(--neutral-600, #495057);
-  font-size: 0.95rem;
+  border-color: transparent;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.pagination-number:hover {
-  background-color: var(--neutral-100, #f8f9fa);
-  color: var(--neutral-900, #212529);
-}
-
-/* 활성화된 숫자 (현재 페이지) */
+/* 현재 페이지 */
 .pagination-number.active {
   background-color: var(--primary-500, #6c5ce7);
+  border-color: var(--primary-500, #6c5ce7);
   color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(108, 92, 231, 0.35);
 }
+
 .pagination-number.active:hover {
   background-color: var(--primary-600, #5f3dc4);
 }
 
-/* 말줄임표 (...) */
+/* ... 표시 */
 .pagination-ellipsis {
-  color: var(--neutral-400, #adb5bd);
-  font-size: 0.9rem;
-  padding: 0 4px;
+  min-width: 24px;
+  text-align: center;
+  color: var(--neutral-500, #868e96);
   user-select: none;
 }
 
-/* 반응형: 모바일에서는 숫자 간격을 조금 줄이거나 크기를 조정 */
-@media (max-width: 640px) {
+/* 반응형: 모바일에서 숫자 개수 줄여서 과도한 너비 방지 */
+@media (max-width: 480px) {
   .pagination-container {
-    gap: 8px;
+    gap: 4px;
   }
+
+  .pagination-numbers {
+    gap: 2px;
+  }
+
+  .pagination-btn,
   .pagination-number {
-    min-width: 32px;
-    height: 32px;
-    font-size: 0.85rem;
+    min-width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
   }
 }

@@ -1,12 +1,21 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock, Book, Quote } from "lucide-react";
-import { getStoryDetail } from "../../api/storyApi";
-import "./StoryDetailPage.css";
+// src/pages/story/StoryDetailPage.jsx
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Calendar, Clock, Book, Quote } from 'lucide-react';
+import { getStoryDetail, getStoryWords } from '../../api/storyApi';
+import './StoryDetailPage.css';
 
 // 정규식 특수문자 이스케이프
-const escapeRegExp = (str = "") =>
-  str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (str = '') =>
+  str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// 읽기 시간(분) 추정
+const estimateReadTime = (text = '') => {
+  if (!text.trim()) return '';
+  const wordCount = text.trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.round(wordCount / 150)); // 150 wpm 기준
+  return `${minutes} min read`;
+};
 
 const StoryDetailPage = () => {
   const { id } = useParams();
@@ -19,6 +28,7 @@ const StoryDetailPage = () => {
 
   // 현재 호버 중인 단어(소문자 기준)
   const [activeWord, setActiveWord] = useState(null);
+  const [words, setWords] = useState(initialStory?.words || []);
 
   useEffect(() => {
     if (!id || initialStory) return;
@@ -28,10 +38,13 @@ const StoryDetailPage = () => {
         setLoading(true);
         const data = await getStoryDetail(id);
         setStory(data);
+
+        const wordList = await getStoryWords(id);
+        setWords(wordList || []);
       } catch (error) {
-        console.error("스토리 로딩 실패:", error);
-        alert("스토리를 불러올 수 없습니다.");
-        navigate("/stories");
+        console.error('스토리 로딩 실패:', error);
+        alert('스토리를 불러올 수 없습니다.');
+        navigate('/stories');
       } finally {
         setLoading(false);
       }
@@ -44,13 +57,13 @@ const StoryDetailPage = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/stories");
+      navigate('/stories');
     }
   };
 
   // --- 하이라이트 로직 ---
-  const keywords = story?.words
-    ? story.words.map((w) => (typeof w === "string" ? w : w.text || w.word))
+  const keywords = words
+    ? words.map((w) => (typeof w === 'string' ? w : w.text || w.word))
     : [];
 
   const highlightKeywords = (text) => {
@@ -59,16 +72,16 @@ const StoryDetailPage = () => {
     const pattern = keywords
       .filter(Boolean)
       .map((k) => escapeRegExp(k))
-      .join("|");
+      .join('|');
 
     if (!pattern) return text;
 
-    const regex = new RegExp(`\\b(${pattern})\\b`, "gi");
+    const regex = new RegExp(`\\b(${pattern})\\b`, 'gi');
     const parts = text.split(regex);
 
     return parts.map((part, i) => {
       const isKeyword = keywords.some(
-        (k) => k && k.toLowerCase() === part.toLowerCase()
+        (k) => k && k.toLowerCase() === part.toLowerCase(),
       );
 
       if (!isKeyword) return part;
@@ -76,8 +89,8 @@ const StoryDetailPage = () => {
       const normalized = part.toLowerCase();
       const isActive = activeWord && activeWord === normalized;
       const className = isActive
-        ? "highlighted-word highlighted-word--active"
-        : "highlighted-word";
+        ? 'highlighted-word highlighted-word--active'
+        : 'highlighted-word';
 
       return (
         <span
@@ -101,16 +114,14 @@ const StoryDetailPage = () => {
 
   if (!story) return null;
 
-  const {
-    title,
-    date,
-    readTime,
-    words = [],
-    content = "",
-    translation = "",
-  } = story;
+  const { title, storyEn, storyKo, createdAt } = story;
 
-  const lines = content ? content.split("\n") : [];
+  const content = storyEn || '';
+  const translation = storyKo || '';
+  const date = createdAt ? createdAt.slice(0, 10) : '';
+  const readTime = estimateReadTime(content);
+
+  const lines = content ? content.split('\n') : [];
 
   return (
     <div className="page-container">
@@ -131,7 +142,7 @@ const StoryDetailPage = () => {
               <h3>
                 <Book size={18} className="text-primary-500" /> 학습 단어
               </h3>
-              <span className="nav-badge" style={{ fontSize: "0.8rem" }}>
+              <span className="nav-badge" style={{ fontSize: '0.8rem' }}>
                 {words.length}
               </span>
             </div>
@@ -145,20 +156,18 @@ const StoryDetailPage = () => {
             <div className="vocab-list">
               {words.length > 0 ? (
                 words.map((item, idx) => {
-                  const isString = typeof item === "string";
-                  const text = isString ? item : item.text || item.word || "";
-                  const pos = !isString ? item.pos || item.type || "Word" : "Word";
-                  const meaning = !isString ? item.meaning || item.kor || "" : "";
+                  const isString = typeof item === 'string';
+                  const text = isString ? item : item.text || item.word || '';
+                  const pos = !isString ? item.pos || item.type || 'Word' : 'Word';
+                  const meaning = !isString ? item.meaning || item.kor || '' : '';
 
-                  const normalized = text ? text.toLowerCase() : "";
+                  const normalized = text ? text.toLowerCase() : '';
 
                   return (
                     <div
                       key={idx}
                       className="mini-word-card"
-                      onMouseEnter={() =>
-                        normalized && setActiveWord(normalized)
-                      }
+                      onMouseEnter={() => normalized && setActiveWord(normalized)}
                       onMouseLeave={() => setActiveWord(null)}
                     >
                       <div className="mini-word-header">
@@ -212,7 +221,7 @@ const StoryDetailPage = () => {
               <div className="story-korean">
                 <div className="ko-label">한국어 번역</div>
                 <p className="ko-paragraph">
-                  {translation || "번역이 제공되지 않았습니다."}
+                  {translation || '번역이 제공되지 않았습니다.'}
                 </p>
               </div>
             </article>

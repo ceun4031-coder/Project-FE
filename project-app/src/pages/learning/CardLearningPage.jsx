@@ -1,8 +1,11 @@
+// src/pages/learning/CardLearningPage.jsx
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { X, Circle } from 'lucide-react'; // 아이콘 임포트
 import { useLearningEngine } from './hooks/useLearningEngine';
 import { Flashcard } from './components/Flashcard';
-import { ProgressBar } from './components/ProgressBar';
 import './CardLearningPage.css';
+import { useEffect, useState } from "react";
+
 
 export default function CardLearningPage() {
   const [searchParams] = useSearchParams();
@@ -11,14 +14,15 @@ export default function CardLearningPage() {
   const source = searchParams.get('source') || 'card';
   const clusterId = searchParams.get('clusterId') || undefined;
   const wordIdsParam = searchParams.get('wordIds');
-  const wordIds = wordIdsParam ? wordIdsParam.split(',').map((x) => Number(x)) : undefined;
+  const wordIds = wordIdsParam
+    ? wordIdsParam.split(',').map((x) => Number(x))
+    : undefined;
   const limit = Number(searchParams.get('limit') || 20);
 
   const {
     current,
     currentIndex,
     total,
-    progress,
     loading,
     error,
     isFinished,
@@ -36,49 +40,127 @@ export default function CardLearningPage() {
     limit,
   });
 
-  const handleRetry = () => {
-    navigate(0);
+  // 변경: 다시 학습 -> 학습 홈으로 이동
+  const handleGoHome = () => {
+    navigate('/learning');
   };
 
   const handleGoQuiz = () => {
-    navigate('/learning/quiz?source=quiz&limit=10');
+    const quizSource = source === 'wrong-note' ? 'wrong-note' : 'quiz';
+    navigate(`/learning/quiz?source=${quizSource}&limit=10`);
   };
+
+  const isWrongMode = source === 'wrong-note';
+const [animateBars, setAnimateBars] = useState(false);
+
+useEffect(() => {
+  if (isFinished) {
+    // 다음 tick에 width 적용 → 애니메이션 시작
+    setTimeout(() => setAnimateBars(true), 50);
+  } else {
+    setAnimateBars(false);
+  }
+}, [isFinished]);
+
+  // 진행도 계산
+  const progressPercent =
+    total > 0 ? ((Math.min(currentIndex + 1, total) / total) * 100) : 0;
+
+  const pageClassName = `card-page ${isWrongMode ? 'card-page--wrong' : ''}`;
 
   if (loading) {
     return <div className="card-page card-page--loading">로딩 중...</div>;
   }
 
   if (error) {
-    return <div className="card-page card-page--error">카드 데이터를 불러오는 중 오류가 발생했습니다.</div>;
+    return (
+      <div className="card-page card-page--error">
+        카드 데이터를 불러오는 중 오류가 발생했습니다.
+      </div>
+    );
   }
 
   return (
-    <div className="card-page">
+    <div className={pageClassName}>
+      {!isFinished && (
       <header className="card-header">
-        <div>
-          <h1>카드 학습</h1>
-          <p className="card-header__subtitle">카드를 뒤집으며 단어를 학습합니다.</p>
-        </div>
-        <div className="card-header__meta">
-          <span>
+        <h1 className="cl-title">{isWrongMode ? '오답 카드 학습' : '카드 학습'}</h1>
+        <p className="cl-subtitle">
+          {isWrongMode
+            ? '틀렸던 단어들만 골라 카드를 뒤집으며 복습합니다.'
+            : '카드를 뒤집으며 단어를 학습합니다.'}
+        </p>
+
+        <div className="cl-progress-area">
+          <span className="cl-progress-count">
             {Math.min(currentIndex + 1, total)} / {total}
           </span>
-          <ProgressBar value={progress} />
+          <ProgressBar value={progressPercent} />
         </div>
       </header>
 
+      )}
+
       <main className="card-body">
         {isFinished ? (
-          <div className="card-result">
-            <h2>학습 완료</h2>
-            <p>알았다: {knownCount}개</p>
-            <p>모르겠다: {unknownCount}개</p>
-            <div className="card-result__actions">
-              <button onClick={handleRetry}>다시 학습</button>
-              <button onClick={handleGoQuiz}>객관식 퀴즈 풀기</button>
+             <div className="card-result card">
+              <h2>{isWrongMode ? '오답 복습 완료' : '학습 완료'}</h2>
+
+              {/* 통계 + 가로 바 카드 */}
+              <div className="stats-card">
+
+                {/* 알았다 */}
+                <div className="stat-row">
+                  <span className="stat-label">알았다</span>
+                  <span className="stat-value stat-known">{knownCount}개</span>
+                </div>
+                <div className="stat-bar">
+                  <div
+                    className="stat-bar-fill stat-known"
+                    style={{
+                      width: animateBars
+                        ? `${(knownCount / total) * 100}%`
+                        : "0%"
+                    }}
+                  />
+                </div>
+
+                {/* 모르겠다 */}
+                <div className="stat-row">
+                  <span className="stat-label">모르겠다</span>
+                  <span className="stat-value stat-unknown">{unknownCount}개</span>
+                </div>
+                <div className="stat-bar">
+                  <div
+                    className="stat-bar-fill stat-unknown"
+                    style={{
+                      width: animateBars
+                        ? `${(unknownCount / total) * 100}%`
+                        : "0%"
+                    }}
+                  />
+                </div>
+                {/* 총 학습 단어 */}
+                <div className="stat-row simple">
+                  <span className="stat-label">총 학습 단어</span>
+                  <span className="stat-value">{total}개</span>
+                </div>
+
+              </div>
+
+              {/* 버튼 영역 */}
+              <div className="result-buttons">
+                <button className="result-btn secondary" onClick={handleGoHome}>
+                  학습하기 홈으로
+                </button>
+
+                <button className="result-btn primary" onClick={handleGoQuiz}>
+                  {isWrongMode ? '오답 퀴즈 풀기' : '객관식 퀴즈 풀기'}
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
+
+            ) : (
           <>
             <Flashcard
               front={current?.frontText}
@@ -86,17 +168,44 @@ export default function CardLearningPage() {
               isFlipped={isFlipped}
               onToggle={toggleFlip}
             />
-            <footer className="card-footer">
-              <button type="button" onClick={markUnknown}>
-                모르겠다
+            
+            {/* 변경: 텍스트 버튼 -> O, X 아이콘 버튼 */}
+            <footer className="card-footer actions-ox">
+              <button 
+                type="button" 
+                className="btn-unknown" 
+                onClick={markUnknown}
+                aria-label="모르겠다"
+              >
+                <X size={32} />
               </button>
-              <button type="button" onClick={markKnown}>
-                알겠다
+              <button 
+                type="button" 
+                className="btn-known" 
+                onClick={markKnown}
+                aria-label="알겠다"
+              >
+                <Circle size={28} strokeWidth={3} />
               </button>
             </footer>
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+function ProgressBar({ value }) {
+  const safe = typeof value === 'number'
+    ? Math.min(Math.max(value, 0), 100)
+    : 0;
+
+  return (
+    <div className="card-progress">
+      <div
+        className="card-progress__fill"
+        style={{ width: `${safe}%` }}
+      />
     </div>
   );
 }

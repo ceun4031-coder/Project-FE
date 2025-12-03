@@ -1,90 +1,151 @@
 // src/components/common/Pagination.jsx
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useMemo } from "react";
+import {ChevronLeft,ChevronRight,} from "lucide-react";
 import "./Pagination.css";
 
-const Pagination = ({ page, totalPages, onChange }) => {
-  // page: 0-based index (0, 1, 2...)
-  // totalPages: total count (1, 2, 3...)
+const DOTS = "dots";
 
-  if (totalPages <= 1) return null;
+const getPaginationRange = ({
+  currentPage,
+  totalPages,
+  siblingCount = 1,
+  boundaryCount = 1,
+}) => {
+  const totalPageNumbers = boundaryCount * 2 + siblingCount * 2 + 3;
 
-  // 페이지 이동 핸들러
-  const handlePrev = () => {
-    if (page > 0) onChange(page - 1);
-  };
+  if (totalPages <= totalPageNumbers) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
 
-  const handleNext = () => {
-    if (page < totalPages - 1) onChange(page + 1);
-  };
-
-  // 페이지 번호 생성 로직
-  // (심플하게: 전체가 7페이지 이하면 다 보여주고, 아니면 현재 페이지 주변만 보여주는 방식도 가능하지만,
-  // 여기서는 우선 깔끔하게 전체 리스트를 슬라이딩하거나, 심플하게 최대 5~7개만 보여주는 로직을 제안합니다.)
-  // *이 예제는 가장 직관적인 '전체 렌더링' 방식에 '스크롤' 혹은 'flex-wrap' 대응이 된 CSS를 사용합니다.
-  // 만약 페이지가 100개가 넘어간다면 '...' 로직이 필요하지만, 학습용 앱 규모상 아래 방식이 가장 깔끔합니다.
-  
-  const getPageNumbers = () => {
-    const pages = [];
-    // 간단한 버전: 모든 페이지 번호 생성 (필요시 slice로 개수 제한 가능)
-    for (let i = 0; i < totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
-  };
-
-  const pageNumbers = getPageNumbers();
-
-  // 표시할 페이지 범위 계산 (선택사항: 너무 길면 자르기)
-  // 현재 페이지를 기준으로 앞뒤로 보여주기
-  const showEllipsis = totalPages > 7;
-  
-  // 렌더링 헬퍼
-  const renderPageButton = (i) => (
-    <button
-      key={i}
-      className={`pagination-number ${i === page ? "active" : ""}`}
-      onClick={() => onChange(i)}
-    >
-      {i + 1}
-    </button>
+  const leftSibling = Math.max(
+    currentPage - siblingCount,
+    boundaryCount + 2
+  );
+  const rightSibling = Math.min(
+    currentPage + siblingCount,
+    totalPages - boundaryCount - 1
   );
 
+  const showLeftDots = leftSibling > boundaryCount + 2;
+  const showRightDots = rightSibling < totalPages - boundaryCount - 1;
+
+  const range = [];
+
+  for (let i = 1; i <= boundaryCount; i += 1) range.push(i);
+
+  if (showLeftDots) {
+    range.push(DOTS);
+  } else {
+    for (let i = boundaryCount + 1; i < leftSibling; i += 1) {
+      range.push(i);
+    }
+  }
+
+  for (let i = leftSibling; i <= rightSibling; i += 1) {
+    range.push(i);
+  }
+
+  if (showRightDots) {
+    range.push(DOTS);
+  } else {
+    for (let i = rightSibling + 1; i <= totalPages - boundaryCount; i += 1) {
+      range.push(i);
+    }
+  }
+
+  for (let i = totalPages - boundaryCount + 1; i <= totalPages; i += 1) {
+    range.push(i);
+  }
+
+  return range;
+};
+
+const Pagination = ({
+  page, // 0-based
+  totalPages,
+  onChange,
+  siblingCount = 1,
+  boundaryCount = 1,
+}) => {
+  if (!totalPages || totalPages <= 1) return null;
+
+  const currentPage = page + 1;
+
+  const paginationRange = useMemo(
+    () =>
+      getPaginationRange({
+        currentPage,
+        totalPages,
+        siblingCount,
+        boundaryCount,
+      }),
+    [currentPage, totalPages, siblingCount, boundaryCount]
+  );
+
+  const canGoPrev = currentPage > 1;
+  const canGoNext = currentPage < totalPages;
+
+  const handleChange = (nextPage1Based) => {
+    if (
+      nextPage1Based < 1 ||
+      nextPage1Based > totalPages ||
+      nextPage1Based === currentPage
+    )
+      return;
+
+    onChange(nextPage1Based - 1);
+  };
+
   return (
-    <nav className="pagination-container" aria-label="Pagination">
+    <nav
+      className="pagination-container"
+      aria-label="Pagination"
+      role="navigation"
+    >
+      {/* 이전 페이지 (<) */}
       <button
-        className="pagination-btn prev"
-        onClick={handlePrev}
-        disabled={page === 0}
+        type="button"
+        className="pagination-btn"
+        onClick={() => handleChange(currentPage - 1)}
+        disabled={!canGoPrev}
         aria-label="Previous page"
       >
         <ChevronLeft size={20} />
       </button>
 
+      {/* 숫자 + … */}
       <div className="pagination-numbers">
-        {/* 페이지가 적을 때는 다 보여줌 */}
-        {!showEllipsis && pageNumbers.map((i) => renderPageButton(i))}
+        {paginationRange.map((item, idx) => {
+          if (item === DOTS) {
+            return (
+              <span key={`dots-${idx}`} className="pagination-ellipsis">
+                …
+              </span>
+            );
+          }
 
-        {/* 페이지가 많을 때 (간단한 로직: 처음, 끝, 현재 주변만 표시) */}
-        {showEllipsis && (
-          <>
-            {renderPageButton(0)}
-            {page > 2 && <span className="pagination-ellipsis">...</span>}
-            
-            {/* 현재 페이지 주변 */}
-            {pageNumbers
-              .slice(Math.max(1, page - 1), Math.min(totalPages - 1, page + 2))
-              .map((i) => renderPageButton(i))}
+          const isActive = item === currentPage;
 
-            {page < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
-            {renderPageButton(totalPages - 1)}
-          </>
-        )}
+          return (
+            <button
+              key={item}
+              type="button"
+              className={`pagination-number ${isActive ? "active" : ""}`}
+              onClick={() => handleChange(item)}
+              aria-current={isActive ? "page" : undefined}
+            >
+              {item}
+            </button>
+          );
+        })}
       </div>
 
+      {/* 다음 페이지 (>) */}
       <button
-        className="pagination-btn next"
-        onClick={handleNext}
-        disabled={page === totalPages - 1}
+        type="button"
+        className="pagination-btn"
+        onClick={() => handleChange(currentPage + 1)}
+        disabled={!canGoNext}
         aria-label="Next page"
       >
         <ChevronRight size={20} />

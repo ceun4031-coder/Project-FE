@@ -1,28 +1,31 @@
 /* src/components/layout/Header.css */
 
-/* ─ Root Header ─ */
 .header {
   position: sticky;
   top: 0;
   z-index: 40;
-
+  width: 100%;              /* 풀폭 배경 */
   background-color: var(--neutral-50);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(130, 130, 154, 0.12);
   box-shadow: 0 8px 20px rgba(108, 92, 231, 0.04);
 }
-
-/* 데스크톱: [로고][네비][액션] 3열 그리드 */
 .header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+
+  /* 기본은 좌우 여백 없음 */
+  padding-inline: 0;
+  padding-block: var(--space-2);
+
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas: "logo nav actions";
-
   align-items: center;
   min-height: 64px;
-  gap: var(--space-4);
-  padding-block: var(--space-2);
 }
+
+
 
 /* ─ Logo ─ */
 .header-logo {
@@ -172,12 +175,12 @@
 
 .header-profile:hover {
   filter: brightness(1.03);
-  box-shadow: 0 10px 22px rgba(108, 92, 231, 0.3);
+  box-shadow: 0 10px 12px rgba(108, 92, 231, 0.3);
 }
 
 .header-profile:active {
   transform: translateY(1px);
-  box-shadow: 0 4px 10px rgba(108, 92, 231, 0.18);
+  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.18);
 }
 
 .header-profile:focus-visible {
@@ -236,17 +239,25 @@
 }
 
 /* ─ Responsive ─ */
+@media (max-width: 1200px) {
+  .header-inner {
+    padding-inline: 24px;
+  }
+}
 
 /* 태블릿/작은 웹: 2줄 레이아웃 (1줄: 로고+액션, 2줄: 네비 전체폭) */
 @media (max-width: 1024px) {
-  .header-inner {
+ .header-inner {
     grid-template-columns: auto auto;
     grid-template-areas:
       "logo actions"
       "nav   nav";
     row-gap: 8px;
     min-height: auto;
+    /* 필요하면 이 구간에서 패딩 다시 조정 가능 */
+    padding-inline: 20px;
   }
+
 
   .header-nav {
     justify-content: center;
