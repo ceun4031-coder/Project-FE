@@ -61,6 +61,8 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--neutral-600);
+   line-height: 1;         /* 🔥 텍스트 높이 차이 제거 */
+  display: inline-block;  /* 🔥 baseline 차이 제거 */
 }
 
 /* 스테퍼 & 셀렉트: 기존 스타일 유지 */

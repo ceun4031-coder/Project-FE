@@ -1,28 +1,31 @@
 // src/pages/story/StoryListPage.jsx
-import { BookOpen, ChevronRight, Plus, Search } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronRight, Search, FileQuestion } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-import PageHeader from '../../components/common/PageHeader';
-import Pagination from '../../components/common/Pagination';
-import './StoryListPage.css';
-import { getStoryList } from '../../api/storyApi';
+import PageHeader from "../../components/common/PageHeader";
+import Pagination from "../../components/common/Pagination";
+import "./StoryListPage.css";
+import { getStoryList } from "../../api/storyApi";
 
 const PAGE_SIZE = 6;
 
 const StoryListPage = ({ stories = [] }) => {
   const navigate = useNavigate();
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [serverStories, setServerStories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 현재 페이지 인덱스 (URL 쿼리스트링 기준)
-  const currentPageIndex = Number(searchParams.get('page') || 0);
+  // 현재 페이지 인덱스 (URL 쿼리스트링 기준, 0-based)
+  const currentPageIndex = Number(searchParams.get("page") || 0);
 
   const handleSelectStory = (story) => navigate(`/stories/${story.id}`);
-  const handleCreateNew = () => navigate('/stories/create');
+
+  const handleGoLearning = () => {
+    navigate("/learning");
+  };
 
   // 서버에서 스토리 목록 로딩
   useEffect(() => {
@@ -33,13 +36,13 @@ const StoryListPage = ({ stories = [] }) => {
         const mapped = (res || []).map((item) => ({
           id: item.storyId,
           title: item.title,
-          excerpt: item.storyEn?.slice(0, 120) || '',
-          date: item.createdAt?.slice(0, 10) || '',
+          excerpt: item.storyEn?.slice(0, 120) || "",
+          date: item.createdAt?.slice(0, 10) || "",
           words: item.keywords || [],
         }));
         setServerStories(mapped);
       } catch (e) {
-        console.error('스토리 목록 로딩 실패:', e);
+        console.error("스토리 목록 로딩 실패:", e);
       } finally {
         setLoading(false);
       }
@@ -48,7 +51,7 @@ const StoryListPage = ({ stories = [] }) => {
     fetchStories();
   }, []);
 
-  // 전체 데이터 준비 (MOCK_STORIES 제거됨: 서버 데이터 우선, 없으면 props 사용)
+  // 전체 데이터 준비 (서버 데이터 우선, 없으면 props 사용)
   const sourceStories = useMemo(() => {
     const base = serverStories.length > 0 ? serverStories : stories;
     return [...base].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -75,9 +78,10 @@ const StoryListPage = ({ stories = [] }) => {
   const startIdx = safeIndex * PAGE_SIZE;
   const endIdx = startIdx + PAGE_SIZE;
 
-  const pagedStories = useMemo(() => {
-    return filteredStories.slice(startIdx, endIdx);
-  }, [filteredStories, startIdx, endIdx]);
+  const pagedStories = useMemo(
+    () => filteredStories.slice(startIdx, endIdx),
+    [filteredStories, startIdx, endIdx]
+  );
 
   const hasAnyStories = sourceStories.length > 0;
   const hasFilteredStories = filteredStories.length > 0;
@@ -86,7 +90,7 @@ const StoryListPage = ({ stories = [] }) => {
   const handlePageChange = (nextIndex) => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
-      params.set('page', String(nextIndex));
+      params.set("page", String(nextIndex));
       return params;
     });
     window.scrollTo(0, 0);
@@ -96,7 +100,7 @@ const StoryListPage = ({ stories = [] }) => {
     setSearchValue(e.target.value);
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
-      params.set('page', '0');
+      params.set("page", "0");
       return params;
     });
   };
@@ -120,11 +124,6 @@ const StoryListPage = ({ stories = [] }) => {
               onChange={handleSearchChange}
             />
           </div>
-
-          <button className="create-story-btn" onClick={handleCreateNew}>
-            <BookOpen size={18} />
-            <span>새 스토리 만들기</span>
-          </button>
         </section>
 
         <section className="story-grid">
@@ -141,23 +140,26 @@ const StoryListPage = ({ stories = [] }) => {
             </div>
           )}
 
-          {/* 데이터가 아예 없을 때 (첫 스토리 유도) */}
-          {!hasAnyStories && !loading && (
-            <article
-              className="story-card add-card"
-              onClick={handleCreateNew}
-              role="button"
-              tabIndex={0}
-            >
-              <div className="add-icon-wrapper">
-                <Plus size={32} />
-              </div>
-              <h3 className="add-card-title">첫 번째 스토리 만들기</h3>
-              <p className="add-card-desc">
-                학습한 단어를 활용해 문장을 만들어보세요.
-              </p>
-            </article>
-          )}
+        {/* 데이터가 아예 없을 때: 학습하기 유도 */}
+{!hasAnyStories && !loading && (
+  <div className="status-msg empty-search">
+    <div className="empty-icon-wrapper">
+      <FileQuestion size={64} strokeWidth={1.5} />
+    </div>
+    <p className="empty-title">AI 스토리가 아직 없습니다.</p>
+    <p className="empty-desc">
+      학습하기에서 퀴즈를 풀고, 나온 오답 단어들로 AI 스토리를 만들어 보세요.
+    </p>
+    <button
+      type="button"
+      className="reset-text-btn"
+      onClick={handleGoLearning}
+    >
+      학습하러 가기
+    </button>
+  </div>
+)}
+
 
           {/* 목록 렌더링 */}
           {hasFilteredStories &&

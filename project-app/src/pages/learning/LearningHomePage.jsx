@@ -9,7 +9,8 @@ import {
   BrainCircuit,
   ArrowRight,
   ChevronRight,
-  Library
+  Library,
+  ChevronDown
 } from "lucide-react";
 
 import PageHeader from "../../components/common/PageHeader";
@@ -18,7 +19,30 @@ import "./LearningHomePage.css";
 function LearningHomePage() {
   const navigate = useNavigate();
   const [questionCount, setQuestionCount] = useState(10);
-  const [level, setLevel] = useState("all");
+  const [level, setLevel] = useState("All");
+  const [domain, setDomain] = useState("All");
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  const toggleDropdown = (name) =>
+  setOpenDropdown((prev) => (prev === name ? null : name));
+
+  const LEVEL_OPTIONS = [
+  { label: "전체", value: "All" },
+  { label: "초급", value: "1" },
+  { label: "중급", value: "2" },
+  { label: "고급", value: "3" }
+];
+// 분야 필터 (domain)
+const DOMAIN_OPTIONS = [
+  { label: "전체 분야", value: "All" },
+  { label: "일상생활", value: "Daily Life" },
+  { label: "사람/감정", value: "People & Feelings" },
+  { label: "직장/비즈니스", value: "Business" },
+  { label: "학교/학습", value: "School & Learning" },
+  { label: "여행/교통", value: "Travel" },
+  { label: "음식/건강", value: "Food & Health" },
+  { label: "기술/IT", value: "Technology" },
+];
 
   const handleStepChange = (delta) => {
     setQuestionCount((prev) => {
@@ -74,7 +98,7 @@ function LearningHomePage() {
                   <button
                     type="button"
                     onClick={() => handleStepChange(5)}
-                    disabled={questionCount >= 50}
+                    disabled={questionCount >= 30}
                     aria-label="문항 수 5개 늘리기"
                   >
                     +
@@ -88,15 +112,60 @@ function LearningHomePage() {
                 <label htmlFor="difficulty" className="control-label">
                   난이도
                 </label>
-                <select
-                  id="difficulty"
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                >
-                  <option value="1">초급 (Lv.1)</option>
-                  <option value="2">중급 (Lv.2)</option>
-                  <option value="3">고급 (Lv.3)</option>
-                </select>
+                <div className="filter-group">
+                  <div className="dropdown-box">
+                    <button
+                      type="button"
+                      className="dropdown-btn no-select"
+                      onClick={() => toggleDropdown("level")}
+                    >
+                      {LEVEL_OPTIONS.find((opt) => opt.value === level)?.label}
+                      <ChevronDown size={14} className="arrow" />
+                    </button>
+                    {openDropdown === "level" && (
+                      <div className="dropdown-menu">
+                        {LEVEL_OPTIONS.map((opt) => (
+                          <div
+                            key={opt.value}
+                            className="dropdown-item"
+                            onClick={() => { setLevel(opt.value); setOpenDropdown(null); }}
+                          >
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="control-group">
+                <label htmlFor="domain" className="control-label">분야</label>
+                <div className="filter-group">
+                  <div className="dropdown-box">
+                    <button
+                      type="button"
+                      className="dropdown-btn no-select"
+                      onClick={() => toggleDropdown("domain")}
+                    >
+                      {DOMAIN_OPTIONS.find((opt) => opt.value === domain)?.label}
+                      <ChevronDown size={14} className="arrow" />
+                    </button>
+
+                    {openDropdown === "domain" && (
+                      <div className="dropdown-menu">
+                        {DOMAIN_OPTIONS.map((opt) => (
+                          <div
+                            key={opt.value}
+                            className="dropdown-item"
+                            onClick={() => { setDomain(opt.value); setOpenDropdown(null); }}
+                          >
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

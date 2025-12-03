@@ -1,0 +1,40 @@
+/* ProgressBar.css */
+
+.progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%; /* 부모 컨테이너에 맞게 꽉 차도록 */
+  min-width: 120px;
+}
+
+.progress-bar__track {
+  position: relative;
+  flex: 1;
+  height: 8px; /* 조금 더 도톰하게 가시성 확보 */
+  border-radius: 999px;
+  background-color: var(--neutral-100); /* #e2e8f0 대체 */
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  
+  /* 기존 초록/파랑 그라데이션 -> 브랜드 테마(보라색) 그라데이션으로 변경 */
+  background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+  
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 부드러운 애니메이션 */
+}
+
+/* 퀴즈 헤더에서는 이미 "1/5" 텍스트가 있으므로 % 라벨은 작고 은은하게 */
+.progress-bar__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--neutral-400); /* #64748b 대체 */
+  min-width: 32px;
+  text-align: right;
+}

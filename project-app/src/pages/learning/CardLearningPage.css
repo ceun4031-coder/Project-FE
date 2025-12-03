@@ -16,54 +16,50 @@
   color: #475569;
 }
 
-/* 헤더 */
+/* 제목 & 설명 중앙 정렬 */
 .card-header {
+  text-align: center;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
 }
 
-.card-header h1 {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.card-header__subtitle {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: #64748b;
-}
-
-.card-header__meta {
+/* 새로운 진행 영역 */
+.cl-progress-area {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  font-size: 0.9rem;
-  color: #475569;
+  gap: 6px;
+  margin-top: 4px;
 }
 
-/* 진행바 */
+.cl-progress-count {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--primary-600);
+}
+
+/* 진행바를 퀴즈 스타일로 변경 */
 .card-progress {
-  width: 120px;
+  width: 160px;
   height: 6px;
+  background: #e5e7eb;
   border-radius: 999px;
-  background-color: #e2e8f0;
   overflow: hidden;
 }
 
 .card-progress__fill {
   height: 100%;
+  background: linear-gradient(90deg, #6c5ce7, #4f46e5);
   border-radius: inherit;
-  background: linear-gradient(90deg, #6366f1, #3b82f6);
-  transition: width 0.2s ease-out;
+  transition: width 0.3s ease-in-out;
 }
+
 
 /* 본문 */
 .card-body {
-  margin-top: 8px;
+  margin-top: px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -208,11 +204,154 @@
   border-color: #bbf7d0;
 }
 
-.card-page--wrong .card-result {
-  border: 1px solid #fed7aa;
-  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.08);
+/* ===========================
+   StoryLex Stats Card + Horizontal Bars
+   =========================== */
+
+.stats-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.card-page--wrong .card-result h2 {
-  color: #9a3412;
+/* 기본 줄 */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 단순 수치 줄 */
+.stat-row.simple {
+  padding-top: 6px;
+}
+
+/* 라벨 */
+.stat-label {
+  color: #374151;
+  font-weight: 500;
+}
+
+/* 값 */
+.stat-value {
+  font-weight: 700;
+  color: #111827;
+}
+
+/* 보라(알았다) */
+.stat-known {
+  color: #6c5ce7;
+}
+
+/* 주황(모르겠다) */
+.stat-unknown {
+  color: #fb923c;
+}
+
+/* 가로 바 전체 */
+.stat-bar {
+  width: 100%;
+  height: 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 채워지는 부분 */
+.stat-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 8px;
+  transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 알았다 바 */
+.stat-bar-fill.stat-known {
+  background: #6c5ce7;
+}
+
+/* 모르겠다 바 */
+.stat-bar-fill.stat-unknown {
+  background: #fb923c;
+}
+
+/* 버튼 영역 */
+.result-buttons {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+/* ===========================
+   StoryLex 결과 버튼 스타일
+   =========================== */
+
+.result-buttons {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* 공통 버튼 스타일 */
+.result-btn {
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+/* ▶ Primary : 보라색 버튼 */
+.result-btn.primary {
+  background: #6c5ce7;
+  color: white;
+  box-shadow: 0 3px 8px rgba(108, 92, 231, 0.25);
+}
+
+.result-btn.primary:hover {
+  background: #5a4adb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(108, 92, 231, 0.35);
+}
+
+/* ▶ Secondary : 회색 버튼 */
+.result-btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.result-btn.secondary:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+/* ===========================
+   오답 노트 모드 전용 Primary 버튼 (주황색)
+   =========================== */
+
+.card-page--wrong .result-btn.primary {
+  background: #fb923c !important;   /* 주황색 */
+  color: white !important;
+  box-shadow: 0 3px 8px rgba(251, 146, 60, 0.35);
+}
+
+.card-page--wrong .result-btn.primary:hover {
+  background: #f97316 !important;  /* 더 진한 주황 Hover */
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.45);
+  transform: translateY(-2px);
+}
+.card-page .card-result {
+  margin-top: 80px;
 }

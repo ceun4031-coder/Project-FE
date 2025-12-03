@@ -261,12 +261,29 @@ export const getUnusedWrongLogs = async () => {
     console.log("[Mock] 스토리 미사용 오답 목록 조회");
 
     // StoryCreatePage 에서 기대하는 형태에 맞춤
-    return [
-      { wrongWordId: 1, wordId: 101, word: "ambiguous", meaning: "애매모호한" },
-      { wrongWordId: 2, wordId: 102, word: "mitigate", meaning: "완화하다" },
-      { wrongWordId: 3, wordId: 103, word: "scrutinize", meaning: "세밀히 조사하다" },
-      { wrongWordId: 4, wordId: 104, word: "fluctuate", meaning: "변동하다" },
-    ];
+// StoryCreatePage 에서 기대하는 형태에 맞춤
+return [
+  { wrongWordId: 1, wordId: 101, word: "ambiguous", meaning: "애매모호한" },
+  { wrongWordId: 2, wordId: 102, word: "mitigate", meaning: "완화하다" },
+  { wrongWordId: 3, wordId: 103, word: "scrutinize", meaning: "세밀히 조사하다" },
+  { wrongWordId: 4, wordId: 104, word: "fluctuate", meaning: "변동하다" },
+  { wrongWordId: 5, wordId: 105, word: "comprehensive", meaning: "포괄적인" },
+  { wrongWordId: 6, wordId: 106, word: "deteriorate", meaning: "악화되다" },
+  { wrongWordId: 7, wordId: 107, word: "equivalent", meaning: "동등한" },
+  { wrongWordId: 8, wordId: 108, word: "hypothesis", meaning: "가설" },
+  { wrongWordId: 9, wordId: 109, word: "inevitable", meaning: "피할 수 없는" },
+  { wrongWordId: 10, wordId: 110, word: "lucrative", meaning: "수익성이 좋은" },
+  { wrongWordId: 11, wordId: 111, word: "meticulous", meaning: "꼼꼼한" },
+  { wrongWordId: 12, wordId: 112, word: "negligible", meaning: "무시해도 될 정도의" },
+  { wrongWordId: 13, wordId: 113, word: "obsolete", meaning: "구식의" },
+  { wrongWordId: 14, wordId: 114, word: "persistent", meaning: "끈질긴" },
+  { wrongWordId: 15, wordId: 115, word: "redundant", meaning: "불필요한" },
+  { wrongWordId: 16, wordId: 116, word: "skeptical", meaning: "회의적인" },
+  { wrongWordId: 17, wordId: 117, word: "tangible", meaning: "유형의" },
+  { wrongWordId: 18, wordId: 118, word: "unanimous", meaning: "만장일치의" },
+  { wrongWordId: 19, wordId: 119, word: "versatile", meaning: "다재다능한" },
+  { wrongWordId: 20, wordId: 120, word: "vulnerable", meaning: "취약한" },
+];
   }
 
   const res = await httpClient.get("/api/wrong/unused");

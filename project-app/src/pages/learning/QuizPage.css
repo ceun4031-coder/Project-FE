@@ -212,6 +212,13 @@
   flex-direction: column;
   align-items: center;
 }
+.result-actions {
+  width: 100%;
+  margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .score-circle {
   width: 140px;
@@ -251,6 +258,17 @@
   margin-bottom: var(--space-10);
   font-size: 1rem;
 }
+/* 🔥 오답 모드(theme-orange)일 때 버튼 */
+.quiz-page-wrapper.theme-orange .result-actions button:first-child {
+  background-color: #fdcb91 !important;   
+  color: #FFFFFF !important;
+  border: 1px solid #fcbf7a  !important;     
+}
+
+/* Hover 효과 */
+.quiz-page-wrapper.theme-orange .result-actions button:first-child:hover {
+  background-color: #fcbf7a  !important;     
+}
 
 /* ───── Utils ───── */
 .result-icon { margin-left: var(--space-2); }
@@ -275,4 +293,30 @@
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
+}
+/* 🔥 오답 모드(theme-orange) Back 버튼 상태별 스타일 */
+
+/* 기본 상태: 흰색 배경 */
+.quiz-page-wrapper.theme-orange .quiz-header button {
+  background-color: #ffffff !important;  /* 흰색 */
+  border: 1px solid #fdc18a !important;  
+  transition: all 0.15s ease;
+}
+
+/* Hover 상태: 살짝 연한 주황 */
+.quiz-page-wrapper.theme-orange .quiz-header button:hover {
+  background-color: #fff4e6 !important;  /* 연한 주황 */
+  border-color: #fdc18a !important;
+}
+
+/* Active 상태(클릭 순간): 진한 주황 */
+.quiz-page-wrapper.theme-orange .quiz-header button:active {
+  background-color: #f97316 !important;  /* 진한 주황 */
+  border-color: #f97316 !important;
+}
+
+/* 화살표 아이콘 색 (기본/hover/active 모두 동일하게 주황색 유지) */
+.quiz-page-wrapper.theme-orange .quiz-header svg,
+.quiz-page-wrapper.theme-orange .quiz-header button svg {
+  stroke: #f97316 !important;
 }

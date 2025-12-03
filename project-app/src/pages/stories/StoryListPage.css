@@ -1,3 +1,5 @@
+/* src/pages/story/StoryListPage.css */
+
 /* =========================================
    1. 페이지 레이아웃
    ========================================= */
@@ -9,11 +11,11 @@
 }
 
 /* =========================================
-   2. 컨트롤 영역 (검색 + 생성 버튼)
+   2. 컨트롤 영역 (검색)
    ========================================= */
 .story-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: var(--space-8);
   gap: 16px;
@@ -46,7 +48,8 @@
   color: var(--neutral-800);
   font-size: 0.95rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 .search-input::placeholder {
   color: var(--neutral-400);
@@ -55,33 +58,6 @@
   border-color: var(--primary-400);
   box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
   outline: none;
-}
-
-/* 스토리 생성 버튼 */
-.create-story-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--primary-500), #8e7bf5);
-  color: #fff;
-  border: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-  white-space: nowrap;
-}
-.create-story-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(108, 92, 231, 0.4);
-  filter: brightness(1.03);
-}
-.create-story-btn:focus-visible {
-  outline: 2px solid var(--primary-500);
-  outline-offset: 3px;
 }
 
 /* =========================================
@@ -98,7 +74,7 @@
   background-color: var(--surface-1);
   border-radius: 24px;
   padding: 24px;
-  border: 1px solid var(--border-subtle); /* 경계 명확히 */
+  border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
@@ -155,7 +131,7 @@
   background-color: var(--neutral-100);
   color: var(--neutral-600);
   padding: 4px 12px;
-  border-radius: 999px; /* 사이트 전체 pill 스타일과 맞춤 */
+  border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -188,57 +164,66 @@
 }
 
 /* =========================================
-   4. 특수 카드 (Empty / Add)
+   4. Empty 상태
    ========================================= */
-.empty-msg {
-  text-align: center;
-  padding: 80px 0;
-  color: var(--neutral-500);
-  grid-column: 1 / -1;
-}
-
-/* 스토리 추가 카드 */
-.add-card {
-  border: 2px dashed var(--border-subtle);
-  background-color: var(--neutral-50);
-  box-shadow: none;
+/* 결과 없음 상태 (단어장과 동일 + grid 전체 폭 사용) */
+.status-msg.empty-search {
+  grid-column: 1 / -1;          /* 그리드 전체 폭 사용 */
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 80px 0;
   text-align: center;
+  min-height: 400px;
+  animation: fadeIn 0.3s ease-in-out;
 }
-.add-card:hover {
-  background-color: #fff;
-  border-color: var(--primary-400);
-  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.12);
-}
-.add-icon-wrapper {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--neutral-100);
-  color: var(--neutral-600);
+
+.empty-icon-wrapper {
+  margin-bottom: 24px;
+  color: var(--neutral-300);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
-  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  width: 100px;
+  height: 100px;
+  background-color: var(--neutral-50);
+  border-radius: 50%;
 }
-.add-card:hover .add-icon-wrapper {
-  background: var(--primary-100);
-  color: var(--primary-600);
-  transform: translateY(-1px);
-}
-.add-card-title {
-  font-size: 1.2rem;
+
+.empty-title {
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--neutral-800);
-  margin: 0 0 8px 0;
+  margin-bottom: 8px;
 }
-.add-card-desc {
-  font-size: 0.9rem;
+
+.empty-desc {
+  font-size: 0.95rem;
   color: var(--neutral-500);
-  margin: 0;
+  margin-bottom: 24px;
 }
+
+.reset-text-btn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-500);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: all 0.2s ease;
+}
+
+.reset-text-btn:hover {
+  color: var(--primary-700);
+  background-color: var(--primary-50);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
 
 /* =========================================
    5. 반응형
@@ -261,9 +246,5 @@
   }
   .search-wrapper {
     width: 100%;
-  }
-  .create-story-btn {
-    width: 100%;
-    justify-content: center;
   }
 }
