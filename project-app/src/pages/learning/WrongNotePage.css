@@ -11,18 +11,18 @@
   gap: 20px;
 }
 
+/* ===== 헤더 ===== */
+
 .wrongnote-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
+  justify-content: center;   /* 타이틀 중앙 정렬 */
+  align-items: center;
 }
 
 .wrongnote-header__main {
-  flex: 1 1 auto;
+  text-align: center;
 }
 
-/* 기존 h1 / subtitle 스타일은 그대로 사용 */
 .wrongnote-header h1 {
   margin: 0;
   font-size: 1.6rem;
@@ -36,128 +36,6 @@
   color: #9ca3af;
 }
 
-/* 헤더 우측 필터 드롭다운 2개 */
-
-.wrongnote-header__filters {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.wrongnote-header__filters label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-.wrongnote-header__filters select {
-  min-width: 150px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 0.88rem;
-  color: #111827;
-  outline: none;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.wrongnote-header__filters select:focus {
-  border-color: var(--primary-400, #818cf8);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
-  background: #ffffff;
-}
-
-/* ===========================
-   필터 카드 (상단 옵션 영역)
-   =========================== */
-
-.wrongnote-filters {
-  margin-top: 8px;
-  background: #f9fafb;
-  border-radius: 20px;
-  padding: 16px 20px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.04);
-}
-
-.wrongnote-filter-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-end;
-}
-
-.wrongnote-filter-group label {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.8rem;
-  color: #6b7280;
-  gap: 4px;
-}
-
-/* 인풋/셀렉트 스타일 – 학습하기 페이지 상단 옵션 느낌 */
-
-.wrongnote-filter-group input[type="date"],
-.wrongnote-filter-group select {
-  min-width: 150px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 0.88rem;
-  color: #111827;
-  outline: none;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.wrongnote-filter-group input[type="date"]:focus,
-.wrongnote-filter-group select:focus {
-  border-color: var(--primary-400, #818cf8);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
-  background: #ffffff;
-}
-
-/* 다시 불러오기 버튼 – 상단 네이비/퍼플 CTA 느낌 */
-
-.wrongnote-filter-group button {
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: none;
-  background: #020617;
-  color: #f9fafb;
-  font-size: 0.86rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-  transition:
-    background-color 0.15s ease,
-    transform 0.06s ease,
-    box-shadow 0.12s ease,
-    opacity 0.12s ease;
-}
-
-.wrongnote-filter-group button:hover:not(:disabled) {
-  background: #0f172a;
-  transform: translateY(-1px);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.3);
-}
-
-.wrongnote-filter-group button:disabled {
-  opacity: 0.6;
-  cursor: default;
-  box-shadow: none;
-}
-
 /* ===========================
    리스트 카드
    =========================== */
@@ -166,7 +44,7 @@
   margin-top: 4px;
   background-color: #ffffff;
   border-radius: 24px;
-  padding: 0;
+  padding: 6;
   border: 1px solid #e5e7eb;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.04);
   overflow: hidden;
@@ -181,7 +59,9 @@
   color: #9ca3af;
 }
 
-/* 테이블 */
+/* ===========================
+   테이블
+   =========================== */
 
 .wrongnote-table {
   width: 100%;
@@ -215,19 +95,49 @@
   border-bottom: none;
 }
 
-/* 행 hover – 살짝 하이라이트 */
-
 .wrongnote-table tbody tr:hover {
   background-color: #f9fafb;
 }
 
-/* 체크박스 */
+/* ===========================
+   체크박스 (오렌지 스타일)
+   =========================== */
 
+/* 체크박스 기본 스타일 */
 .wrongnote-table input[type="checkbox"] {
   width: 16px;
   height: 16px;
+  appearance: none;
+  border: 2px solid #d1d5db; 
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  background-color: #ffffff;
+}
+/* hover 시  */
+.wrongnote-table input[type="checkbox"]:hover {
+  border-color: #fb923c; 
+}
+/* 체크된 상태 */
+.wrongnote-table input[type="checkbox"]:checked {
+  background-color: #fb923c; 
+  border-color: #fb923c;      
 }
 
+/* 체크 표시 */
+.wrongnote-table input[type="checkbox"]:checked::after {
+  content: "✔";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -58%);
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  pointer-events: none;
+}
 /* 난이도/스토리 뱃지 */
 
 .badge {
@@ -240,7 +150,7 @@
 }
 
 .badge--used {
-  background-color: rgba(251, 146, 60, 0.12); /* 오렌지 계열 */
+  background-color: rgba(251, 146, 60, 0.12); 
   color: #ea580c;
 }
 
@@ -248,18 +158,21 @@
   background-color: rgba(148, 163, 184, 0.12);
   color: #6b7280;
 }
+/* ===========================
+   상단 액션 바 (리스트 안)
+   =========================== */
+
 .wrongnote-actions {
-  margin-top: 16px;
-  background: #f9fafb;
-  border-radius: 20px;
-  padding: 10px 16px;
-  border: 1px solid #e5e7eb;
+  padding: 16px 20px 6px;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.03);
 }
 
 .wrongnote-actions__left {
@@ -278,17 +191,19 @@
   gap: 8px;
 }
 
-/* 공통 버튼 스타일 (pill) – 세 버튼 모두 동일하게 보이게 */
+/* 버튼: 기본 회색, hover 주황 pill 스타일 */
 
 .wrongnote-actions button {
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;     /* 기본 회색 테두리 */
   background-color: #ffffff;
-  color: #111827;
+  color: #6b7280;                 /* 회색 텍스트 */
   font-size: 0.86rem;
   font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
+  appearance: none;               /* 브라우저 기본 버튼 스타일 제거 */
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -299,17 +214,56 @@
 }
 
 .wrongnote-actions button:not(:disabled):hover {
-  background-color: #111827;
-  color: #f9fafb;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.25);
+  background-color: #fb923c;      /* hover 주황 */
+  color: #ffffff;
+  border-color: #fb923c;
+  box-shadow: 0 10px 26px rgba(251, 146, 60, 0.35);
   transform: translateY(-1px);
 }
 
 .wrongnote-actions button:disabled {
   opacity: 0.5;
   cursor: default;
-  box-shadow: none;
   background-color: #ffffff;
+  color: #9ca3af;
+  border-color: #d1d5db;
+  box-shadow: none;
+}
+
+
+/* ===========================
+   스토리 드롭다운 메뉴
+   =========================== */
+
+.story-filter-header {
+  position: relative;
+  cursor: pointer;
+}
+
+.story-filter-menu {
+  position: absolute;
+  top: 28px;
+  left: 0;
+  width: 100px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  z-index: 50;
+  padding: 6px 0;
+}
+
+.story-filter-menu div {
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  color: #6b7280; /* 헤더톤과 동일 */
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.story-filter-menu div:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 /* ===========================
@@ -321,11 +275,6 @@
     padding: 20px 12px 28px;
   }
 
-  .wrongnote-filter-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .wrongnote-actions {
     flex-direction: column;
     align-items: flex-start;
@@ -334,11 +283,8 @@
   .wrongnote-actions__right {
     width: 100%;
     justify-content: flex-start;
-    flex-wrap: wrap;
   }
 
-  /* 모바일에서는 테이블을 카드형으로 전환해도 되지만
-     필요 없으면 아래 블록은 제거해도 된다. */
   .wrongnote-table thead {
     display: none;
   }
@@ -361,107 +307,72 @@
     font-size: 0.9rem;
   }
 
-  .wrongnote-table td:first-child {
-    padding-top: 10px;
-  }
-
   .wrongnote-pagination {
     justify-content: center;
   }
 }
-/* ===========================================================
-   StoryLex Checkbox — 안정형(깨짐 방지)
-   =========================================================== */
+/* ===========================
+   액션 드롭다운
+   =========================== */
 
-.sl-checkbox {
-  appearance: none !important;
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--neutral-300) !important;
-  border-radius: 4px;
-  background: var(--neutral-50) !important;
-  cursor: pointer;
-  position: relative; /* ::after 기준점 */
-  transition: 0.15s ease;
-}
-
-.sl-checkbox:hover {
-  border-color: var(--primary-400) !important;
-}
-
-.sl-checkbox:checked {
-  background: var(--primary-500) !important;
-  border-color: var(--primary-500) !important;
-}
-
-/* 체크 표시 — 항상 정중앙에 고정 */
-.sl-checkbox:checked::after {
-  content: "✔";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -56%); /* 정확한 수직 균형 */
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  pointer-events: none;
-}
-
-/* ==========================================================
-   StoryLex WrongNote Bottom Buttons
-   ========================================================== */
-
-/* 기본 상태 → 흰색 그대로 유지 */
-.sl-btn {
-  padding: 8px 14px;
-  border-radius: 999px;
-  background-color: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  color: #111827 !important;
-  font-size: 0.86rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-/* hover 시 보라색 */
-.sl-btn:hover:not(:disabled) {
-  background-color: var(--primary-500) !important;
-  color: white !important;
-  border-color: var(--primary-500) !important;
-}
-
-/* 클릭한 버튼(activeAction일 때) → 보라색 유지 */
-.sl-btn-primary {
-  background-color: var(--primary-500) !important;
-  border-color: var(--primary-500) !important;
-  color: #fff !important;
-}
-
-/* active 상태 hover */
-.sl-btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-600) !important;
-}
-/* 타이틀만 가운데 정렬 (필터는 오른쪽 유지) */
-.wrongnote-header {
+.wrongnote-actions-dropdown {
+  padding: 14px 20px 8px;
   display: flex;
-  justify-content: center; /* 타이틀 중앙 */
+  justify-content: space-between;
   align-items: center;
+}
+
+.wrongnote-actions-dropdown-wrapper {
   position: relative;
 }
 
-/* 타이틀과 설명을 포함한 영역을 정중앙에 위치 */
-.wrongnote-header__main {
-  text-align: center;
-  margin-bottom: 10px; /* 타이틀 아래 간격 조절 */
+/* 드롭다운 버튼 스타일 */
+.action-dropdown-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: 0.15s ease;
 }
 
-/* 필터는 원래 위치(오른쪽)로 복귀 */
-.wrongnote-header__filters {
+.action-dropdown-btn:hover:not(:disabled) {
+  border-color: #fb923c;
+  color: #fb923c;
+}
+
+.action-dropdown-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* 드롭다운 메뉴 */
+.action-dropdown-menu {
   position: absolute;
+  top: 42px;
   right: 0;
-  bottom: 0;
-  display: flex;
-  gap: 12px;
-  align-items: center;
+
+  width: 150px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 6px 0;
+  z-index: 50;
+}
+
+.action-dropdown-menu div {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.action-dropdown-menu div:hover {
+  background: #f3f4f6;
+  color: #111827;
 }
