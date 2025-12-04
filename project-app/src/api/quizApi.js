@@ -22,14 +22,18 @@ const normalizeQuizItem = (raw, index) => {
 
   // 백엔드가 이런 형태로 줄 수도 있다고 가정:
   // { quizId, questionText, choices, answerIndex }
-  const id = raw.quizId ?? raw.id ?? index ?? 0;
+  // { wordId, word, options, answerIndex } 등
+  const id = raw.quizId ?? raw.id ?? raw.wordId ?? index ?? 0;
+
   const question =
     raw.questionText ??
     raw.question ??
-    raw.word ??
+    raw.word ?? // word만 오는 경우에도 처리
     raw.prompt ??
     "질문 내용이 없습니다.";
+
   const options = raw.options ?? raw.choices ?? [];
+
   const answer =
     typeof raw.answerIndex === "number"
       ? raw.answerIndex
@@ -55,7 +59,7 @@ const normalizeQuizListResponse = (data) => {
     return data.questions.map(normalizeQuizItem).filter(Boolean);
   }
 
-  // 3) 그 외는 빈 배열
+  // 필요하면 여기서 { items: [...] } 등 추가 대응 가능
   return [];
 };
 
@@ -74,13 +78,22 @@ export const fetchQuizzes = async (params) => {
 
     const res = await httpClient.get("/api/quiz", {
       params: {
-        mode,                    // normal | wrong
-        count: params.limit,     // 백엔드 명세 주석: /api/quiz?mode=normal&count=10&level=1
+        mode,               // normal | wrong
+        count: params.limit, // 백엔드 명세: /api/quiz?mode=normal&count=10&level=1
         level: params.level,
       },
     });
 
-    return normalizeQuizListResponse(res.data);
+    const list = normalizeQuizListResponse(res.data);
+
+    // 백엔드가 count를 무시하고 더 많이 줘도 프론트에서 제한
+    const limit = typeof params.limit === "number"
+      ? params.limit
+      : Number(params.limit);
+
+    return Number.isFinite(limit) && limit > 0
+      ? list.slice(0, limit)
+      : list;
   } catch (error) {
     console.error("Quiz Fetch Error:", error);
     throw error;
@@ -181,7 +194,8 @@ const mockFetchQuizzes = (params) => {
             },
           ];
 
-      resolve(mockData.slice(0, Number(params.limit)));
+      const limit = Number(params.limit) || mockData.length;
+      resolve(mockData.slice(0, limit));
     }, 600);
   });
 };

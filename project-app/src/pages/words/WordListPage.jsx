@@ -20,6 +20,7 @@ import {
 import PageHeader from "../../components/common/PageHeader";
 import Pagination from "../../components/common/Pagination";
 import Card from "../../components/common/Card";
+import Spinner from "../../components/common/Spinner";
 import "./WordListPage.css";
 
 // --- 상수 데이터 (기존과 동일) ---
@@ -377,8 +378,10 @@ function WordListPage() {
       <section className="wordlist-content">
         {loading && (
           <div className="status-msg loading">
-            <div className="spinner"></div>
-            <span>단어장을 불러오는 중입니다...</span>
+             <Spinner
+              fullHeight={false}
+              message="단어장을 불러오는 중입니다..."
+            />
           </div>
         )}
 

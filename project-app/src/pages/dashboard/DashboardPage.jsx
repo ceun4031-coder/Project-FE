@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import Spinner from "../../components/common/Spinner";
+
 import {
   getDailyGoal,
   getDashboardStats,
@@ -26,7 +28,6 @@ const getTimeBasedGreeting = () => {
 };
 
 const DashboardPage = () => {
-  // ... (상태 관리 및 useEffect 로직은 기존과 동일) ...
   const { user: realUser } = useAuth();
   const navigate = useNavigate();
 
@@ -40,7 +41,6 @@ const DashboardPage = () => {
 
   useEffect(() => {
     setGreeting(getTimeBasedGreeting());
-    // ... (Mock 및 API 호출 로직 유지) ...
     if (USE_MOCK) {
       setTimeout(() => {
         setCurrentUser({ nickname: "홍길동", email: "test@example.com" });
@@ -68,32 +68,34 @@ const DashboardPage = () => {
     if (!realUser) return;
     setCurrentUser(realUser);
     setLoading(true);
+   Promise.all([getDailyGoal(), getDashboardStats(), getWeeklyStudy()])
+      .then(([dailyGoalObj, statsObj, weeklyArr]) => {
+        // 세 개 모두 이미 정규화된 값
+        setDailyGoalData(dailyGoalObj);
+        setStatsData(statsObj);
+        setWeeklyData(weeklyArr);
 
-    Promise.all([getDailyGoal(), getDashboardStats(), getWeeklyStudy()])
-      .then(([dailyRes, statsRes, weeklyRes]) => {
-        setDailyGoalData(dailyRes?.data || null);
-        setStatsData(statsRes?.data || null);
-        const rawWeekly = weeklyRes?.data?.items || weeklyRes?.data || [];
-        const normalized = Array.isArray(rawWeekly)
-          ? rawWeekly.map((d) => ({
-              date: d.date || d.day || d.baseDate,
-              learnedCount: d.learnedCount ?? d.studyCount ?? 0,
-              wrongCount: d.wrongCount ?? d.incorrectCount ?? 0,
-            }))
-          : [];
-        setWeeklyData(normalized);
+        // 오답 Top5는 당분간 더미
         setWrongWordsList([
-           { id: 1, word: "Vocabulary", meaning: "어휘", count: 3 },
-           { id: 2, word: "React", meaning: "반응하다", count: 2 },
-        ]); 
+          { id: 1, word: "Vocabulary", meaning: "어휘", count: 3 },
+          { id: 2, word: "React", meaning: "반응하다", count: 2 },
+          { id: 2, word: "React", meaning: "반응하다", count: 2 },
+          { id: 2, word: "React", meaning: "반응하다", count: 2 },
+          { id: 2, word: "React", meaning: "반응하다", count: 2 },
+        ]);
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [realUser]);
-
   if (loading || !currentUser || !dailyGoalData) {
-    return <div className="dashboard-loading"><div className="spinner" /></div>;
-  }
+  return (
+    <Spinner
+      fullHeight={true}
+      message="대시보드를 불러오는 중입니다..."
+    />
+  );
+}
+
 
   const goal = dailyGoalData.dailyGoal || 50;
   const learned = dailyGoalData.todayProgress || 0;

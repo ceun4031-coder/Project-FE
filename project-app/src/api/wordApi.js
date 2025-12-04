@@ -33,36 +33,94 @@ let mockWordList = [
     exampleSentenceEn: "We need to negotiate a better price.",
     exampleSentenceKo: "우리는 더 나은 가격을 협상해야 한다.",
   },
-  // ... 필요시 Mock 데이터 추가
+  {
+    wordId: 3,
+    word: "Beautiful",
+    meaning: "아름다운",
+    partOfSpeech: "Adjective",
+    domain: "Daily Life",
+    category: "Daily Life",
+    level: 1,
+    isFavorite: false,
+    isCompleted: true,
+    exampleSentenceEn: "It is a beautiful day today.",
+    exampleSentenceKo: "오늘은 아름다운 날이다.",
+  },
+  {
+    wordId: 4,
+    word: "Quickly",
+    meaning: "빠르게",
+    partOfSpeech: "Adverb",
+    domain: "Daily Life",
+    category: "Daily Life",
+    level: 2,
+    isFavorite: true,
+    isCompleted: true,
+    exampleSentenceEn: "She quickly finished her homework.",
+    exampleSentenceKo: "그녀는 숙제를 빠르게 끝냈다.",
+  },
+  {
+    wordId: 5,
+    word: "Strategy",
+    meaning: "전략",
+    partOfSpeech: "Noun",
+    domain: "Business",
+    category: "Business",
+    level: 2,
+    isFavorite: false,
+    isCompleted: false,
+    exampleSentenceEn: "We need a new strategy for marketing.",
+    exampleSentenceKo: "우리는 마케팅을 위한 새로운 전략이 필요하다.",
+  },
+  {
+    wordId: 6,
+    word: "Implement",
+    meaning: "실행하다",
+    partOfSpeech: "Verb",
+    domain: "Business",
+    category: "Business",
+    level: 3,
+    isFavorite: false,
+    isCompleted: true,
+    exampleSentenceEn: "The company will implement the new policy.",
+    exampleSentenceKo: "회사는 새로운 정책을 실행할 것이다.",
+  },
 ];
 
 const mockDelay = (result, ms = 200) =>
   new Promise((resolve) => setTimeout(() => resolve(result), ms));
 
-// 품사 값 통일: db / api 값 → 프론트 공통 포맷
+/**
+ * 품사 값 통일: DB / API 값 → 프론트 공통 포맷
+ * - 소문자, 축약형 등 섞여 들어와도 UI에서는 Noun/Verb/Adj/Adv로 통일
+ */
 const normalizePartOfSpeech = (raw) => {
   if (!raw) return null;
   const v = String(raw).trim().toLowerCase();
 
   switch (v) {
     case "noun":
+    case "n":
       return "Noun";
     case "verb":
+    case "v":
       return "Verb";
     case "adjective":
+    case "adj":
       return "Adj";
     case "adverb":
+    case "adv":
       return "Adv";
     default:
-      // 혹시 모르는 값: 첫 글자만 대문자로
+      // 그 외는 첫 글자만 대문자로
       return v.charAt(0).toUpperCase() + v.slice(1);
   }
 };
 
-// -----------------------------------------------------
-// 공통 매핑: 백엔드/Mock → 프론트 공통 형태
-// FavoriteWordResponse / Word 엔티티 공통 대응
-// -----------------------------------------------------
+/**
+ * 공통 매핑: 백엔드/Mock → 프론트 공통 형태
+ * - Word / Favorite / Completed 응답을 한 번에 처리
+ */
 const mapWordFromApi = (w) => {
   // 이상한 값 들어오면 안전한 기본값
   if (!w || typeof w !== "object") {
@@ -75,7 +133,7 @@ const mapWordFromApi = (w) => {
       partOfSpeech: null,
       domain: null,
       category: null,
-      level: null,
+      level: 1,
       isFavorite: false,
       isCompleted: false,
       exampleSentence: "",
@@ -84,7 +142,7 @@ const mapWordFromApi = (w) => {
     };
   }
 
-  // level / wordLevel 둘 다 대응
+  // level / wordLevel 둘 다 대응 + 기본값 1
   let levelValue = null;
   if (typeof w.level === "number") {
     levelValue = w.level;
@@ -97,6 +155,9 @@ const mapWordFromApi = (w) => {
     const n = Number(w.wordLevel);
     levelValue = Number.isNaN(n) ? null : n;
   }
+  if (levelValue == null) {
+    levelValue = 1;
+  }
 
   const hasExampleSentence =
     typeof w.exampleSentence === "string" &&
@@ -106,10 +167,13 @@ const mapWordFromApi = (w) => {
     ? w.exampleSentence
     : typeof w.exampleSentenceEn === "string"
     ? w.exampleSentenceEn
+    : typeof w.exampleEn === "string"
+    ? w.exampleEn
     : "";
 
   const id = w.id != null ? w.id : null;
-  // Word 목록: wordId, Favorite 목록: id + wordId 둘 다 존재
+
+  // Word 목록: wordId / Favorite 목록: id + wordId 둘 다 존재 가능
   const wordId =
     w.wordId != null
       ? w.wordId
@@ -117,12 +181,28 @@ const mapWordFromApi = (w) => {
       ? w.id
       : null;
 
+  // 품사: partOfSpeech / pos 둘 다 대응
+  const rawPos = w.partOfSpeech ?? w.pos ?? null;
+
+  // 즐겨찾기: isFavorite / favorite 둘 다 대응
+  const isFavorite =
+    w.isFavorite != null ? w.isFavorite : w.favorite ?? false;
+
+  // 완료 여부: isCompleted / learningStatus(COMPLETED) 둘 다 대응
+  let isCompleted = w.isCompleted;
+  if (
+    typeof isCompleted === "undefined" &&
+    typeof w.learningStatus === "string"
+  ) {
+    isCompleted = w.learningStatus === "COMPLETED";
+  }
+
   return {
     id,
     wordId,
     word: w.word || "",
     meaning: w.meaning || "",
-    partOfSpeech: normalizePartOfSpeech(w.partOfSpeech),
+    partOfSpeech: normalizePartOfSpeech(rawPos),
 
     // domain 없으면 category로 대체
     domain:
@@ -135,16 +215,22 @@ const mapWordFromApi = (w) => {
 
     level: levelValue,
 
-    isFavorite: !!w.isFavorite,
-    isCompleted: !!w.isCompleted,
+    isFavorite: !!isFavorite,
+    isCompleted: !!isCompleted,
 
     exampleSentence,
     exampleSentenceEn:
       typeof w.exampleSentenceEn === "string"
         ? w.exampleSentenceEn
+        : typeof w.exampleEn === "string"
+        ? w.exampleEn
         : exampleSentence || "",
     exampleSentenceKo:
-      typeof w.exampleSentenceKo === "string" ? w.exampleSentenceKo : "",
+      typeof w.exampleSentenceKo === "string"
+        ? w.exampleSentenceKo
+        : typeof w.exampleKo === "string"
+        ? w.exampleKo
+        : "",
   };
 };
 
@@ -299,7 +385,7 @@ export const filterWords = async ({
 };
 
 // =====================================================
-// 5. 즐겨찾기 관련 APIs (사용자 조작 가능)
+// 5. 즐겨찾기 관련 APIs
 // =====================================================
 
 // 즐겨찾기 추가: POST /api/favorites/{wordId}
@@ -317,7 +403,6 @@ export const addFavorite = async (wordId) => {
 
   try {
     const res = await httpClient.post(`/api/favorites/${wordId}`, {});
-    // 201 Created 또는 200 OK
     return res.status === 201 || res.status === 200;
   } catch (e) {
     const resp = e?.response;
@@ -351,7 +436,6 @@ export const removeFavorite = async (wordId) => {
 
   try {
     const res = await httpClient.delete(`/api/favorites/${wordId}`);
-    // 정상 케이스: 204 No Content 또는 200 OK
     return res.status === 204 || res.status === 200;
   } catch (e) {
     const resp = e && e.response;
@@ -392,8 +476,7 @@ export const getFavoriteList = async () => {
 };
 
 // =====================================================
-// 6. 학습 완료 관련 APIs (조회 전용으로 사용)
-//    → 프론트에서 학습 상태를 "변경"하는 기능은 사용하지 않음
+// 6. 학습 완료 관련 APIs (조회 전용)
 // =====================================================
 
 // 완료 단어 목록: GET /api/completed
@@ -418,7 +501,6 @@ export const getCompletedList = async () => {
 };
 
 // 상태 조회 (단일): GET /api/completed/{wordId}/status
-// 화면에서 단어 하나의 학습 상태만 확인해야 할 때 사용 가능
 export const getCompletedStatus = async (wordId) => {
   if (USE_MOCK) {
     const target = mockWordList.find((w) => w.wordId === Number(wordId));
@@ -431,10 +513,6 @@ export const getCompletedStatus = async (wordId) => {
   const res = await httpClient.get(`/api/completed/${wordId}/status`);
   return res.data;
 };
-
-// ❌ 학습 완료 토글 API는 더 이상 내보내지 않음
-//    (사용자가 직접 학습 상태를 바꾸는 기능을 쓰지 않기 때문)
-//    필요하면 서버 쪽 자동 로직(퀴즈 완료 등)에서만 처리.
 
 // =====================================================
 // 7. 단어 상세 조회
