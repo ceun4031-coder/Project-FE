@@ -6,6 +6,9 @@ import Pagination from "../../components/common/Pagination";
 import { WrongNoteItem } from "./components/WrongNoteItem";
 import "./WrongNotePage.css";
 
+// 아이콘 (드롭다운 화살표)
+import { ChevronDown } from "lucide-react";
+
 const PAGE_SIZE = 10;
 
 // 공통 헬퍼: 스토리 사용 여부
@@ -29,26 +32,29 @@ const getLastWrongTime = (item) => {
 export default function WrongNotePage() {
   const navigate = useNavigate();
 
-  // 전체 오답 원본 리스트
+  // =============================
+  // 상태
+  // =============================
   const [rawItems, setRawItems] = useState([]);
 
-  // 필터 상태 (스토리 사용 여부 + 정렬)
   const [filters, setFilters] = useState({
     isUsedInStory: "",
-    sortBy: "latest", // latest | oldest | mostWrong
+    sortBy: "latest",
   });
 
-  // UI 상태
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // 선택된 wrongWordId 리스트
   const [selectedIds, setSelectedIds] = useState([]);
-
-  // 0-based 페이지 인덱스 (0,1,2,…)
   const [page, setPage] = useState(0);
 
-  // ====== 데이터 로딩 ======
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  const [activeAction, setActiveAction] = useState("none");
+
+  // =============================
+  // 데이터 로딩
+  // =============================
   const refresh = async () => {
     setLoading(true);
     setError(null);
@@ -69,48 +75,41 @@ export default function WrongNotePage() {
     refresh();
   }, []);
 
-  // ====== 필터 변경 ======
+  // =============================
+  // 필터 변경
+  // =============================
   const handleChangeFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(0);
   };
 
-  // ====== 필터 + 정렬 로직 ======
+  // =============================
+  // 필터 + 정렬
+  // =============================
   const processedItems = useMemo(() => {
     const { isUsedInStory: usedFilter, sortBy } = filters;
 
-    // 1) 필터링 (스토리 사용 여부만)
     const filtered = rawItems.filter((item) => {
       const used = isUsedInStory(item);
-
-      if (usedFilter === "Y") {
-        return used;
-      }
-      if (usedFilter === "N") {
-        return !used;
-      }
-      return true; // 전체
+      if (usedFilter === "Y") return used;
+      if (usedFilter === "N") return !used;
+      return true;
     });
 
-    // 2) 정렬
     const sorted = [...filtered].sort((a, b) => {
       const aDate = getLastWrongTime(a);
       const bDate = getLastWrongTime(b);
-
       const aWrong = getWrongCount(a);
       const bWrong = getWrongCount(b);
 
       switch (sortBy) {
         case "oldest":
-          // 오래된순
           return aDate - bDate;
         case "mostWrong":
-          // 많이 틀린순 (동점이면 최신순)
           if (bWrong !== aWrong) return bWrong - aWrong;
           return bDate - aDate;
         case "latest":
         default:
-          // 최신순
           return bDate - aDate;
       }
     });
@@ -118,7 +117,9 @@ export default function WrongNotePage() {
     return sorted;
   }, [rawItems, filters]);
 
-  // ====== 페이지네이션 계산 ======
+  // =============================
+  // 페이지네이션
+  // =============================
   const totalPages = useMemo(
     () => Math.ceil(processedItems.length / PAGE_SIZE) || 0,
     [processedItems.length]
@@ -129,14 +130,15 @@ export default function WrongNotePage() {
     return processedItems.slice(start, start + PAGE_SIZE);
   }, [processedItems, page]);
 
-  // page가 totalPages 범위를 넘어가면 조정
   useEffect(() => {
     if (page > 0 && page >= totalPages) {
       setPage(Math.max(0, totalPages - 1));
     }
   }, [page, totalPages]);
 
-  // ====== 선택 관련 ======
+  // =============================
+  // 선택
+  // =============================
   const toggleSelect = (id) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -144,27 +146,23 @@ export default function WrongNotePage() {
   };
 
   const clearSelection = () => setSelectedIds([]);
-
   const selectedCount = selectedIds.length;
 
-  // ====== 상단 액션 ======
+  // =============================
+  // 액션 (퀴즈/카드/스토리)
+  // =============================
   const handleReviewAsQuiz = () => {
     if (selectedCount === 0) return;
     const ids = selectedIds.join(",");
-    navigate(
-      `/learning/quiz?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`
-    );
+    navigate(`/learning/quiz?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`);
   };
 
   const handleReviewAsCard = () => {
     if (selectedCount === 0) return;
     const ids = selectedIds.join(",");
-    navigate(
-      `/learning/card?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`
-    );
+    navigate(`/learning/card?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`);
   };
 
-  // 스토리에 사용되지 않은 단어만 사용
   const handleCreateStory = () => {
     if (selectedCount === 0) return;
 
@@ -181,11 +179,11 @@ export default function WrongNotePage() {
     navigate(`/stories/create?wrongWordIds=${encodeURIComponent(ids)}`);
   };
 
-  const handleRowClick = (item) => {
-    // 필요하면 단어 상세 페이지로 연결
-    // navigate(`/words/${item.wordId}`);
-  };
+  const handleRowClick = (item) => {};
 
+  // ============================================================
+  // JSX 시작
+  // ============================================================
   return (
     <div className="wrongnote-page">
       <header className="wrongnote-header">
@@ -196,41 +194,93 @@ export default function WrongNotePage() {
           </p>
         </div>
 
-        {/* 헤더 우측 필터 드롭다운 2개 */}
+        {/* ========== 상단 필터: 커스텀 드롭다운 적용 ========== */}
         <div className="wrongnote-header__filters">
-          <label>
-            <span>스토리 사용 여부</span>
-            <select
-              value={filters.isUsedInStory}
-              onChange={(e) =>
-                handleChangeFilter("isUsedInStory", e.target.value)
-              }
-            >
-              <option value="">전체</option>
-              <option value="N">스토리 미사용</option>
-              <option value="Y">스토리 사용됨</option>
-            </select>
-          </label>
 
-          <label>
-            <span>정렬</span>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => handleChangeFilter("sortBy", e.target.value)}
-            >
-              <option value="latest">최신순</option>
-              <option value="oldest">오래된순</option>
-              <option value="mostWrong">많이 틀린순</option>
-            </select>
-          </label>
+          {/* 스토리 사용 여부 */}
+          <div className="control-group">
+            <label className="control-label">스토리</label>
+            <div className="filter-group">
+              <div className="dropdown-box">
+                <button
+                  type="button"
+                  className="dropdown-btn no-select"
+                  onClick={() =>
+                    setOpenDropdown(openDropdown === "used" ? null : "used")
+                  }
+                >
+                  {
+                    filters.isUsedInStory === ""
+                      ? "전체"
+                      : filters.isUsedInStory === "Y"
+                      ? "사용됨"
+                      : "미사용"
+                  }
+                  <ChevronDown size={14} className="arrow" />
+                </button>
+
+                {openDropdown === "used" && (
+                  <div className="dropdown-menu">
+                    <div className="dropdown-item" onClick={() => { handleChangeFilter("isUsedInStory", ""); setOpenDropdown(null); }}>
+                      전체
+                    </div>
+                    <div className="dropdown-item" onClick={() => { handleChangeFilter("isUsedInStory", "N"); setOpenDropdown(null); }}>
+                      미사용
+                    </div>
+                    <div className="dropdown-item" onClick={() => { handleChangeFilter("isUsedInStory", "Y"); setOpenDropdown(null); }}>
+                      사용됨
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 정렬 */}
+          <div className="control-group">
+            <label className="control-label">정렬</label>
+            <div className="filter-group">
+              <div className="dropdown-box">
+                <button
+                  type="button"
+                  className="dropdown-btn no-select"
+                  onClick={() =>
+                    setOpenDropdown(openDropdown === "sort" ? null : "sort")
+                  }
+                >
+                  {
+                    filters.sortBy === "latest"
+                      ? "최신순"
+                      : filters.sortBy === "oldest"
+                      ? "오래된순"
+                      : "많이 틀린순"
+                  }
+                  <ChevronDown size={14} className="arrow" />
+                </button>
+
+                {openDropdown === "sort" && (
+                  <div className="dropdown-menu">
+                    <div className="dropdown-item" onClick={() => { handleChangeFilter("sortBy", "latest"); setOpenDropdown(null); }}>
+                      최신순
+                    </div>
+                    <div className="dropdown-item" onClick={() => { handleChangeFilter("sortBy", "oldest"); setOpenDropdown(null); }}>
+                      오래된순
+                    </div>
+                    <div className="dropdown-item" onClick={() => { handleChangeFilter("sortBy", "mostWrong"); setOpenDropdown(null); }}>
+                      많이 틀린순
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
         </div>
       </header>
 
-      {/* 리스트 영역 */}
+      {/* 리스트 */}
       <section className="wrongnote-list">
-        {loading && (
-          <div className="wrongnote-list__loading">로딩 중...</div>
-        )}
+        {loading && <div className="wrongnote-list__loading">로딩 중...</div>}
         {error && <div className="wrongnote-list__error">{error}</div>}
         {!loading && !error && processedItems.length === 0 && (
           <div className="wrongnote-list__empty">오답 기록이 없습니다.</div>
@@ -242,8 +292,10 @@ export default function WrongNotePage() {
               <thead>
                 <tr>
                   <th>
+                    {/* 전체 선택 체크박스 */}
                     <input
                       type="checkbox"
+                      className="sl-checkbox"
                       checked={
                         pagedItems.length > 0 &&
                         pagedItems.every((item) =>
@@ -259,12 +311,8 @@ export default function WrongNotePage() {
                               .filter((id) => !prev.includes(id));
                             return [...prev, ...idsToAdd];
                           } else {
-                            const pageIds = pagedItems.map(
-                              (i) => i.wrongWordId
-                            );
-                            return prev.filter(
-                              (id) => !pageIds.includes(id)
-                            );
+                            const pageIds = pagedItems.map((i) => i.wrongWordId);
+                            return prev.filter((id) => !pageIds.includes(id));
                           }
                         });
                       }}
@@ -278,6 +326,7 @@ export default function WrongNotePage() {
                   <th>스토리</th>
                 </tr>
               </thead>
+
               <tbody>
                 {pagedItems.map((item) => (
                   <WrongNoteItem
@@ -305,37 +354,61 @@ export default function WrongNotePage() {
         )}
       </section>
 
-      {/* 하단 액션 바 */}
+      {/* 하단 액션 버튼 */}
       <section className="wrongnote-actions">
         <div className="wrongnote-actions__left">
           <span className="wrongnote-selected-count">
             선택된 단어 {selectedCount}개
           </span>
         </div>
+
         <div className="wrongnote-actions__right">
+
           <button
             type="button"
             disabled={selectedCount === 0}
-            onClick={handleReviewAsQuiz}
+            className={`sl-btn ${activeAction === "quiz" ? "sl-btn-primary" : ""}`}
+            onClick={() => {
+              handleReviewAsQuiz();
+              setActiveAction("quiz");
+            }}
           >
             선택 단어 퀴즈
           </button>
+
           <button
             type="button"
             disabled={selectedCount === 0}
-            onClick={handleReviewAsCard}
+            className={`sl-btn ${activeAction === "card" ? "sl-btn-primary" : ""}`}
+            onClick={() => {
+              handleReviewAsCard();
+              setActiveAction("card");
+            }}
           >
             선택 단어 카드
           </button>
+
           <button
             type="button"
             disabled={selectedCount === 0}
-            onClick={handleCreateStory}
+            className={`sl-btn ${activeAction === "story" ? "sl-btn-primary" : ""}`}
+            onClick={() => {
+              handleCreateStory();
+              setActiveAction("story");
+            }}
           >
             선택 단어로 스토리 만들기
           </button>
+
           {selectedCount > 0 && (
-            <button type="button" onClick={clearSelection}>
+            <button
+              type="button"
+              className="sl-btn"
+              onClick={() => {
+                clearSelection();
+                setActiveAction("none");
+              }}
+            >
               선택 해제
             </button>
           )}
