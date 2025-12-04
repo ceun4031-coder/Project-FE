@@ -56,11 +56,7 @@ const LandingPage = () => {
                 <div className="hero-visual-wrapper">
                   <div className="blob-bg"></div>
                   {/* 실제 이미지 경로로 수정해주세요 */}
-                  <img
-                    src="https://via.placeholder.com/360x360.png?text=AI+Learning" 
-                    alt="AI Learning Illustration"
-                    className="hero-img"
-                  />
+                 
                 </div>
               </div>
             </div>

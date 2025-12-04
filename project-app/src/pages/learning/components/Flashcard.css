@@ -5,58 +5,64 @@
   display: flex;
   justify-content: center;
   margin-top: var(--space-2);
+  perspective: 1200px; /* 3D 공간 */
+  padding-top: 12px;
+  padding-bottom: 24px;
 }
 
 /* 카드 본체 */
 .flashcard {
-  width: min(100%, 820px);
+  width: 100%;          
+  max-width: 480px;     
   min-height: 260px;
-  background-color: var(--surface-1);
+  background-color: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
   border-radius: 28px;
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.06);
   padding: 40px 32px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition:
-    transform 0.15s ease-out,
-    box-shadow 0.15s ease-out,
-    background-color 0.15s ease-out;
-  overflow: hidden; /* 내부 텍스트 스크롤 방지 */
+  position: relative;
+
+  transform-style: preserve-3d;
+  transition: transform 0.45s ease-in-out,
+              box-shadow 0.15s ease-out,
+              background-color 0.15s ease-out;
 }
 
 .flashcard:hover {
-  transform: translateY(-2px);
   box-shadow:
-    0 26px 70px rgba(15, 23, 42, 0.4),
-    0 0 0 1px rgba(108, 92, 231, 0.16); /* primary-500 기반 */
+    0 4px 10px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(108, 92, 231, 0.05);
 }
 
-/* 플립 상태일 때 살짝 톤 변경 */
+/* 플립될 때 카드 자체가 회전 */
 .flashcard--flipped {
-  background-color: var(--neutral-100);
+  transform: rotateY(180deg);
 }
 
-/* 내부 컨텐츠 영역 */
+/* 내부 컨텐츠 공통 */
 .flashcard-inner {
-  text-align: center;
-  width: 100%;
-  max-height: 100%;
-  overflow: hidden; /* 텍스트 스크롤 방지 */
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  padding: 40px 32px;
+  border-radius: 28px;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.flashcard-inner--empty {
-  color: var(--neutral-500);
-  font-size: 0.95rem;
+/* 앞면 */
+.flashcard-inner--front {
+  transform: rotateY(0deg);
+  background-color: var(--surface-1);
 }
 
-/* 앞면: 단어 */
 .flashcard-inner--front .flashcard-word {
   font-size: 2.4rem;
   font-weight: 700;
@@ -71,7 +77,12 @@
   color: var(--neutral-300);
 }
 
-/* 뒷면: 뜻 */
+/* 뒷면 */
+.flashcard-inner--back {
+  transform: rotateY(180deg);
+  background-color: var(--primary-100); /* 보라색 톤 */
+}
+
 .flashcard-inner--back .flashcard-meaning {
   font-size: 1.6rem;
   font-weight: 600;
@@ -92,6 +103,51 @@
   font-size: 0.9rem;
   color: var(--neutral-300);
 }
+
+.card-page--wrong .flashcard-inner--back {
+  background-color: var(--warning-100) !important;
+}
+
+/* 오답 카드에서 '뜻(meaning)' 텍스트만 검정 */
+.card-page--wrong .flashcard-inner--back .flashcard-meaning {
+  color: #111 !important;
+}
+.card-page--wrong .flashcard-helper-back {
+  color: var(--neutral-500) !important;
+}
+
+
+
+/* ---------------------------------------------------------
+   🔥 Vertical Flip (위↕아래로 뒤집히는 3D 모션)
+--------------------------------------------------------- */
+
+/* 카드 자체를 상하 회전시키기 위한 기본 설정 */
+.flashcard {
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+  perspective: 1000px;
+}
+
+/* 카드가 위아래로 뒤집히는 상태 */
+.flashcard--flipped {
+  transform: rotateX(180deg);
+}
+
+/* 앞면 */
+.flashcard-inner--front {
+  transform: rotateX(0deg);
+  backface-visibility: hidden;
+}
+
+/* 뒷면 */
+.flashcard-inner--back {
+  transform: rotateX(180deg);
+  backface-visibility: hidden;
+  position: absolute;
+  inset: 0;
+}
+
 
 /* 반응형 */
 @media (max-width: 640px) {

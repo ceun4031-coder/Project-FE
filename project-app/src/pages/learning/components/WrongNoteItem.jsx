@@ -57,7 +57,7 @@ export function WrongNoteItem({ item, selected, onToggleSelect, onClick }) {
   return (
     <tr className="wrongnote-item" onClick={onClick}>
       <td>
-        <input type="checkbox" checked={selected} onChange={onToggleSelect} />
+        <input type="checkbox" className="sl-checkbox" checked={selected} onChange={onToggleSelect} />
       </td>
       <td>{word}</td>
       <td>{meaning}</td>

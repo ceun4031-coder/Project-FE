@@ -1,29 +1,28 @@
 // src/pages/words/WordListPage.jsx
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Search,
+  ArrowRight,
   FileQuestion,
   LayoutGrid,
-  Star,
-  ChevronDown,
-  ArrowRight,
   RotateCcw,
+  Search,
+  Star,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   addFavorite,
+  getCompletedList,
+  getFavoriteList,
   getWordList,
   removeFavorite,
-  getFavoriteList,
-  getCompletedList,
 } from "../../api/wordApi";
-import PageHeader from "../../components/common/PageHeader";
-import Pagination from "../../components/common/Pagination";
 import Card from "../../components/common/Card";
 import Input from "../../components/common/Input";
+import PageHeader from "../../components/common/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import Spinner from "../../components/common/Spinner";
 import "./WordListPage.css";
-
+import FilterDropdown from "../../components/common/FilterDropdown"; 
 // --- 상수 데이터 (기존과 동일) ---
 const CATEGORY_OPTIONS = [
   { label: "전체 품사", value: "All" },
@@ -312,54 +311,36 @@ function WordListPage() {
       {/* 2. 컨트롤 영역 (기존 유지) */}
       <section className="wordlist-controls">
         <div className="controls-left">
-          <div className="filter-container">
-            {[
-              { id: "category", label: "품사", options: CATEGORY_OPTIONS },
-              { id: "domain", label: "분야", options: DOMAIN_OPTIONS },
-              { id: "level", label: "난이도", options: LEVEL_OPTIONS },
-            ].map(({ id, label, options }) => (
-              <div className="filter-group" key={id}>
-                <span className="filter-label">{label}</span>
-                <div className="dropdown-box">
-                  <button
-                    type="button"
-                    className={`dropdown-btn no-select ${
-                      filter[id] !== "All" ? "selected" : ""
-                    }`}
-                    onClick={() => toggleDropdown(id)}
-                  >
-                    {getFilterLabel(id, options)}
-                    <ChevronDown size={14} className="arrow" />
-                  </button>
-                  {openDropdown === id && (
-                    <div className="dropdown-menu">
-                      {options.map((opt) => (
-                        <div
-                          key={opt.value}
-                          className={`dropdown-item ${
-                            filter[id] === opt.value ? "active" : ""
-                          }`}
-                          onClick={() => selectFilterOption(id, opt.value)}
-                        >
-                          {opt.label}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {isFilterActive && (
-              <button
-                type="button"
-                onClick={handleFilterReset}
-                className="filter-reset-btn"
-                title="필터 초기화"
-              >
-                <RotateCcw size={16} />
-              </button>
-            )}
-          </div>
+    <div className="filter-container">
+  {[
+    { id: "category", label: "품사", options: CATEGORY_OPTIONS },
+    { id: "domain", label: "분야", options: DOMAIN_OPTIONS },
+    { id: "level", label: "난이도", options: LEVEL_OPTIONS },
+  ].map(({ id, label, options }) => (
+    <FilterDropdown
+      key={id}
+      id={id}
+      label={label}
+      options={options}
+      value={filter[id]}
+      isOpen={openDropdown === id}
+      onToggle={toggleDropdown}        // (id) => setOpenDropdown(...)
+      onChange={selectFilterOption}    // (id, value) => setFilter(...)
+    />
+  ))}
+
+  {isFilterActive && (
+    <button
+      type="button"
+      onClick={handleFilterReset}
+      className="filter-reset-btn"
+      title="필터 초기화"
+    >
+      <RotateCcw size={16} />
+    </button>
+  )}
+</div>
+
         </div>
 
         <div className="controls-right">
@@ -424,10 +405,10 @@ function WordListPage() {
                   return (
                     <Card
                       key={w.wordId}
+                      className="word-card card--compact"
                       as="article"
                       title={w.word}
                       onClick={() => handleCardClick(w.wordId)}
-                      className={w.isCompleted ? "word-card-completed" : ""}
                       meta={
                         <button
                           type="button"

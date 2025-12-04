@@ -1,3 +1,4 @@
+// src/pages/learning/LearningHomePage.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,29 +11,19 @@ import {
   ArrowRight,
   ChevronRight,
   Library,
-  ChevronDown
 } from "lucide-react";
 
 import PageHeader from "../../components/common/PageHeader";
+import FilterDropdown from "../../components/common/FilterDropdown";
 import "./LearningHomePage.css";
 
-function LearningHomePage() {
-  const navigate = useNavigate();
-  const [questionCount, setQuestionCount] = useState(10);
-  const [level, setLevel] = useState("All");
-  const [domain, setDomain] = useState("All");
-  const [openDropdown, setOpenDropdown] = useState(null);
-
-  const toggleDropdown = (name) =>
-  setOpenDropdown((prev) => (prev === name ? null : name));
-
-  const LEVEL_OPTIONS = [
+const LEVEL_OPTIONS = [
   { label: "전체", value: "All" },
   { label: "초급", value: "1" },
   { label: "중급", value: "2" },
-  { label: "고급", value: "3" }
+  { label: "고급", value: "3" },
 ];
-// 분야 필터 (domain)
+
 const DOMAIN_OPTIONS = [
   { label: "전체 분야", value: "All" },
   { label: "일상생활", value: "Daily Life" },
@@ -44,11 +35,23 @@ const DOMAIN_OPTIONS = [
   { label: "기술/IT", value: "Technology" },
 ];
 
+const DEFAULT_QUESTION_COUNT = 10;
+
+function LearningHomePage() {
+  const navigate = useNavigate();
+  const [questionCount, setQuestionCount] = useState(DEFAULT_QUESTION_COUNT);
+  const [level, setLevel] = useState("All");
+  const [domain, setDomain] = useState("All");
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  const toggleDropdown = (name) =>
+    setOpenDropdown((prev) => (prev === name ? null : name));
+
   const handleStepChange = (delta) => {
     setQuestionCount((prev) => {
       const next = prev + delta;
       if (next < 5) return 5;
-      if (next > 50) return 50;
+      if (next > 30) return 30; // 버튼 disabled 조건과 맞춤
       return next;
     });
   };
@@ -57,9 +60,22 @@ const DOMAIN_OPTIONS = [
     const params = new URLSearchParams({
       source,
       limit: String(questionCount),
-      level
+      level,
+      domain,
     });
     return params.toString();
+  };
+
+  const isFilterActive =
+    questionCount !== DEFAULT_QUESTION_COUNT ||
+    level !== "All" ||
+    domain !== "All";
+
+  const handleFilterReset = () => {
+    setQuestionCount(DEFAULT_QUESTION_COUNT);
+    setLevel("All");
+    setDomain("All");
+    setOpenDropdown(null);
   };
 
   return (
@@ -79,101 +95,93 @@ const DOMAIN_OPTIONS = [
             </div>
 
             <div className="setting-controls">
+              {/* 문항 수 - 라벨 스타일을 필터와 통일 */}
               <div className="control-group">
-                <label htmlFor="question-count" className="control-label">
-                  문항 수
-                </label>
-                <div className="stepper-input" role="group" aria-label="문항 수 조절">
-                  <button
-                    type="button"
-                    onClick={() => handleStepChange(-5)}
-                    disabled={questionCount <= 5}
-                    aria-label="문항 수 5개 줄이기"
+                <div className="filter-group">
+                  <span className="filter-label">문항 수</span>
+                  <div
+                    className="stepper-input"
+                    role="group"
+                    aria-label="문항 수 조절"
                   >
-                    –
-                  </button>
-                  <span id="question-count" className="value" aria-live="polite">
-                    {questionCount}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleStepChange(5)}
-                    disabled={questionCount >= 30}
-                    aria-label="문항 수 5개 늘리기"
-                  >
-                    +
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStepChange(-5)}
+                      disabled={questionCount <= 5}
+                      aria-label="문항 수 5개 줄이기"
+                    >
+                      –
+                    </button>
+                    <span
+                      id="question-count"
+                      className="value"
+                      aria-live="polite"
+                    >
+                      {questionCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleStepChange(5)}
+                      disabled={questionCount >= 30}
+                      aria-label="문항 수 5개 늘리기"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div className="divider" aria-hidden="true" />
 
+              {/* 난이도 필터 */}
               <div className="control-group">
-                <label htmlFor="difficulty" className="control-label">
-                  난이도
-                </label>
-                <div className="filter-group">
-                  <div className="dropdown-box">
-                    <button
-                      type="button"
-                      className="dropdown-btn no-select"
-                      onClick={() => toggleDropdown("level")}
-                    >
-                      {LEVEL_OPTIONS.find((opt) => opt.value === level)?.label}
-                      <ChevronDown size={14} className="arrow" />
-                    </button>
-                    {openDropdown === "level" && (
-                      <div className="dropdown-menu">
-                        {LEVEL_OPTIONS.map((opt) => (
-                          <div
-                            key={opt.value}
-                            className="dropdown-item"
-                            onClick={() => { setLevel(opt.value); setOpenDropdown(null); }}
-                          >
-                            {opt.label}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <FilterDropdown
+                  id="level"
+                  label="난이도"
+                  options={LEVEL_OPTIONS}
+                  value={level}
+                  isOpen={openDropdown === "level"}
+                  onToggle={toggleDropdown}
+                  onChange={(_, value) => {
+                    setLevel(value);
+                    setOpenDropdown(null);
+                  }}
+                />
               </div>
-              <div className="control-group">
-                <label htmlFor="domain" className="control-label">분야</label>
-                <div className="filter-group">
-                  <div className="dropdown-box">
-                    <button
-                      type="button"
-                      className="dropdown-btn no-select"
-                      onClick={() => toggleDropdown("domain")}
-                    >
-                      {DOMAIN_OPTIONS.find((opt) => opt.value === domain)?.label}
-                      <ChevronDown size={14} className="arrow" />
-                    </button>
 
-                    {openDropdown === "domain" && (
-                      <div className="dropdown-menu">
-                        {DOMAIN_OPTIONS.map((opt) => (
-                          <div
-                            key={opt.value}
-                            className="dropdown-item"
-                            onClick={() => { setDomain(opt.value); setOpenDropdown(null); }}
-                          >
-                            {opt.label}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+              {/* 분야 필터 */}
+              <div className="control-group">
+                <FilterDropdown
+                  id="domain"
+                  label="분야"
+                  options={DOMAIN_OPTIONS}
+                  value={domain}
+                  isOpen={openDropdown === "domain"}
+                  onToggle={toggleDropdown}
+                  onChange={(_, value) => {
+                    setDomain(value);
+                    setOpenDropdown(null);
+                  }}
+                />
               </div>
+
+              {/* 필터 + 문항수 초기화 */}
+              {isFilterActive && (
+                <button
+                  type="button"
+                  className="filter-reset-btn"
+                  onClick={handleFilterReset}
+                  title="옵션 초기화"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              )}
             </div>
           </div>
         </section>
 
         {/* 2. 메인 대시보드 */}
         <div className="dashboard-grid">
-          
           {/* [LEFT] 정규 학습 존 */}
           <section className="zone-column growth-zone" aria-label="정규 학습">
             <header className="zone-header">
@@ -191,12 +199,18 @@ const DOMAIN_OPTIONS = [
               <button
                 type="button"
                 className="action-card primary"
-                onClick={() => navigate(`/learning/quiz?${buildParams("quiz")}`)}
+                onClick={() =>
+                  navigate(`/learning/quiz?${buildParams("quiz")}`)
+                }
               >
                 <div className="card-content">
                   <div className="card-badge">추천</div>
                   <h4>실전 퀴즈 풀기</h4>
-                  <p>객관식 문제로 단어 실력을<br />정확하게 테스트하세요.</p>
+                  <p>
+                    객관식 문제로 단어 실력을
+                    <br />
+                    정확하게 테스트하세요.
+                  </p>
                 </div>
                 <div className="card-visual">
                   <BookOpen size={64} strokeWidth={1.2} aria-hidden="true" />
@@ -210,7 +224,9 @@ const DOMAIN_OPTIONS = [
               <button
                 type="button"
                 className="action-card secondary"
-                onClick={() => navigate(`/learning/card?${buildParams("card")}`)}
+                onClick={() =>
+                  navigate(`/learning/card?${buildParams("card")}`)
+                }
               >
                 <div className="card-icon-small">
                   <Layers size={22} aria-hidden="true" />
@@ -219,7 +235,11 @@ const DOMAIN_OPTIONS = [
                   <h4>플래시 카드</h4>
                   <p>카드를 뒤집으며 빠르게 암기</p>
                 </div>
-                <ChevronRight size={18} className="card-chevron" aria-hidden="true" />
+                <ChevronRight
+                  size={18}
+                  className="card-chevron"
+                  aria-hidden="true"
+                />
               </button>
             </div>
           </section>
@@ -237,16 +257,22 @@ const DOMAIN_OPTIONS = [
             </header>
 
             <div className="zone-cards">
-              {/* 메인 액션 (수정됨: wrong-notes -> wrong-note) */}
+              {/* 메인 액션 */}
               <button
                 type="button"
                 className="action-card primary"
-                onClick={() => navigate(`/learning/quiz?${buildParams("wrong-note")}`)} 
+                onClick={() =>
+                  navigate(`/learning/quiz?${buildParams("wrong-note")}`)
+                }
               >
                 <div className="card-content">
                   <div className="card-badge">집중 복습</div>
                   <h4>오답 다시 풀기</h4>
-                  <p>내가 틀린 문제만 모아서<br />다시 도전해보세요.</p>
+                  <p>
+                    내가 틀린 문제만 모아서
+                    <br />
+                    다시 도전해보세요.
+                  </p>
                 </div>
                 <div className="card-visual">
                   <RotateCcw size={64} strokeWidth={1.2} aria-hidden="true" />
@@ -256,11 +282,13 @@ const DOMAIN_OPTIONS = [
                 </div>
               </button>
 
-              {/* 서브 액션 (수정됨: wrong-notes -> wrong-note) */}
+              {/* 서브 액션 */}
               <button
                 type="button"
                 className="action-card secondary"
-                onClick={() => navigate(`/learning/card?${buildParams("wrong-note")}`)}
+                onClick={() =>
+                  navigate(`/learning/card?${buildParams("wrong-note")}`)
+                }
               >
                 <div className="card-icon-small">
                   <Layers size={22} aria-hidden="true" />
@@ -269,7 +297,11 @@ const DOMAIN_OPTIONS = [
                   <h4>오답 플래시 카드</h4>
                   <p>취약한 단어를 집중적으로 암기</p>
                 </div>
-                <ChevronRight size={18} className="card-chevron" aria-hidden="true" />
+                <ChevronRight
+                  size={18}
+                  className="card-chevron"
+                  aria-hidden="true"
+                />
               </button>
 
               {/* 오답 노트 관리 링크 */}
@@ -284,7 +316,11 @@ const DOMAIN_OPTIONS = [
                   </div>
                   <span>전체 오답 노트 관리하기</span>
                 </div>
-                <ArrowRight size={18} className="manage-arrow" aria-hidden="true" />
+                <ArrowRight
+                  size={18}
+                  className="manage-arrow"
+                  aria-hidden="true"
+                />
               </button>
             </div>
           </section>

@@ -1,25 +1,23 @@
 /* src/pages/learning/LearningHomePage.css */
+
 /* =========================================
-   1. 페이지 레이아웃 (StoryLayout과 통일)
+   1. 페이지 레이아웃
    ========================================= */
 .learning-home-page {
   padding-top: var(--space-6);
   padding-bottom: var(--space-10);
-  max-width: 1200px; /* 1000px -> 1200px로 확장하여 Story 페이지와 통일 */
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 /* =========================================
-   2. 통합 설정 바 (배경에 바로 배치)
+   2. 상단 학습 옵션 바 (문항 수 + 필터)
    ========================================= */
 .learning-settings-bar {
-  /* 카드 스타일 제거 */
   background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: none;
-
-  /* 여백만 유지해서 배치만 그대로 */
   padding: 0 0 24px 0;
 
   display: flex;
@@ -46,124 +44,119 @@
 
 .setting-controls {
   display: flex;
-  align-items: center;
+  align-items: flex-end; /* 문항 수 + 필터 + 리셋 버튼 수평 하단 정렬 */
   gap: 24px;
   flex-wrap: wrap;
 }
 
 .control-group {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-end;
 }
 
-.control-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--neutral-600);
-   line-height: 1;         /* 🔥 텍스트 높이 차이 제거 */
-  display: inline-block;  /* 🔥 baseline 차이 제거 */
-}
-
-/* 스테퍼 & 셀렉트: 기존 스타일 유지 */
+/* 문항 수 스테퍼: 보라색 캡슐 + 흰색 버튼 */
+/* - / + 버튼 */
+/* 문항 수 스테퍼: 드롭다운과 톤/크기 맞춤 */
 .stepper-input {
   display: flex;
   align-items: center;
-  background: var(--neutral-100);
-  border-radius: 999px;
-  padding: 4px;
+  gap: 8px;
+
+  /* 드롭다운 버튼과 일관된 스타일 */
+  background: var(--surface-1);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
+
+  padding: 6px 12px;         /* 높이/두께 드롭다운과 비슷하게 */
+  height: 42px;              /* dropdown-btn 과 유사한 높이 */
+
+  box-sizing: border-box;
 }
 
+/* - / + 버튼: 흰색 라운드, 심플하게 */
 .stepper-input button {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: var(--surface-1);
+
   border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+
+  background: #ffffff;
+  color: var(--neutral-500);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
   cursor: pointer;
-  color: var(--neutral-600);
-  font-weight: bold;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .stepper-input button:hover:not(:disabled) {
-  transform: scale(1.05);
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background: var(--neutral-100);
+  color: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.16);
 }
 
 .stepper-input button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: default;
+  transform: none;
   box-shadow: none;
 }
 
+/* 현재 문항 수 숫자 */
 .stepper-input .value {
-  width: 44px;
+  min-width: 40px;
   text-align: center;
   font-weight: 700;
+  font-size: 0.95rem;
   color: var(--primary-600);
-  font-size: 1rem;
 }
 
+
+/* 문항 수/필터 라벨은 공통 FilterDropdown.css의
+   .filter-group / .filter-label 스타일을 그대로 사용 */
+
+/* 문항 수와 필터 사이 구분선 */
 .divider {
   width: 1px;
-  height: 20px;
+  height: 24px;
   background: var(--border-strong);
   opacity: 0.3;
 }
 
-.control-group select {
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-1);
-  font-size: 0.95rem;
-  color: var(--neutral-800);
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.control-group select:hover {
-  border-color: var(--neutral-300);
-}
-
-.control-group select:focus-visible {
-  border-color: var(--primary-400);
-  box-shadow: 0 0 0 2px var(--primary-100);
-}
+/* 필터 리셋 버튼은 WordListPage.css의 .filter-reset-btn 재사용
+   (여기서는 추가 정의 불필요) */
 
 /* =========================================
    3. 대시보드 그리드 & 존 스타일
    ========================================= */
-
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px; /* 패널 간 간격 */
-  align-items: stretch; /* 높이 맞춤 */
+  gap: 32px;
+  align-items: stretch;
 }
 
-/* [핵심 변경] 컬럼 자체가 하나의 큰 '흰색 카드'가 됩니다 */
+/* 컬럼(정규 학습 / 오답 학습) 컨테이너 */
 .zone-column {
   background: var(--surface-1);
   border: 1px solid var(--border-subtle);
-  border-radius: 24px; /* Story 스타일 둥글기 */
-  padding: 32px;       /* 내부 여백 넉넉하게 */
+  border-radius: 24px;
+  padding: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  
+
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* Theme Mapping (유지) */
+/* 오답 존 색상 매핑 */
 .clinic-zone {
   --primary-100: var(--warning-100);
   --primary-200: var(--warning-200);
@@ -172,7 +165,6 @@
   --primary-600: var(--warning-600);
 }
 
-/* 헤더 스타일: 이제 흰색 박스 안에 들어오므로 패딩/보더 불필요 */
 .zone-header {
   display: flex;
   align-items: center;
@@ -206,10 +198,11 @@
 .zone-cards {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* 내부 버튼 간격 */
+  gap: 16px;
   height: 100%;
 }
 
+/* 공통 액션 카드 */
 .action-card {
   width: 100%;
   text-align: left;
@@ -217,19 +210,16 @@
   position: relative;
   overflow: hidden;
   font-family: inherit;
-  
-  /* [변경] 배경을 흰색(Surface-1) -> 연한 회색(Neutral-50/100)으로 변경 
-     이미 부모가 흰색이므로, 버튼은 구분되도록 약간 어둡게 처리 */
-  background: var(--neutral-50); 
+
+  background: var(--neutral-50);
   border: 1px solid var(--border-subtle);
-  border-radius: 20px; /* 내부 요소니 살짝 작게 */
-  
+  border-radius: 20px;
+
   transition: all 0.2s ease;
 }
 
 .action-card:hover {
-  /* 호버 시 조금 더 진해지거나 테두리 강조 */
-  background: #fff; 
+  background: #ffffff;
   border-color: var(--primary-200);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
@@ -240,9 +230,9 @@
   outline-offset: 2px;
 }
 
-/* Primary Big Card */
+/* 메인 큰 카드 */
 .action-card.primary {
-  flex: 1; /* 남은 높이 채우기 */
+  flex: 1;
   min-height: 220px;
   padding: 28px;
   display: flex;
@@ -250,20 +240,21 @@
   justify-content: space-between;
 }
 
-/* Secondary Small Card */
+/* 보조 카드 */
 .action-card.secondary {
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--surface-1); /* 서브 카드는 흰색 유지하여 계층 구분 */
+  background: var(--surface-1);
   border: 1px solid var(--border-subtle);
 }
+
 .action-card.secondary:hover {
   background: var(--neutral-50);
 }
 
-/* 아이콘 등 내부 요소 스타일 (유지) */
+/* 카드 안 요소들 */
 .card-badge {
   display: inline-block;
   font-size: 0.8rem;
@@ -274,7 +265,15 @@
   color: var(--neutral-50);
   margin-bottom: 12px;
 }
-.clinic-zone .card-badge { background: var(--primary-500); }
+
+.clinic-zone .card-badge {
+  background: var(--warning-500) !important; /* 메인 주황 */
+  color: white !important;                   /* 글씨 흰색 */
+  border: none !important;                   /* 보라 테두리 제거 */
+  box-shadow: none !important;               /* 보라 outline 제거 */
+}
+
+
 
 .action-card h4 {
   font-size: 1.3rem;
@@ -298,6 +297,7 @@
   color: var(--neutral-900);
   transition: all 0.3s ease;
 }
+
 .action-card:hover .card-visual {
   opacity: 0.15;
   transform: scale(1.1) rotate(-5deg);
@@ -312,12 +312,13 @@
   transition: all 0.2s ease;
   color: var(--primary-500);
 }
+
 .action-card:hover .hover-arrow {
   opacity: 1;
   transform: translateX(0);
 }
 
-/* 카드 아이콘 등 */
+/* 보조 카드용 아이콘 */
 .card-icon-small {
   width: 44px;
   height: 44px;
@@ -330,38 +331,50 @@
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
+
 .action-card.secondary:hover .card-icon-small {
   background: var(--primary-100);
   color: var(--primary-600);
 }
 
-.card-text-row { flex: 1; }
-.card-text-row h4 { font-size: 1rem; margin-bottom: 2px; }
-.card-text-row p { font-size: 0.85rem; }
+.card-text-row {
+  flex: 1;
+}
+
+.card-text-row h4 {
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.card-text-row p {
+  font-size: 0.85rem;
+}
 
 .card-chevron {
   color: var(--neutral-300);
   transition: all 0.2s ease;
 }
+
 .action-card.secondary:hover .card-chevron {
   color: var(--neutral-600);
   transform: translateX(4px);
 }
 
-/* Manage Link */
+/* 오답 노트 관리 링크 카드 */
 .action-card.manage-link {
-background: linear-gradient(135deg, var(--warning-500), var(--warning-600));
+  background: linear-gradient(135deg, var(--warning-500), var(--warning-600));
   color: #ffffff;
-  padding: 18px 24px; /* 높이감 살짝 더 확보 */
+  padding: 18px 24px;
   margin-top: 8px;
   border: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
-}.action-card.manage-link:hover {
+}
+
+.action-card.manage-link:hover {
   transform: translateY(-2px);
-  /* 호버 시 더 진한 주황색 */
   background: linear-gradient(135deg, var(--warning-600), #c2410c);
   box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
 }
@@ -375,12 +388,12 @@ background: linear-gradient(135deg, var(--warning-500), var(--warning-600));
 .manage-icon {
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.2); /* 반투명 흰색 배경 */
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff; /* 아이콘도 흰색으로 통일하여 깔끔하게 */
+  color: #ffffff;
 }
 
 .manage-content span {
@@ -399,7 +412,19 @@ background: linear-gradient(135deg, var(--warning-500), var(--warning-600));
   transform: translateX(4px);
 }
 
-/* 반응형 */
+/* =========================================
+   4. 반응형
+   ========================================= */
 @media (max-width: 900px) {
-  .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .learning-settings-main {
+    align-items: flex-start;
+  }
+
+  .setting-controls {
+    align-items: flex-start;
+  }
 }

@@ -116,78 +116,39 @@
   align-items: flex-end;
 }
 
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.filter-label {
-  font-size: 0.8rem;
-  color: var(--neutral-500);
-  margin-left: 4px;
-}
-
-.dropdown-box {
+.search-wrapper {
   position: relative;
+  width: 280px;
 }
 
-.dropdown-btn {
-  padding: 10px 16px;
-  background: var(--surface-1);
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-400);
+  font-size: 1.1rem;
+}
+
+.search-input {
+  width: 100%;
+  height: 46px;
+  padding-left: 44px;
+  padding-right: 16px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
-  color: var(--neutral-700);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  white-space: nowrap;
+  background: var(--surface-1);
+  color: var(--neutral-800);
+  font-size: 0.95rem;
   transition: all 0.2s ease;
 }
 
-.dropdown-btn:hover {
-  background-color: var(--neutral-100);
+.search-input:focus {
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+  outline: none;
 }
 
-.dropdown-btn.selected {
-  background-color: var(--primary-100);
-  color: var(--primary-600);
-  border-color: var(--primary-200);
-  font-weight: 600;
-}
-
-.dropdown-btn .arrow {
-  font-size: 0.7rem;
-  color: var(--neutral-400);
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 160px;
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  z-index: 20;
-  padding: 6px;
-}
-
-.dropdown-item {
-  padding: 10px 14px;
-  font-size: 0.9rem;
-  color: var(--neutral-800);
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.dropdown-item:hover {
-  background: var(--neutral-100);
-}
 
 /* =========================================
    3. Card 커스텀 스타일 (배치 수정)
@@ -195,8 +156,8 @@
 
 .wordlist-grid {
   display: grid;
-  gap: var(--space-5);
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
 }
 
 .wordlist-grid .card {
@@ -255,11 +216,6 @@
   margin-top: 0;
 }
 
-/* 완료된 단어 카드 스타일 */
-.word-card-completed {
-  background-color: var(--success-50) !important;
-  border-color: var(--success-200) !important;
-}
 
 /* 별 아이콘 버튼 */
 .star-btn {
@@ -291,7 +247,7 @@
 }
 .tag {
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-pill);
   font-size: 0.7rem;
   font-weight: 600;
   white-space: nowrap;
@@ -434,7 +390,7 @@
 }
 
 .reset-text-btn:hover {
-  color: var(--primary-600);
+  color: var(--primary-700);
   background-color: var(--primary-50);
   border-radius: 8px;
   text-decoration: none;

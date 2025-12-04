@@ -369,3 +369,99 @@
     justify-content: center;
   }
 }
+/* ===========================================================
+   StoryLex Checkbox — 안정형(깨짐 방지)
+   =========================================================== */
+
+.sl-checkbox {
+  appearance: none !important;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--neutral-300) !important;
+  border-radius: 4px;
+  background: var(--neutral-50) !important;
+  cursor: pointer;
+  position: relative; /* ::after 기준점 */
+  transition: 0.15s ease;
+}
+
+.sl-checkbox:hover {
+  border-color: var(--primary-400) !important;
+}
+
+.sl-checkbox:checked {
+  background: var(--primary-500) !important;
+  border-color: var(--primary-500) !important;
+}
+
+/* 체크 표시 — 항상 정중앙에 고정 */
+.sl-checkbox:checked::after {
+  content: "✔";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -56%); /* 정확한 수직 균형 */
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* ==========================================================
+   StoryLex WrongNote Bottom Buttons
+   ========================================================== */
+
+/* 기본 상태 → 흰색 그대로 유지 */
+.sl-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #111827 !important;
+  font-size: 0.86rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* hover 시 보라색 */
+.sl-btn:hover:not(:disabled) {
+  background-color: var(--primary-500) !important;
+  color: white !important;
+  border-color: var(--primary-500) !important;
+}
+
+/* 클릭한 버튼(activeAction일 때) → 보라색 유지 */
+.sl-btn-primary {
+  background-color: var(--primary-500) !important;
+  border-color: var(--primary-500) !important;
+  color: #fff !important;
+}
+
+/* active 상태 hover */
+.sl-btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-600) !important;
+}
+/* 타이틀만 가운데 정렬 (필터는 오른쪽 유지) */
+.wrongnote-header {
+  display: flex;
+  justify-content: center; /* 타이틀 중앙 */
+  align-items: center;
+  position: relative;
+}
+
+/* 타이틀과 설명을 포함한 영역을 정중앙에 위치 */
+.wrongnote-header__main {
+  text-align: center;
+  margin-bottom: 10px; /* 타이틀 아래 간격 조절 */
+}
+
+/* 필터는 원래 위치(오른쪽)로 복귀 */
+.wrongnote-header__filters {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}

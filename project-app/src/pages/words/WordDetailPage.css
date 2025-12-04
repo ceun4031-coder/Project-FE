@@ -59,7 +59,7 @@
 
 .detail-word-title {
   font-size: 2.5rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--neutral-900);
   margin: 0;
   line-height: 1.1;
@@ -68,8 +68,8 @@
 
 .detail-meaning {
   font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--neutral-700);
+  font-weight: 500;
+  color: var(--neutral-500);
   margin: 4px 0 12px 0;
   line-height: 1.5;
 }
@@ -83,7 +83,7 @@
 /* Tags */
 .tag {
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius:var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
@@ -100,7 +100,7 @@
   border: 1px solid var(--border-subtle);
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius:var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,7 +135,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius:var(--radius-pill);
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -235,7 +235,7 @@
 .cluster-tabs {
   display: flex;
   background-color: var(--neutral-100);
-  border-radius: 8px;
+  border-radius:var(--radius-pill);
   padding: 2px;
 }
 
@@ -246,7 +246,7 @@
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--neutral-500);
-  border-radius: 6px;
+  border-radius:var(--radius-pill);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -308,7 +308,7 @@
   align-items: center;
   background: white;
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius:var(--radius-pill);
   padding: 10px 14px;
   transition: all 0.2s;
 }
@@ -335,13 +335,13 @@
   color: var(--neutral-400);
   background: var(--neutral-100);
   padding: 1px 5px;
-  border-radius: 4px;
+   border-radius:var(--radius-pill);
 }
 
 .chip-add-btn {
   background: var(--surface-2);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+    border-radius:var(--radius-pill);
   width: 24px;
   height: 24px;
   display: flex;

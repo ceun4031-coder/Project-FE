@@ -1,21 +1,20 @@
 // src/pages/words/WordDetailPage.jsx
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Star,
+  BookOpen,
+  Check,
   CheckCircle,
   Plus,
-  Check,
-  BookOpen, // <-- BookOpen 아이콘은 이제 안 쓸 수도 있지만 예문에 써도 됨
-  Share2,
+  Star
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  getWordDetail,
   addFavorite,
-  removeFavorite,
-  getFavoriteList,
   getCompletedList,
+  getFavoriteList,
+  getWordDetail,
+  removeFavorite,
 } from "../../api/wordApi";
 import "./WordDetailPage.css";
 

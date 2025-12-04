@@ -355,3 +355,127 @@
 .card-page .card-result {
   margin-top: 80px;
 }
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* 가로 중앙 정렬 */
+  text-align: center;    /* 텍스트 중앙 */
+  width: 100%;
+}
+/* 오답 모드에서도 제목/설명은 기본 색상 유지 */
+.card-page--wrong .card-header h1 {
+  color: #0f172a !important; /* 기본 제목색 */
+}
+
+.card-page--wrong .card-header__subtitle {
+  color: #334155 !important; /* 기본 본문 설명 텍스트 */
+}
+/* ===========================
+   카드 학습 헤더 배지
+   =========================== */
+
+.cl-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+/* 일반 카드 학습 – 보라색 */
+.badge-purple {
+  background-color: #ede9fe;   /* 연보라 */
+  color: #5b21b6;              /* 진보라 */
+}
+
+/* 오답 카드 학습 – 주황색 */
+.badge-orange {
+  background-color: #fff4e6;   /* 연주황 */
+  color: #c2410c;              /* 진한 오렌지 */
+}
+/* ===========================
+   전체를 감싸는 학습 박스
+ =========================== */
+
+.card-wrap {
+  width: 100%;
+  max-width: 900px;       /* 🔥 가로폭 넓게 */
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 32px 32px 40px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+/* ===========================
+   OX 버튼 (StoryLex 스타일)
+   =========================== */
+
+.actions-ox {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 12px;
+}
+
+/* 기본 버튼 스타일 리셋 */
+.actions-ox button {
+  width: 82px;
+  height: 48px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 2px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+/* ❌ 모르겠다 버튼 */
+.actions-ox .btn-unknown {
+  border-color: #f8b4b4;
+  background-color: #fff5f5;
+}
+.actions-ox .btn-unknown svg {
+  color: #d64545;
+}
+.actions-ox .btn-unknown:hover {
+  background-color: #ffe0e0;
+  transform: translateY(-2px);
+}
+.actions-ox .btn-unknown:active {
+  transform: scale(0.96);
+}
+
+/* ⭕ 알겠다 버튼 */
+.actions-ox .btn-known {
+  border-color: #b7f0c8;
+  background-color: #f1fff6;
+}
+.actions-ox .btn-known svg {
+  color: #2f9e44;
+}
+.actions-ox .btn-known:hover {
+  background-color: #defbe9;
+  transform: translateY(-2px);
+}
+.actions-ox .btn-known:active {
+  transform: scale(0.96);
+}
+/* 결과 화면 폭 줄이기 (너무 길어지는 문제 해결) */
+.page-result {
+  max-width: 640px;   /* 원한다면 600~700 사이 조절 */
+  margin: 0 auto;
+  padding: 32px 28px;
+}
+
+/* 내부 stats-card도 박스 폭 맞추기 */
+.page-result .stats-card {
+  max-width: 580px;
+  margin: 0 auto;
+}

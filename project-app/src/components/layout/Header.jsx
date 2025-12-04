@@ -9,7 +9,6 @@ import StoryLexLogo from "../../assets/images/StoryLex-logo.svg";
 import "./Header.css";
 import { useAuth } from "../../context/AuthContext";
 
-// 로그인 사용자 네비
 const AUTH_NAV_ITEMS = [
   { to: "/dashboard", label: "대시보드" },
   { to: "/words", label: "단어장" },
@@ -17,7 +16,6 @@ const AUTH_NAV_ITEMS = [
   { to: "/learning", label: "학습하기" },
 ];
 
-// 비로그인 사용자 네비
 const GUEST_NAV_ITEMS = [
   { to: "/", label: "홈" },
   { to: "/stories", label: "AI 스토리" },
@@ -39,12 +37,10 @@ export default function Header() {
 
   const isAuthenticated = !!user;
 
-  // 라우트 변경 시 계정 메뉴 닫기
   useEffect(() => {
     setIsAccountMenuOpen(false);
   }, [location.pathname]);
 
-  // 바깥 클릭 시 계정 메뉴 닫기
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (accountRef.current && !accountRef.current.contains(e.target)) {
@@ -71,7 +67,7 @@ export default function Header() {
     try {
       await logout();
     } catch {
-      // 에러 처리 필요 없으면 비워둠
+      // 무시
     }
   };
 
@@ -79,7 +75,6 @@ export default function Header() {
     setIsAccountMenuOpen((prev) => !prev);
   };
 
-  // Auth 페이지에서는 최소 헤더 (로고만)
   const isAuthPage = location.pathname.startsWith("/auth");
 
   if (isAuthPage) {
@@ -107,7 +102,6 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-inner">
-        {/* 로고 */}
         <button
           type="button"
           className="header-logo"
@@ -120,7 +114,6 @@ export default function Header() {
           />
         </button>
 
-        {/* 네비게이션 */}
         <nav className="header-nav" aria-label="주요 메뉴">
           <div className="header-nav-group">
             {navItems.map((item) => (
@@ -131,7 +124,6 @@ export default function Header() {
           </div>
         </nav>
 
-        {/* 우측 액션 */}
         <div className="header-actions">
           {isAuthenticated ? (
             <div className="header-account" ref={accountRef}>
