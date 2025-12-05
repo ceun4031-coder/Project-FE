@@ -21,9 +21,11 @@ import Input from "../../components/common/Input";
 import PageHeader from "../../components/common/PageHeader";
 import Pagination from "../../components/common/Pagination";
 import Spinner from "../../components/common/Spinner";
+import FilterDropdown from "../../components/common/FilterDropdown";
 import "./WordListPage.css";
-import FilterDropdown from "../../components/common/FilterDropdown"; 
-// --- 상수 데이터 (기존과 동일) ---
+
+// --- 필터 옵션 ---
+// 품사 필터
 const CATEGORY_OPTIONS = [
   { label: "전체 품사", value: "All" },
   { label: "명사 (Noun)", value: "Noun" },
@@ -32,6 +34,7 @@ const CATEGORY_OPTIONS = [
   { label: "부사 (Adv)", value: "Adv" },
 ];
 
+// 분야 필터 (값은 category 컬럼과 동일하게)
 const DOMAIN_OPTIONS = [
   { label: "전체 분야", value: "All" },
   { label: "일상생활", value: "Daily Life" },
@@ -43,6 +46,7 @@ const DOMAIN_OPTIONS = [
   { label: "기술/IT", value: "Technology" },
 ];
 
+// 난이도 필터
 const LEVEL_OPTIONS = [
   { label: "전체 난이도", value: "All" },
   { label: "Lv.1", value: 1 },
@@ -64,12 +68,12 @@ function WordListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [mode, setMode] = useState("all");
+  const [mode, setMode] = useState("all"); // all / favorite
   const [filter, setFilter] = useState(FILTER_INITIAL);
-  const [sortKey, setSortKey] = useState("default");
+  const [sortKey, setSortKey] = useState("default"); // default / alphabet / level
   const [openDropdown, setOpenDropdown] = useState(null);
 
-  // --- 데이터 로딩 (기존과 동일) ---
+  // --- 데이터 로딩 ---
   useEffect(() => {
     let cancelled = false;
 
@@ -150,19 +154,13 @@ function WordListPage() {
     setSearchParams({ page: "0" });
   };
 
-  const toggleDropdown = (name) =>
-    setOpenDropdown((prev) => (prev === name ? null : name));
+  const toggleDropdown = (id) =>
+    setOpenDropdown((prev) => (prev === id ? null : id));
 
   const selectFilterOption = (type, value) => {
     setFilter((prev) => ({ ...prev, [type]: value }));
     setOpenDropdown(null);
     setSearchParams({ page: "0" });
-  };
-
-  const getFilterLabel = (type, options) => {
-    const current = filter[type];
-    const found = options.find((opt) => opt.value === current);
-    return found ? found.label : options[0].label;
   };
 
   const handleFilterReset = () => {
@@ -182,7 +180,6 @@ function WordListPage() {
     filter.domain !== "All" ||
     filter.level !== "All";
 
-  // --- 통계 및 필터링 ---
   const favoriteCount = useMemo(
     () => words.filter((w) => w.isFavorite).length,
     [words]
@@ -193,7 +190,6 @@ function WordListPage() {
       key: "all",
       label: "전체 단어",
       count: words.length,
-      // [수정] mode가 'all'일 때만 색상을 채움 (즐겨찾기와 동일한 로직)
       icon: (
         <LayoutGrid
           size={20}
@@ -218,6 +214,7 @@ function WordListPage() {
     },
   ];
 
+  // --- 필터 + 정렬 ---
   const filteredAndSortedWords = useMemo(() => {
     let result = words.filter((w) => {
       if (mode === "favorite" && !w.isFavorite) return false;
@@ -225,14 +222,22 @@ function WordListPage() {
     });
 
     result = result.filter((w) => {
+      // 품사 필터
       if (filter.category !== "All" && w.partOfSpeech !== filter.category)
         return false;
-      if (filter.domain !== "All" && w.domain !== filter.domain) return false;
+
+      // 분야 필터: filter.domain 값은 category 컬럼과 동일하게 사용
+      if (filter.domain !== "All" && w.category !== filter.domain)
+        return false;
+
+      // 난이도 필터
       if (
         filter.level !== "All" &&
         Number(w.level) !== Number(filter.level)
       )
         return false;
+
+      // 검색어
       if (search) {
         const lower = search.toLowerCase();
         const wordText = (w.word || "").toLowerCase();
@@ -241,9 +246,11 @@ function WordListPage() {
           return false;
         }
       }
+
       return true;
     });
 
+    // 정렬
     if (sortKey === "alphabet") {
       result.sort((a, b) => (a.word || "").localeCompare(b.word || ""));
     } else if (sortKey === "level") {
@@ -274,6 +281,7 @@ function WordListPage() {
 
   const isEmptyAll = !loading && !error && words.length === 0;
 
+  // --- 렌더링 ---
   return (
     <div className="page-container wordlist-page">
       {/* 1. 헤더 영역 */}
@@ -296,7 +304,9 @@ function WordListPage() {
                   } ${color}`}
                   onClick={() => handleModeChange(key)}
                 >
-                  <div className={`stat-icon-wrapper bg-${color}`}>{icon}</div>
+                  <div className={`stat-icon-wrapper bg-${color}`}>
+                    {icon}
+                  </div>
                   <div className="stat-info">
                     <span className="stat-label">{label}</span>
                     <span className="stat-count">{count}</span>
@@ -308,39 +318,38 @@ function WordListPage() {
         </div>
       </header>
 
-      {/* 2. 컨트롤 영역 (기존 유지) */}
+      {/* 2. 컨트롤 영역 */}
       <section className="wordlist-controls">
         <div className="controls-left">
-    <div className="filter-container">
-  {[
-    { id: "category", label: "품사", options: CATEGORY_OPTIONS },
-    { id: "domain", label: "분야", options: DOMAIN_OPTIONS },
-    { id: "level", label: "난이도", options: LEVEL_OPTIONS },
-  ].map(({ id, label, options }) => (
-    <FilterDropdown
-      key={id}
-      id={id}
-      label={label}
-      options={options}
-      value={filter[id]}
-      isOpen={openDropdown === id}
-      onToggle={toggleDropdown}        // (id) => setOpenDropdown(...)
-      onChange={selectFilterOption}    // (id, value) => setFilter(...)
-    />
-  ))}
+          <div className="filter-container">
+            {[
+              { id: "category", label: "품사", options: CATEGORY_OPTIONS },
+              { id: "domain", label: "분야", options: DOMAIN_OPTIONS },
+              { id: "level", label: "난이도", options: LEVEL_OPTIONS },
+            ].map(({ id, label, options }) => (
+              <FilterDropdown
+                key={id}
+                id={id}
+                label={label}
+                options={options}
+                value={filter[id]}
+                isOpen={openDropdown === id}
+                onToggle={toggleDropdown}     // (id) => ...
+                onChange={selectFilterOption} // (id, value) => ...
+              />
+            ))}
 
-  {isFilterActive && (
-    <button
-      type="button"
-      onClick={handleFilterReset}
-      className="filter-reset-btn"
-      title="필터 초기화"
-    >
-      <RotateCcw size={16} />
-    </button>
-  )}
-</div>
-
+            {isFilterActive && (
+              <button
+                type="button"
+                onClick={handleFilterReset}
+                className="filter-reset-btn"
+                title="필터 초기화"
+              >
+                <RotateCcw size={16} />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="controls-right">
@@ -363,7 +372,7 @@ function WordListPage() {
       <section className="wordlist-content">
         {loading && (
           <div className="status-msg loading">
-             <Spinner
+            <Spinner
               fullHeight={false}
               message="단어장을 불러오는 중입니다..."
             />
@@ -381,7 +390,8 @@ function WordListPage() {
             </button>
           </div>
         )}
-{/* 단어장에 단어가 없는경우 인데 나중에 수정하면서 제거하거나 고칠 것 */}
+
+        {/* 단어장에 단어가 없는 경우 */}
         {!loading && !error && isEmptyAll && (
           <div className="status-msg empty">
             <p>저장된 단어가 없습니다. 📭</p>
@@ -428,10 +438,9 @@ function WordListPage() {
                         </button>
                       }
                     >
-                      {/* [추가] 구분선: 단어 길이 차이 시각적 보정 */}
                       <div className="card-separator" />
 
-                      {/* 1. 태그 (왼쪽 정렬) */}
+                      {/* 태그 */}
                       <div className="word-tags-row">
                         {typeof w.level === "number" && (
                           <span className="tag tag-level">Lv.{w.level}</span>
@@ -439,17 +448,17 @@ function WordListPage() {
                         {w.partOfSpeech && (
                           <span className="tag tag-pos">{w.partOfSpeech}</span>
                         )}
-                        {w.domain && (
-                          <span className="tag tag-domain">{w.domain}</span>
+                        {w.category && (
+                          <span className="tag tag-domain">{w.category}</span>
                         )}
                       </div>
 
-                      {/* 2. 뜻 (왼쪽 정렬) */}
+                      {/* 뜻 */}
                       <div className="word-meaning-row">
                         <p className="word-meaning">{meaningPreview}</p>
                       </div>
 
-                      {/* 3. 하단 링크 (우측 하단) */}
+                      {/* 하단 링크 */}
                       <div className="word-card-footer">
                         <div className="view-detail">
                           More{" "}
@@ -461,7 +470,6 @@ function WordListPage() {
                 })}
               </div>
             ) : (
-              // 결과 없음 화면 (기존 유지)
               <div className="status-msg empty-search">
                 <div className="empty-icon-wrapper">
                   <FileQuestion size={64} strokeWidth={1.5} />
@@ -479,7 +487,7 @@ function WordListPage() {
         )}
       </section>
 
-      {/* 4. 페이지네이션 (기존 유지) */}
+      {/* 4. 페이지네이션 */}
       {!loading && !error && filteredAndSortedWords.length > 0 && (
         <Pagination
           page={safeIndex}

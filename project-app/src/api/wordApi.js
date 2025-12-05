@@ -12,7 +12,6 @@ let mockWordList = [
     word: "Coffee",
     meaning: "커피",
     partOfSpeech: "Noun",
-    domain: "Daily Life",
     category: "Daily Life",
     level: 1,
     isFavorite: false,
@@ -25,7 +24,6 @@ let mockWordList = [
     word: "Negotiate",
     meaning: "협상하다",
     partOfSpeech: "Verb",
-    domain: "Business",
     category: "Business",
     level: 3,
     isFavorite: true,
@@ -38,7 +36,6 @@ let mockWordList = [
     word: "Beautiful",
     meaning: "아름다운",
     partOfSpeech: "Adjective",
-    domain: "Daily Life",
     category: "Daily Life",
     level: 1,
     isFavorite: false,
@@ -51,7 +48,6 @@ let mockWordList = [
     word: "Quickly",
     meaning: "빠르게",
     partOfSpeech: "Adverb",
-    domain: "Daily Life",
     category: "Daily Life",
     level: 2,
     isFavorite: true,
@@ -64,7 +60,6 @@ let mockWordList = [
     word: "Strategy",
     meaning: "전략",
     partOfSpeech: "Noun",
-    domain: "Business",
     category: "Business",
     level: 2,
     isFavorite: false,
@@ -77,7 +72,6 @@ let mockWordList = [
     word: "Implement",
     meaning: "실행하다",
     partOfSpeech: "Verb",
-    domain: "Business",
     category: "Business",
     level: 3,
     isFavorite: false,
@@ -85,13 +79,11 @@ let mockWordList = [
     exampleSentenceEn: "The company will implement the new policy.",
     exampleSentenceKo: "회사는 새로운 정책을 실행할 것이다.",
   },
-  // ---- 여기부터 추가 7~13 ----
   {
     wordId: 7,
     word: "Deadline",
     meaning: "마감 기한",
     partOfSpeech: "Noun",
-    domain: "Business",
     category: "Business",
     level: 2,
     isFavorite: false,
@@ -104,7 +96,6 @@ let mockWordList = [
     word: "Conference",
     meaning: "회의, 회의회",
     partOfSpeech: "Noun",
-    domain: "Business",
     category: "Business",
     level: 2,
     isFavorite: false,
@@ -117,7 +108,6 @@ let mockWordList = [
     word: "Analyze",
     meaning: "분석하다",
     partOfSpeech: "Verb",
-    domain: "Business",
     category: "Business",
     level: 3,
     isFavorite: true,
@@ -130,7 +120,6 @@ let mockWordList = [
     word: "Curious",
     meaning: "궁금한, 호기심 많은",
     partOfSpeech: "Adjective",
-    domain: "Daily Life",
     category: "Daily Life",
     level: 1,
     isFavorite: false,
@@ -143,7 +132,6 @@ let mockWordList = [
     word: "Comfortable",
     meaning: "편안한",
     partOfSpeech: "Adjective",
-    domain: "Daily Life",
     category: "Daily Life",
     level: 1,
     isFavorite: true,
@@ -156,7 +144,6 @@ let mockWordList = [
     word: "Frequently",
     meaning: "자주, 빈번히",
     partOfSpeech: "Adverb",
-    domain: "Daily Life",
     category: "Daily Life",
     level: 2,
     isFavorite: false,
@@ -169,7 +156,6 @@ let mockWordList = [
     word: "Opportunity",
     meaning: "기회",
     partOfSpeech: "Noun",
-    domain: "Business",
     category: "Business",
     level: 2,
     isFavorite: true,
@@ -178,7 +164,6 @@ let mockWordList = [
     exampleSentenceKo: "이것은 당신의 커리어에 훌륭한 기회이다.",
   },
 ];
-
 
 const mockDelay = (result, ms = 200) =>
   new Promise((resolve) => setTimeout(() => resolve(result), ms));
@@ -205,7 +190,6 @@ const normalizePartOfSpeech = (raw) => {
     case "adv":
       return "Adv";
     default:
-      // 그 외는 첫 글자만 대문자로
       return v.charAt(0).toUpperCase() + v.slice(1);
   }
 };
@@ -215,7 +199,6 @@ const normalizePartOfSpeech = (raw) => {
  * - Word / Favorite / Completed 응답을 한 번에 처리
  */
 const mapWordFromApi = (w) => {
-  // 이상한 값 들어오면 안전한 기본값
   if (!w || typeof w !== "object") {
     console.error("mapWordFromApi: invalid data", w);
     return {
@@ -224,7 +207,6 @@ const mapWordFromApi = (w) => {
       word: "",
       meaning: "",
       partOfSpeech: null,
-      domain: null,
       category: null,
       level: 1,
       isFavorite: false,
@@ -235,7 +217,7 @@ const mapWordFromApi = (w) => {
     };
   }
 
-  // level / wordLevel 둘 다 대응 + 기본값 1
+  // level / wordLevel 둘 다 대응
   let levelValue = null;
   if (typeof w.level === "number") {
     levelValue = w.level;
@@ -248,9 +230,7 @@ const mapWordFromApi = (w) => {
     const n = Number(w.wordLevel);
     levelValue = Number.isNaN(n) ? null : n;
   }
-  if (levelValue == null) {
-    levelValue = 1;
-  }
+  if (levelValue == null) levelValue = 1;
 
   const hasExampleSentence =
     typeof w.exampleSentence === "string" &&
@@ -266,7 +246,6 @@ const mapWordFromApi = (w) => {
 
   const id = w.id != null ? w.id : null;
 
-  // Word 목록: wordId / Favorite 목록: id + wordId 둘 다 존재 가능
   const wordId =
     w.wordId != null
       ? w.wordId
@@ -274,14 +253,11 @@ const mapWordFromApi = (w) => {
       ? w.id
       : null;
 
-  // 품사: partOfSpeech / pos 둘 다 대응
   const rawPos = w.partOfSpeech ?? w.pos ?? null;
 
-  // 즐겨찾기: isFavorite / favorite 둘 다 대응
   const isFavorite =
     w.isFavorite != null ? w.isFavorite : w.favorite ?? false;
 
-  // 완료 여부: isCompleted / learningStatus(COMPLETED) 둘 다 대응
   let isCompleted = w.isCompleted;
   if (
     typeof isCompleted === "undefined" &&
@@ -296,21 +272,10 @@ const mapWordFromApi = (w) => {
     word: w.word || "",
     meaning: w.meaning || "",
     partOfSpeech: normalizePartOfSpeech(rawPos),
-
-    // domain 없으면 category로 대체
-    domain:
-      w.domain != null
-        ? w.domain
-        : w.category != null
-        ? w.category
-        : null,
     category: w.category != null ? w.category : null,
-
     level: levelValue,
-
     isFavorite: !!isFavorite,
     isCompleted: !!isCompleted,
-
     exampleSentence,
     exampleSentenceEn:
       typeof w.exampleSentenceEn === "string"
@@ -329,7 +294,6 @@ const mapWordFromApi = (w) => {
 
 // =====================================================
 // 1. 단어 목록 조회 (페이징)
-//    GET /api/words?page=0&size=20
 // =====================================================
 export const getWordList = async (page = 0, size = 100) => {
   if (USE_MOCK) {
@@ -362,8 +326,7 @@ export const getWordList = async (page = 0, size = 100) => {
 };
 
 // =====================================================
-// 2. 오늘의 단어 (단일 객체)
-//    GET /api/words/today
+// 2. 오늘의 단어
 // =====================================================
 export const getTodayWord = async () => {
   if (USE_MOCK) {
@@ -377,7 +340,6 @@ export const getTodayWord = async () => {
 
 // =====================================================
 // 3. 단어 검색
-//    GET /api/words/search?keyword=app&page=0&size=20
 // =====================================================
 export const searchWords = async (keyword, page = 0, size = 20) => {
   if (USE_MOCK) {
@@ -420,8 +382,7 @@ export const searchWords = async (keyword, page = 0, size = 20) => {
 };
 
 // =====================================================
-// 4. 필터 검색
-//    GET /api/words/filter?category=Daily&level=1&partOfSpeech=adj
+// 4. 필터 검색 (백엔드용, 필요시)
 // =====================================================
 export const filterWords = async ({
   category,
@@ -433,7 +394,7 @@ export const filterWords = async ({
   if (USE_MOCK) {
     let filtered = [...mockWordList];
 
-    if (category) {
+    if (category && category !== "All") {
       filtered = filtered.filter((w) => w.category === category);
     }
     if (level != null && level !== "" && level !== "All") {
@@ -441,7 +402,7 @@ export const filterWords = async ({
         (w) => Number(w.level) === Number(level)
       );
     }
-    if (partOfSpeech) {
+    if (partOfSpeech && partOfSpeech !== "All") {
       const lowered = String(partOfSpeech).toLowerCase();
       filtered = filtered.filter((w) => {
         if (!w.partOfSpeech) return false;
@@ -478,10 +439,8 @@ export const filterWords = async ({
 };
 
 // =====================================================
-// 5. 즐겨찾기 관련 APIs
+// 5. 즐겨찾기 관련
 // =====================================================
-
-// 즐겨찾기 추가: POST /api/favorites/{wordId}
 export const addFavorite = async (wordId) => {
   if (USE_MOCK) {
     mockWordList = mockWordList.map((w) =>
@@ -514,7 +473,6 @@ export const addFavorite = async (wordId) => {
   }
 };
 
-// 즐겨찾기 삭제: DELETE /api/favorites/{wordId}
 export const removeFavorite = async (wordId) => {
   if (USE_MOCK) {
     mockWordList = mockWordList.map((w) =>
@@ -547,7 +505,6 @@ export const removeFavorite = async (wordId) => {
   }
 };
 
-// 즐겨찾기 목록: GET /api/favorites
 export const getFavoriteList = async () => {
   if (USE_MOCK) {
     const favorites = mockWordList
@@ -569,10 +526,8 @@ export const getFavoriteList = async () => {
 };
 
 // =====================================================
-// 6. 학습 완료 관련 APIs (조회 전용)
+// 6. 학습 완료 관련
 // =====================================================
-
-// 완료 단어 목록: GET /api/completed
 export const getCompletedList = async () => {
   if (USE_MOCK) {
     const completed = mockWordList
@@ -593,7 +548,6 @@ export const getCompletedList = async () => {
   });
 };
 
-// 상태 조회 (단일): GET /api/completed/{wordId}/status
 export const getCompletedStatus = async (wordId) => {
   if (USE_MOCK) {
     const target = mockWordList.find((w) => w.wordId === Number(wordId));
@@ -609,7 +563,6 @@ export const getCompletedStatus = async (wordId) => {
 
 // =====================================================
 // 7. 단어 상세 조회
-//    GET /api/words/detail/{wordId}
 // =====================================================
 export const getWordDetail = async (wordId) => {
   if (USE_MOCK) {
@@ -622,7 +575,6 @@ export const getWordDetail = async (wordId) => {
           word: "Unknown",
           meaning: "등록되지 않은 단어입니다.",
           partOfSpeech: "Noun",
-          domain: "Daily Life",
           category: "Daily Life",
           level: 1,
           isFavorite: false,
@@ -641,7 +593,6 @@ export const getWordDetail = async (wordId) => {
 
 // =====================================================
 // 8. 테스트: 전체 단어 개수
-//    GET /api/words/test-count
 // =====================================================
 export const getWordCount = async () => {
   if (USE_MOCK) {
@@ -657,7 +608,6 @@ export const getWordCount = async () => {
 // =====================================================
 export const addWordFromCluster = async ({ text, level = 1 }) => {
   if (USE_MOCK) {
-    // 1) 이미 있는 단어면 그대로 반환
     const exists = mockWordList.find(
       (w) => String(w.word).toLowerCase() === String(text).toLowerCase()
     );
@@ -665,7 +615,6 @@ export const addWordFromCluster = async ({ text, level = 1 }) => {
       return mockDelay(mapWordFromApi(exists));
     }
 
-    // 2) 새 단어 mockWordList에 push
     const lastId = mockWordList[mockWordList.length - 1]?.wordId || 0;
     const newId = lastId + 1;
 
@@ -674,7 +623,6 @@ export const addWordFromCluster = async ({ text, level = 1 }) => {
       word: text,
       meaning: `${text} (mock)`,
       partOfSpeech: "Noun",
-      domain: "Daily Life",
       category: "Daily Life",
       level,
       isFavorite: false,
@@ -688,7 +636,6 @@ export const addWordFromCluster = async ({ text, level = 1 }) => {
     return mockDelay(mapWordFromApi(newWord));
   }
 
-  // 실서버 모드는 추후 백엔드 연동 시 구현
   console.warn("addWordFromCluster: 실서버 모드에서는 아직 미구현입니다.");
   throw new Error("addWordFromCluster is not implemented on real server yet.");
 };
