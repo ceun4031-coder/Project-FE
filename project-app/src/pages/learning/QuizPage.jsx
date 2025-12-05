@@ -10,6 +10,42 @@ import "./QuizPage.css";
 // API 모듈
 import { fetchQuizzes, submitQuizResult } from "../../api/quizApi";
 
+// 문제 객체에서 단어만 추출하는 헬퍼
+const extractWordFromQuestion = (q) => {
+  if (!q) return "";
+
+  // 백엔드가 word 필드를 내려주면 그게 가장 정확함
+  if (typeof q.word === "string" && q.word.trim().length > 0) {
+    return q.word.trim();
+  }
+
+  const src =
+    (typeof q.question === "string" && q.question) ||
+    (typeof q.questionText === "string" && q.questionText) ||
+    "";
+
+  if (!src) return "";
+
+  // 1) "[복습] 'Abstract'의 의미는?" → 작은따옴표 안의 단어만 추출
+  const singleMatch = src.match(/'([^']+)'/);
+  if (singleMatch && singleMatch[1]) {
+    return singleMatch[1].trim();
+  }
+
+  // 2) "Abstract" 처럼 큰따옴표 사용 시
+  const doubleMatch = src.match(/"([^"]+)"/);
+  if (doubleMatch && doubleMatch[1]) {
+    return doubleMatch[1].trim();
+  }
+
+  // 3) 아무 것도 못 찾으면 대충 첫 단어 사용 (fallback)
+  return src
+    .split(/\s+/)[0] // 첫 단어
+    .replace(/^[\[\(]+/, "") // 앞의 [, ( 제거
+    .replace(/[\]\)\?:]+$/, "") // 뒤의 ], ), ?, : 제거
+    .trim();
+};
+
 const QuizPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,6 +69,9 @@ const QuizPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // 이번 퀴즈 세션에서 틀린 단어 목록 (정규/오답 모드 공통)
+  const [wrongQuizWords, setWrongQuizWords] = useState([]);
+
   // 2️⃣ 퀴즈 데이터 가져오기
   useEffect(() => {
     const loadData = async () => {
@@ -55,6 +94,11 @@ const QuizPage = () => {
         }
 
         setQuestions(data);
+        setCurrentIndex(0);
+        setSelectedOption(null);
+        setScore(0);
+        setIsFinished(false);
+        setWrongQuizWords([]); // 새 세션 시작 시 초기화
       } catch (err) {
         console.error("❌ 퀴즈 로드 실패:", err);
         setError("문제를 불러오는 중 오류가 발생했습니다.");
@@ -70,46 +114,70 @@ const QuizPage = () => {
   const handleOptionClick = (index) => {
     if (selectedOption !== null) return;
 
+    const currentQ = questions[currentIndex];
     setSelectedOption(index);
-    if (index === questions[currentIndex].answer) {
+
+    const isCorrect = index === currentQ.answer;
+
+    if (isCorrect) {
       setScore((prev) => prev + 1);
+    } else {
+      // 오답이면 모드 상관없이 이번 세션 오답 단어로 수집
+      setWrongQuizWords((prev) => {
+        const wordText = extractWordFromQuestion(currentQ);
+        const normalized = (wordText || "").trim();
+        if (!normalized) return prev;
+
+        const lower = normalized.toLowerCase();
+
+        // 이미 동일 단어가 있으면 중복 추가 X
+        if (prev.some((w) => w.text.toLowerCase() === lower)) {
+          return prev;
+        }
+
+        const newItem = {
+          text: normalized, // StoryCreatePage에서 그대로 칩에 표시할 단어
+          wordId: currentQ.wordId,
+          wrongWordId: currentQ.wrongWordId,
+          meaning: currentQ.meaning,
+        };
+
+        return [...prev, newItem];
+      });
     }
   };
 
   // 3️⃣ 다음 문제 이동 및 결과 전송
- const handleNext = async () => {
-  if (selectedOption === null) return;
+  const handleNext = async () => {
+    if (selectedOption === null) return;
 
-  if (currentIndex + 1 < questions.length) {
-    // 다음 문제로 이동
-    setCurrentIndex((prev) => prev + 1);
-    setSelectedOption(null);
-  } else {
-    // 마지막 문제 → 이미 handleOptionClick 에서 점수 계산됨
-    try {
-      await submitQuizResult({
-        mode: isWrongMode ? "wrong" : "normal",
-        score: score,               
-        total: questions.length,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error("❌ 결과 전송 실패:", err);
+    if (currentIndex + 1 < questions.length) {
+      // 다음 문제로 이동
+      setCurrentIndex((prev) => prev + 1);
+      setSelectedOption(null);
+    } else {
+      // 마지막 문제 → 이미 handleOptionClick 에서 점수 계산됨
+      try {
+        await submitQuizResult({
+          mode: isWrongMode ? "wrong" : "normal",
+          score,
+          total: questions.length,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error("❌ 결과 전송 실패:", err);
+      }
+
+      setIsFinished(true);
     }
-
-    setIsFinished(true);            
-  }
-};
-
+  };
 
   // ─── 화면 렌더링 ───
 
-  // 로딩
   if (isLoading) {
     return <div className="loading-screen">퀴즈를 불러오는 중입니다...</div>;
   }
 
-  // 에러
   if (error) {
     return (
       <div className="error-screen">
@@ -133,14 +201,14 @@ const QuizPage = () => {
         {/* 헤더 영역 */}
         <header className="quiz-header">
           <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/learning")}
-          aria-label="뒤로 가기"
-          style={{ padding: "8px" }}
-        >
-          <ArrowLeft size={20} />
-        </Button>
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/learning")}
+            aria-label="뒤로 가기"
+            style={{ padding: "8px" }}
+          >
+            <ArrowLeft size={20} />
+          </Button>
           <div className="quiz-title">
             {isWrongMode ? "오답 퀴즈" : "실전 퀴즈"}
             <span className="quiz-badge">
@@ -261,21 +329,34 @@ const QuizPage = () => {
                 ? "틀린 문제를 다시 한번 확인해보세요."
                 : "오늘의 학습 목표를 달성했습니다."}
             </p>
+
             <div className="result-actions">
               <Button
                 variant="secondary"
                 full
                 size="lg"
-                onClick={() =>
+                onClick={() => {
+                  // 정규/오답 모드 공통: 이번 세션의 '틀린 단어들'을 StoryCreatePage로 전달
+                  const wrongWordsPayload = wrongQuizWords
+                    .filter((w) => w.text && w.text.trim().length > 0)
+                    .map((w) => ({
+                      text: w.text.trim(),
+                      word: w.text.trim(),
+                      wordId: w.wordId ?? null,
+                      wrongWordId: w.wrongWordId ?? null,
+                      meaning: w.meaning ?? "",
+                    }));
+
                   navigate("/stories/create", {
                     state: {
-                      from: "quiz",
+                      from: isWrongMode ? "wrong-quiz" : "quiz",
                       mode: isWrongMode ? "wrong" : "normal",
                       score,
                       total: questions.length,
+                      wrongWords: wrongWordsPayload,
                     },
-                  })
-                }
+                  });
+                }}
               >
                 AI 스토리 생성하기
               </Button>

@@ -43,7 +43,13 @@ const normalizeQuizItem = (raw, index) => {
       ? raw.answer
       : 0;
 
-  return { id, question, options, answer };
+    return {
+    ...raw,
+    id,
+    question,
+    options,
+    answer,
+  };
 };
 
 const normalizeQuizListResponse = (data) => {

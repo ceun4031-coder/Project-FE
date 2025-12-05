@@ -1,27 +1,27 @@
 // src/pages/wrongnote/WrongNotePage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
+
 import { getWrongList } from "../../api/wrongApi";
 import Pagination from "../../components/common/Pagination";
 import { WrongNoteItem } from "./components/WrongNoteItem";
-import "./WrongNotePage.css";
 
-// 아이콘 (드롭다운 화살표)
-import { ChevronDown } from "lucide-react";
+import "./WrongNotePage.css";
 
 const PAGE_SIZE = 10;
 
-// 공통 헬퍼: 스토리 사용 여부
+// 스토리 사용 여부 판별
 const isUsedInStory = (item) =>
   item?.isUsedInStory === "Y" ||
   item?.isUsedInStory === "y" ||
   item?.isUsedInStory === true;
 
-// 공통 헬퍼: 오답 횟수
+// 오답 횟수 헬퍼
 const getWrongCount = (item) =>
   item?.totalWrong ?? item?.wrongCount ?? item?.wrong ?? 0;
 
-// 공통 헬퍼: 마지막 오답 일시
+// 마지막 오답 일시 헬퍼 (정렬용)
 const getLastWrongTime = (item) => {
   const raw = item?.lastWrongAt || item?.wrongAt || item?.wrong_at;
   if (!raw) return 0;
@@ -32,25 +32,22 @@ const getLastWrongTime = (item) => {
 export default function WrongNotePage() {
   const navigate = useNavigate();
 
-  // =============================
-  // 상태
-  // =============================
+  // 데이터 원본
   const [rawItems, setRawItems] = useState([]);
 
+  // 필터 상태
   const [filters, setFilters] = useState({
-    isUsedInStory: "",
-    sortBy: "latest",
+    isUsedInStory: "", // "", "Y", "N"
+    sortBy: "latest",  // latest | oldest | mostWrong
   });
 
+  // UI 상태
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]); // wrongWordId[]
   const [page, setPage] = useState(0);
-
-
-  const [openDropdown, setOpenDropdown] = useState(null);
-
-  const [activeAction, setActiveAction] = useState("none");
+  const [openDropdown, setOpenDropdown] = useState(null); // "used" | "sort" | null
+  const [activeAction, setActiveAction] = useState("none"); // quiz | card | story | none
 
   // =============================
   // 데이터 로딩
@@ -58,8 +55,9 @@ export default function WrongNotePage() {
   const refresh = async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const data = await getWrongList();
+      const data = await getWrongList(); // 항상 normalize된 형태
       setRawItems(Array.isArray(data) ? data : []);
       setSelectedIds([]);
       setPage(0);
@@ -84,11 +82,12 @@ export default function WrongNotePage() {
   };
 
   // =============================
-  // 필터 + 정렬
+  // 필터 + 정렬 적용
   // =============================
   const processedItems = useMemo(() => {
     const { isUsedInStory: usedFilter, sortBy } = filters;
 
+    // 사용 여부 필터
     const filtered = rawItems.filter((item) => {
       const used = isUsedInStory(item);
       if (usedFilter === "Y") return used;
@@ -96,6 +95,7 @@ export default function WrongNotePage() {
       return true;
     });
 
+    // 정렬
     const sorted = [...filtered].sort((a, b) => {
       const aDate = getLastWrongTime(a);
       const bDate = getLastWrongTime(b);
@@ -130,6 +130,7 @@ export default function WrongNotePage() {
     return processedItems.slice(start, start + PAGE_SIZE);
   }, [processedItems, page]);
 
+  // 현재 page가 마지막 페이지를 넘어가면 보정
   useEffect(() => {
     if (page > 0 && page >= totalPages) {
       setPage(Math.max(0, totalPages - 1));
@@ -137,7 +138,7 @@ export default function WrongNotePage() {
   }, [page, totalPages]);
 
   // =============================
-  // 선택
+  // 선택 처리
   // =============================
   const toggleSelect = (id) => {
     setSelectedIds((prev) =>
@@ -149,23 +150,30 @@ export default function WrongNotePage() {
   const selectedCount = selectedIds.length;
 
   // =============================
-  // 액션 (퀴즈/카드/스토리)
+  // 액션 (퀴즈 / 카드 / 스토리)
   // =============================
   const handleReviewAsQuiz = () => {
     if (selectedCount === 0) return;
     const ids = selectedIds.join(",");
-    navigate(`/learning/quiz?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`);
+    navigate(
+      `/learning/quiz?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`
+    );
   };
 
   const handleReviewAsCard = () => {
     if (selectedCount === 0) return;
     const ids = selectedIds.join(",");
-    navigate(`/learning/card?source=wrong-note&wrongWordIds=${encodeURIComponent(ids)}`);
+    navigate(
+      `/learning/card?source=wrong-note&wrongWordIds=${encodeURIComponent(
+        ids
+      )}`
+    );
   };
 
   const handleCreateStory = () => {
     if (selectedCount === 0) return;
 
+    // 이미 스토리에 사용된 단어는 제외
     const candidateItems = rawItems.filter(
       (item) => selectedIds.includes(item.wrongWordId) && !isUsedInStory(item)
     );
@@ -179,13 +187,17 @@ export default function WrongNotePage() {
     navigate(`/stories/create?wrongWordIds=${encodeURIComponent(ids)}`);
   };
 
-  const handleRowClick = (item) => {};
+  const handleRowClick = (item) => {
+    // 필요하면 추후 상세 모달/단어 상세로 연결
+    console.log("row clicked:", item);
+  };
 
   // ============================================================
-  // JSX 시작
+  // JSX
   // ============================================================
   return (
     <div className="wrongnote-page">
+      {/* 상단 헤더 + 필터 */}
       <header className="wrongnote-header">
         <div className="wrongnote-header__main">
           <h1>오답 노트</h1>
@@ -194,10 +206,8 @@ export default function WrongNotePage() {
           </p>
         </div>
 
-        {/* ========== 상단 필터: 커스텀 드롭다운 적용 ========== */}
         <div className="wrongnote-header__filters">
-
-          {/* 스토리 사용 여부 */}
+          {/* 스토리 사용 여부 필터 */}
           <div className="control-group">
             <label className="control-label">스토리</label>
             <div className="filter-group">
@@ -209,25 +219,41 @@ export default function WrongNotePage() {
                     setOpenDropdown(openDropdown === "used" ? null : "used")
                   }
                 >
-                  {
-                    filters.isUsedInStory === ""
-                      ? "전체"
-                      : filters.isUsedInStory === "Y"
-                      ? "사용됨"
-                      : "미사용"
-                  }
+                  {filters.isUsedInStory === ""
+                    ? "전체"
+                    : filters.isUsedInStory === "Y"
+                    ? "사용됨"
+                    : "미사용"}
                   <ChevronDown size={14} className="arrow" />
                 </button>
 
                 {openDropdown === "used" && (
                   <div className="dropdown-menu">
-                    <div className="dropdown-item" onClick={() => { handleChangeFilter("isUsedInStory", ""); setOpenDropdown(null); }}>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleChangeFilter("isUsedInStory", "");
+                        setOpenDropdown(null);
+                      }}
+                    >
                       전체
                     </div>
-                    <div className="dropdown-item" onClick={() => { handleChangeFilter("isUsedInStory", "N"); setOpenDropdown(null); }}>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleChangeFilter("isUsedInStory", "N");
+                        setOpenDropdown(null);
+                      }}
+                    >
                       미사용
                     </div>
-                    <div className="dropdown-item" onClick={() => { handleChangeFilter("isUsedInStory", "Y"); setOpenDropdown(null); }}>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleChangeFilter("isUsedInStory", "Y");
+                        setOpenDropdown(null);
+                      }}
+                    >
                       사용됨
                     </div>
                   </div>
@@ -236,7 +262,7 @@ export default function WrongNotePage() {
             </div>
           </div>
 
-          {/* 정렬 */}
+          {/* 정렬 필터 */}
           <div className="control-group">
             <label className="control-label">정렬</label>
             <div className="filter-group">
@@ -248,25 +274,41 @@ export default function WrongNotePage() {
                     setOpenDropdown(openDropdown === "sort" ? null : "sort")
                   }
                 >
-                  {
-                    filters.sortBy === "latest"
-                      ? "최신순"
-                      : filters.sortBy === "oldest"
-                      ? "오래된순"
-                      : "많이 틀린순"
-                  }
+                  {filters.sortBy === "latest"
+                    ? "최신순"
+                    : filters.sortBy === "oldest"
+                    ? "오래된순"
+                    : "많이 틀린순"}
                   <ChevronDown size={14} className="arrow" />
                 </button>
 
                 {openDropdown === "sort" && (
                   <div className="dropdown-menu">
-                    <div className="dropdown-item" onClick={() => { handleChangeFilter("sortBy", "latest"); setOpenDropdown(null); }}>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleChangeFilter("sortBy", "latest");
+                        setOpenDropdown(null);
+                      }}
+                    >
                       최신순
                     </div>
-                    <div className="dropdown-item" onClick={() => { handleChangeFilter("sortBy", "oldest"); setOpenDropdown(null); }}>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleChangeFilter("sortBy", "oldest");
+                        setOpenDropdown(null);
+                      }}
+                    >
                       오래된순
                     </div>
-                    <div className="dropdown-item" onClick={() => { handleChangeFilter("sortBy", "mostWrong"); setOpenDropdown(null); }}>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleChangeFilter("sortBy", "mostWrong");
+                        setOpenDropdown(null);
+                      }}
+                    >
                       많이 틀린순
                     </div>
                   </div>
@@ -274,10 +316,10 @@ export default function WrongNotePage() {
               </div>
             </div>
           </div>
-
         </div>
       </header>
-    {/* 하단 액션 버튼 */}
+
+      {/* 하단 액션 버튼 영역 */}
       <section className="wrongnote-actions">
         <div className="wrongnote-actions__left">
           <span className="wrongnote-selected-count">
@@ -286,11 +328,12 @@ export default function WrongNotePage() {
         </div>
 
         <div className="wrongnote-actions__right">
-
           <button
             type="button"
             disabled={selectedCount === 0}
-            className={`sl-btn ${activeAction === "quiz" ? "sl-btn-primary" : ""}`}
+            className={`sl-btn ${
+              activeAction === "quiz" ? "sl-btn-primary" : ""
+            }`}
             onClick={() => {
               handleReviewAsQuiz();
               setActiveAction("quiz");
@@ -302,7 +345,9 @@ export default function WrongNotePage() {
           <button
             type="button"
             disabled={selectedCount === 0}
-            className={`sl-btn ${activeAction === "card" ? "sl-btn-primary" : ""}`}
+            className={`sl-btn ${
+              activeAction === "card" ? "sl-btn-primary" : ""
+            }`}
             onClick={() => {
               handleReviewAsCard();
               setActiveAction("card");
@@ -314,7 +359,9 @@ export default function WrongNotePage() {
           <button
             type="button"
             disabled={selectedCount === 0}
-            className={`sl-btn ${activeAction === "story" ? "sl-btn-primary" : ""}`}
+            className={`sl-btn ${
+              activeAction === "story" ? "sl-btn-primary" : ""
+            }`}
             onClick={() => {
               handleCreateStory();
               setActiveAction("story");
@@ -337,10 +384,15 @@ export default function WrongNotePage() {
           )}
         </div>
       </section>
-      {/* 리스트 */}
+
+      {/* 리스트 영역 */}
       <section className="wrongnote-list">
-        {loading && <div className="wrongnote-list__loading">로딩 중...</div>}
+        {loading && (
+          <div className="wrongnote-list__loading">로딩 중...</div>
+        )}
+
         {error && <div className="wrongnote-list__error">{error}</div>}
+
         {!loading && !error && processedItems.length === 0 && (
           <div className="wrongnote-list__empty">오답 기록이 없습니다.</div>
         )}
@@ -351,7 +403,7 @@ export default function WrongNotePage() {
               <thead>
                 <tr>
                   <th>
-                    {/* 전체 선택 체크박스 */}
+                    {/* 전체 선택 체크박스 (현재 페이지 기준) */}
                     <input
                       type="checkbox"
                       className="sl-checkbox"
@@ -370,7 +422,9 @@ export default function WrongNotePage() {
                               .filter((id) => !prev.includes(id));
                             return [...prev, ...idsToAdd];
                           } else {
-                            const pageIds = pagedItems.map((i) => i.wrongWordId);
+                            const pageIds = pagedItems.map(
+                              (i) => i.wrongWordId
+                            );
                             return prev.filter((id) => !pageIds.includes(id));
                           }
                         });
@@ -401,19 +455,14 @@ export default function WrongNotePage() {
                 ))}
               </tbody>
             </table>
-
           </>
         )}
       </section>
-            <div className="wrongnote-pagination">
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                onChange={setPage}
-              />
-            </div>
 
-  
+      {/* 페이지네이션 */}
+      <div className="wrongnote-pagination">
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      </div>
     </div>
   );
 }
