@@ -5,19 +5,18 @@ import "./LoginPage.css";
 
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
-import PasswordInput from './components/PasswordInput';
+import PasswordInput from "./components/PasswordInput";
 import TodayWordCard from "../words/components/TodayWordCard";
 import LoginIllustration from "../../assets/images/login.svg";
 
 import { useAuth } from "../../context/AuthContext";
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true"; // 표시용만 사용
-
 const SAVE_EMAIL_KEY = "storylex_login_email";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useAuth(); // AuthContext.login 사용 (내부에서 authApi.login 호출)
 
   const [formData, setFormData] = useState({
     email: "",
@@ -33,6 +32,7 @@ export default function LoginPage() {
   const [globalError, setGlobalError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // 저장된 이메일 자동 세팅
   useEffect(() => {
     const savedEmail = localStorage.getItem(SAVE_EMAIL_KEY);
     if (savedEmail) {
@@ -83,7 +83,7 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-      // 🔹 무조건 AuthContext.login 사용
+      // AuthContext.login이 (email, password) 시그니처
       await login(formData.email, formData.password);
 
       if (formData.saveEmail) {
@@ -94,11 +94,27 @@ export default function LoginPage() {
 
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      const message =
-        err?.response?.data?.message ||
-        "로그인에 실패했습니다. (서버 연결 확인 필요)";
+      console.error("로그인 실패:", err);
+
+      let message =
+        "로그인에 실패했습니다. (이메일/비밀번호 또는 서버 연결을 확인해 주세요.)";
+
+      const data = err?.response?.data;
+      if (typeof data === "string") {
+        // 백엔드가 문자열만 반환하는 경우
+        message = data;
+      } else if (data?.message && typeof data.message === "string") {
+        // 기본 Spring 에러 응답 또는 커스텀 응답
+        message = data.message;
+      }
+
       setGlobalError(message);
+
+      // 비밀번호만 초기화
+      setFormData((prev) => ({
+        ...prev,
+        password: "",
+      }));
     } finally {
       setSubmitting(false);
     }
@@ -190,17 +206,11 @@ export default function LoginPage() {
               </label>
 
               <div className="login-links">
-                <Link
-                  to="/auth/find?tab=email"
-                  className="login-link"
-                >
+                <Link to="/auth/find?tab=email" className="login-link">
                   이메일 찾기
                 </Link>
                 <span className="login-links-divider">|</span>
-                <Link
-                  to="/auth/find?tab=pw"
-                  className="login-link"
-                >
+                <Link to="/auth/find?tab=pw" className="login-link">
                   비밀번호 찾기
                 </Link>
               </div>

@@ -9,6 +9,7 @@ import StoryLexLogo from "../../assets/images/StoryLex-logo.svg";
 import "./Header.css";
 import { useAuth } from "../../context/AuthContext";
 
+// 로그인 후에만 보이는 메뉴
 const AUTH_NAV_ITEMS = [
   { to: "/dashboard", label: "대시보드" },
   { to: "/words", label: "단어장" },
@@ -16,9 +17,12 @@ const AUTH_NAV_ITEMS = [
   { to: "/learning", label: "학습하기" },
 ];
 
+// 비회원 메뉴: 홈은 자유 접근, 나머지는 클릭 시 로그인 유도
 const GUEST_NAV_ITEMS = [
-  { to: "/", label: "홈" },
-  { to: "/stories", label: "AI 스토리" },
+  { to: "/", label: "홈", requiresAuth: false },
+  { to: "/words", label: "단어장", requiresAuth: true },
+  { to: "/stories", label: "AI 스토리", requiresAuth: true },
+  { to: "/learning", label: "학습하기", requiresAuth: true },
 ];
 
 const AUTH_HOME_PATH = "/dashboard";
@@ -75,6 +79,16 @@ export default function Header() {
     setIsAccountMenuOpen((prev) => !prev);
   };
 
+  // 비회원 + 회원 전용 메뉴일 때 클릭을 가로채서 로그인 페이지로 보냄
+  const handleNavClick = (e, item) => {
+    if (!isAuthenticated && item.requiresAuth) {
+      e.preventDefault();
+      navigate("/auth/login", {
+        state: { from: item.to }, // 로그인 후 다시 보내줄 경로
+      });
+    }
+  };
+
   const isAuthPage = location.pathname.startsWith("/auth");
 
   if (isAuthPage) {
@@ -117,7 +131,12 @@ export default function Header() {
         <nav className="header-nav" aria-label="주요 메뉴">
           <div className="header-nav-group">
             {navItems.map((item) => (
-              <NavLink key={item.to} to={item.to} className={getNavClass}>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={getNavClass}
+                onClick={(e) => handleNavClick(e, item)}
+              >
                 {item.label}
               </NavLink>
             ))}

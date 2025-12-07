@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// src/pages/dashboard/DashboardPage.jsx
+import React from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/common/Spinner";
@@ -28,6 +29,7 @@ import {
   Tooltip,
   Cell,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 import "./DashboardPage.css";
 
 const getTimeBasedGreeting = () => {
@@ -70,61 +72,113 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const DashboardPage = () => {
-  const { user: realUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [currentUser, setCurrentUser] = useState(null);
-  const [dailyGoalData, setDailyGoalData] = useState(null);
-  const [statsData, setStatsData] = useState(null);
-  const [weeklyData, setWeeklyData] = useState([]);
-  const [wrongWordsList, setWrongWordsList] = useState([]);
-  const [attendance, setAttendance] = useState(
-    [false, false, false, false, false, false, false]
-  );
-  const [loading, setLoading] = useState(true);
-  const [greeting, setGreeting] = useState("반가워요,");
-
+  const greeting = getTimeBasedGreeting();
   const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
 
-  useEffect(() => {
-    setGreeting(getTimeBasedGreeting());
-    if (!realUser) return;
+  // 관심 분야 설정 여부
+  const hasPreference =
+    !!user?.preference && String(user.preference).trim().length > 0;
 
-    setCurrentUser(realUser);
-    setLoading(true);
+  // -----------------------------
+  // 1) 오늘의 학습 목표
+  // -----------------------------
+  const {
+    data: dailyGoalData,
+    isLoading: isDailyLoading,
+    isError: isDailyError,
+    error: dailyError,
+  } = useQuery({
+    queryKey: ["dashboard", "dailyGoal"],
+    queryFn: getDailyGoal,
+    enabled: !!user,
+  });
 
-    Promise.all([
-      getDailyGoal(),
-      getDashboardStats(),
-      getWeeklyStudy(),
-      getWrongTop5(),
-    ])
-      .then(([dailyGoalObj, statsObj, weeklyStudyArr, wrongTop5]) => {
-        setDailyGoalData(dailyGoalObj);
-        setStatsData(statsObj);
+  // -----------------------------
+  // 2) 대시보드 통계
+  // -----------------------------
+  const {
+    data: statsData,
+    isLoading: isStatsLoading,
+    isError: isStatsError,
+    error: statsError,
+  } = useQuery({
+    queryKey: ["dashboard", "stats"],
+    queryFn: getDashboardStats,
+    enabled: !!user,
+  });
 
-        const sortedWeekly = [...weeklyStudyArr].sort(
-          (a, b) => new Date(a.date) - new Date(b.date)
-        );
-        setWeeklyData(sortedWeekly);
+  // -----------------------------
+  // 3) 주간 학습 데이터
+  // -----------------------------
+  const {
+    data: weeklyStudyData,
+    isLoading: isWeeklyLoading,
+    isError: isWeeklyError,
+    error: weeklyError,
+  } = useQuery({
+    queryKey: ["dashboard", "weeklyStudy"],
+    queryFn: getWeeklyStudy,
+    enabled: !!user,
+  });
 
-        const attArr = sortedWeekly.map((day) => day.learnedCount > 0);
-        setAttendance(attArr);
+  // -----------------------------
+  // 4) 자주 틀리는 단어 Top 5
+  // -----------------------------
+  const {
+    data: wrongTop5Data,
+    isLoading: isWrongLoading,
+    isError: isWrongError,
+    error: wrongError,
+  } = useQuery({
+    queryKey: ["dashboard", "wrongTop5"],
+    queryFn: getWrongTop5,
+    enabled: !!user,
+  });
 
-        setWrongWordsList(wrongTop5);
-      })
-      .catch((err) => {
-        console.error("Dashboard load error:", err);
-      })
-      .finally(() => setLoading(false));
-  }, [realUser]);
+  // -----------------------------
+  // 공통 로딩 / 에러 처리
+  // -----------------------------
+  const isLoading =
+    isDailyLoading || isStatsLoading || isWeeklyLoading || isWrongLoading;
 
-  if (loading || !currentUser || !dailyGoalData) {
+  const hasError =
+    isDailyError || isStatsError || isWeeklyError || isWrongError;
+
+  if (!user) {
     return (
-      <Spinner fullHeight={true} message="대시보드를 불러오는 중입니다..." />
+      <Spinner fullHeight={true} message="로그인 정보를 확인하는 중입니다..." />
     );
   }
 
+  if (isLoading || !dailyGoalData) {
+    return (
+      <Spinner
+        fullHeight={true}
+        message="대시보드를 불러오는 중입니다..."
+      />
+    );
+  }
+
+  if (hasError) {
+    console.error("Dashboard load error:", {
+      dailyError,
+      statsError,
+      weeklyError,
+      wrongError,
+    });
+    return (
+      <div className="page-container mt-24">
+        <p>대시보드 데이터를 불러오는 중 오류가 발생했습니다.</p>
+      </div>
+    );
+  }
+
+  // -----------------------------
+  // 파생 데이터 계산
+  // -----------------------------
   const goal = dailyGoalData.dailyGoal || 50;
   const learned = dailyGoalData.todayProgress || 0;
   const progressPercent = Math.min(dailyGoalData.percentage || 0, 100);
@@ -133,105 +187,141 @@ const DashboardPage = () => {
   const totalWords = statsData?.totalLearnedWords ?? 0;
   const streak = statsData?.streakDays ?? 0;
 
-  const chartData = weeklyData.map((d) => ({
+  const weeklyDataSorted = [...(weeklyStudyData ?? [])].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const chartData = weeklyDataSorted.map((d) => ({
     date: formatDateLabel(d.date),
     learned: d.learnedCount,
     wrong: d.wrongCount,
   }));
 
-  const totalLearned7 = weeklyData.reduce(
+  const attendance = weeklyDataSorted.map((day) => day.learnedCount > 0);
+
+  const totalLearned7 = weeklyDataSorted.reduce(
     (acc, cur) => acc + cur.learnedCount,
     0
   );
 
   const bestStudyDay =
-    weeklyData.length > 0
-      ? weeklyData.reduce(
+    weeklyDataSorted.length > 0
+      ? weeklyDataSorted.reduce(
           (best, cur) =>
             cur.learnedCount > (best?.learnedCount ?? -1) ? cur : best,
           null
         )
       : null;
 
-  const bestStudyDayLabel = bestStudyDay ? formatDateLabel(bestStudyDay.date) : "-";
+  const bestStudyDayLabel = bestStudyDay
+    ? formatDateLabel(bestStudyDay.date)
+    : "-";
   const bestStudyDayCount = bestStudyDay?.learnedCount ?? 0;
+
+  const wrongWordsList = wrongTop5Data ?? [];
 
   return (
     <div className="page-container mt-24 fade-in">
-      <PageHeader title={greeting} highlight={`${currentUser.nickname}님!`} />
+      <PageHeader title={greeting} highlight={`${user.nickname}님!`} />
 
       <div className="dashboard-layout">
-       {/* 1. 오늘의 학습 목표 */}
-<section className="dashboard-card status-card">
-  <div className="status-header">
-    <h3 className="section-title">오늘의 학습 목표</h3>
-  </div>
+        {/* 0. 관심 분야 설정 유도 배너 (관심 분야가 비어 있을 때만 표시) */}
+        {!hasPreference && (
+          <section className="dashboard-card preference-card">
+            <div className="preference-main">
+              <div className="preference-icon-wrap">
+                <Layers size={20} />
+              </div>
+              <div className="preference-text">
+                <p className="preference-title">관심 분야를 설정해 보세요</p>
+                <p className="preference-desc">
+                  관심 분야에 맞춰 단어를 추천해 드립니다. 지금 설정하면
+                  단어장과 학습 추천이 더 정확해져요.
+                </p>
+              </div>
+            </div>
+            <div className="preference-actions">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => navigate("/account/profile")}
+              >
+                관심 분야 설정하기
+                <ArrowRight
+                  size={14}
+                  className="btn__icon btn__icon--right"
+                />
+              </Button>
+            </div>
+          </section>
+        )}
 
-  <div className="status-body">
-    {/* 왼쪽: 목표 숫자 + % + 진행바 */}
-    <div className="status-progress-area">
-      <div className="progress-header-row">
-        <div className="progress-text-row">
-          <div className="big-number">
-            {learned}
-            <span className="slash">/</span>
-            <span className="goal-text">{goal} 단어</span>
+        {/* 1. 오늘의 학습 목표 */}
+        <section className="dashboard-card status-card">
+          <div className="status-header">
+            <h3 className="section-title">오늘의 학습 목표</h3>
           </div>
-          <p className="remaining-text">
-            {remaining > 0 ? (
-              <>
-                목표까지 <strong>{remaining}개</strong> 남았어요.
-              </>
-            ) : (
-              "오늘의 목표 달성! 🎉"
-            )}
-          </p>
-        </div>
 
-        <div className="status-percent-area">
-          <span className="percent-badge">
-            {Math.round(progressPercent)}% 달성
-          </span>
-        </div>
-      </div>
+          <div className="status-body">
+            <div className="status-progress-area">
+              <div className="progress-header-row">
+                <div className="progress-text-row">
+                  <div className="big-number">
+                    {learned}
+                    <span className="slash">/</span>
+                    <span className="goal-text">{goal} 단어</span>
+                  </div>
+                  <p className="remaining-text">
+                    {remaining > 0 ? (
+                      <>
+                        목표까지 <strong>{remaining}개</strong> 남았어요.
+                      </>
+                    ) : (
+                      "오늘의 목표 달성! 🎉"
+                    )}
+                  </p>
+                </div>
 
-      <div className="progress-bar-bg">
-        <div
-          className="progress-bar-fill"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
-    </div>
+                <div className="status-percent-area">
+                  <span className="percent-badge">
+                    {Math.round(progressPercent)}% 달성
+                  </span>
+                </div>
+              </div>
 
-    {/* 오른쪽: 누적 / 연속 학습 */}
-    <div className="status-metrics">
-      <div className="metric-item">
-        <div className="metric-icon">
-          <BookOpen size={20} />
-        </div>
-        <div>
-          <span className="metric-label">누적 학습</span>
-          <div className="metric-value">
-            {totalWords.toLocaleString()}
+              <div className="progress-bar-bg">
+                <div
+                  className="progress-bar-fill"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="status-metrics">
+              <div className="metric-item">
+                <div className="metric-icon">
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <span className="metric-label">누적 학습</span>
+                  <div className="metric-value">
+                    {totalWords.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              <div className="metric-item">
+                <div className="metric-icon warn">
+                  <Flame size={20} />
+                </div>
+                <div>
+                  <span className="metric-label">연속 학습</span>
+                  <div className="metric-value highlight">{streak}일째</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="metric-item">
-        <div className="metric-icon warn">
-          <Flame size={20} />
-        </div>
-        <div>
-          <span className="metric-label">연속 학습</span>
-          <div className="metric-value highlight">
-            {streak}일째
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
+        </section>
 
         {/* 2. 이번 주 출석 현황 */}
         <section className="dashboard-card action-card">
@@ -243,7 +333,9 @@ const DashboardPage = () => {
               {weekDays.map((day, i) => (
                 <div
                   key={day + i}
-                  className={`calendar-day ${attendance[i] ? "checked" : ""}`}
+                  className={`calendar-day ${
+                    attendance[i] ? "checked" : ""
+                  }`}
                 >
                   {day}
                 </div>
@@ -284,7 +376,7 @@ const DashboardPage = () => {
           </div>
 
           <div className="chart-container">
-              <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} barGap={4}>
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -299,14 +391,20 @@ const DashboardPage = () => {
                   dy={10}
                 />
                 <YAxis hide />
-                <Tooltip content={<CustomTooltip />} cursor={{ opacity: 0.1 }} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ opacity: 0.1 }}
+                />
                 <Bar
                   dataKey="learned"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={32}
                 >
                   {chartData.map((_, index) => (
-                    <Cell key={`learned-${index}`} fill="var(--primary-500)" />
+                    <Cell
+                      key={`learned-${index}`}
+                      fill="var(--primary-500)"
+                    />
                   ))}
                 </Bar>
                 <Bar
@@ -341,7 +439,10 @@ const DashboardPage = () => {
                 <span className="kpi-main-text">
                   <strong>{bestStudyDayCount}</strong>개
                   {bestStudyDayLabel !== "-" && (
-                    <span className="kpi-sub-date"> ({bestStudyDayLabel})</span>
+                    <span className="kpi-sub-date">
+                      {" "}
+                      ({bestStudyDayLabel})
+                    </span>
                   )}
                 </span>
               </div>
@@ -356,7 +457,9 @@ const DashboardPage = () => {
             <Button
               variant="text"
               size="sm"
-              onClick={() => navigate("/learning/quiz?source=wrong-note")}
+              onClick={() =>
+                navigate("/learning/quiz?source=wrong-note")
+              }
               style={{ padding: 0, height: "auto" }}
             >
               복습하기

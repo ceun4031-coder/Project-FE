@@ -1,11 +1,10 @@
 // src/pages/learning/LearningHomePage.jsx
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Layers,
   RotateCcw,
-  Settings2,
   CheckCircle2,
   BrainCircuit,
   ArrowRight,
@@ -15,6 +14,7 @@ import {
 
 import PageHeader from "../../components/common/PageHeader";
 import FilterDropdown from "../../components/common/FilterDropdown";
+import { useLearningSettingsStore } from "./hooks/useLearningSettingsStore";
 import "./LearningHomePage.css";
 
 const LEVEL_OPTIONS = [
@@ -39,22 +39,29 @@ const DEFAULT_QUESTION_COUNT = 10;
 
 function LearningHomePage() {
   const navigate = useNavigate();
-  const [questionCount, setQuestionCount] = useState(DEFAULT_QUESTION_COUNT);
-  const [level, setLevel] = useState("All");
-  const [domain, setDomain] = useState("All");
+
+  // ✅ 전역 학습 설정 store 사용
+  const {
+    questionCount,
+    level,
+    domain,
+    setQuestionCount,
+    setLevel,
+    setDomain,
+    resetAll,
+  } = useLearningSettingsStore();
+
+  // 로컬 UI 상태(드롭다운 열림 여부)는 이 페이지 안에서만 필요하므로 그대로 useState 사용
   const [openDropdown, setOpenDropdown] = useState(null);
 
   const toggleDropdown = (name) =>
     setOpenDropdown((prev) => (prev === name ? null : name));
 
-  const handleStepChange = (delta) => {
-    setQuestionCount((prev) => {
-      const next = prev + delta;
-      if (next < 5) return 5;
-      if (next > 30) return 30; // 버튼 disabled 조건과 맞춤
-      return next;
-    });
-  };
+ const handleStepChange = (delta) => {
+  const next = questionCount + delta; // 현재 값에서 +5 / -5
+  const clamped = Math.max(5, Math.min(30, next)); // 5~30 사이로 제한
+  setQuestionCount(clamped);
+};
 
   const buildParams = (source) => {
     const params = new URLSearchParams({
@@ -66,34 +73,35 @@ function LearningHomePage() {
     return params.toString();
   };
 
-  const isFilterActive =
-    questionCount !== DEFAULT_QUESTION_COUNT ||
-    level !== "All" ||
-    domain !== "All";
+  const isFilterActive = useMemo(
+    () =>
+      questionCount !== DEFAULT_QUESTION_COUNT ||
+      level !== "All" ||
+      domain !== "All",
+    [questionCount, level, domain]
+  );
 
   const handleFilterReset = () => {
-    setQuestionCount(DEFAULT_QUESTION_COUNT);
-    setLevel("All");
-    setDomain("All");
+    resetAll();
     setOpenDropdown(null);
   };
 
   return (
     <div className="page-container">
       <main className="learning-home-page" aria-label="학습하기">
-       <header className="learning-header">
-        <PageHeader
-          title="오늘의"
-          highlight="학습하기"
-          description="오늘의 목표를 달성하고 실력을 키워보세요."
-        />
-      </header>
+        <header className="learning-header">
+          <PageHeader
+            title="오늘의"
+            highlight="학습하기"
+            description="오늘의 목표를 달성하고 실력을 키워보세요."
+          />
+        </header>
 
         {/* 1. 통합 설정 바 */}
         <section className="learning-settings-bar" aria-label="학습 옵션 설정">
           <div className="learning-settings-main">
             <div className="setting-controls">
-              {/* 문항 수 - 라벨 스타일을 필터와 통일 */}
+              {/* 문항 수 */}
               <div className="control-group">
                 <div className="filter-group">
                   <span className="filter-label">문항 수</span>

@@ -76,10 +76,19 @@ export default function CardLearningPage() {
     navigate("/learning");
   };
 
-  const handleGoQuiz = () => {
-    const quizSource = source === "wrong-note" ? "wrong-note" : "quiz";
-    navigate(`/learning/quiz?source=${quizSource}&limit=10`);
-  };
+const handleGoQuiz = () => {
+  const quizSource = source === "wrong-note" ? "wrong-note" : "quiz";
+
+  const params = new URLSearchParams();
+  params.set("source", quizSource);
+  params.set("limit", String(limit));     // ★ 카드에서 사용하던 문항 수 그대로
+  if (rawLevel) {
+    params.set("level", rawLevel);        // ★ 선택된 난이도 그대로
+  }
+
+  navigate(`/learning/quiz?${params.toString()}`);
+};
+
 
   if (loading) {
     return <div className="card-page card-page--loading">로딩 중...</div>;

@@ -1,5 +1,4 @@
-// src/pages/api/auth/SetupPage.jsx
-
+// src/pages/auth/SetupPage.jsx
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -11,11 +10,9 @@ import Illustration from "../../assets/images/login.svg";
 import "./SetupPage.css";
 import { signup as signupApi } from "../../api/authApi";
 
-// 📌 MOCK 모드 상수 정의
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
-
 const MIN_LEVEL = 5;
 const MAX_LEVEL = 50;
+const STEP = 5; // ✅ 5단위 고정
 
 const FIELD_OPTIONS = [
   { label: "일상생활", value: "DAILY_LIFE" },
@@ -30,24 +27,17 @@ const FIELD_OPTIONS = [
 export default function SetupPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // 📌 MOCK 모드일 경우, 이전 페이지에서 데이터가 안 넘어왔더라도 테스트용 더미 데이터를 사용
-  const basicInfo = location.state?.basicInfo || (USE_MOCK ? {
-    email: "mock@test.com",
-    password: "password123!",
-    nickname: "MockUser",
-    userName: "홍길동",
-    userBirth: "2000-01-01"
-  } : null);
 
-  const [level, setLevel] = useState(20);
-  const [selected, setSelected] = useState([]);
-  const [goal, setGoal] = useState("");
+  // SignupPage에서 넘어온 기본 정보만 사용
+  const basicInfo = location.state?.basicInfo || null;
+
+  const [level, setLevel] = useState(20); // 하루 목표 단어 수
+  const [selected, setSelected] = useState([]); // 관심 분야 배열
+  const [goal, setGoal] = useState(""); // 학습 목표 텍스트
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // basicInfo가 없으면 회원가입 페이지로 리다이렉트 (MOCK 모드면 위에서 더미 데이터를 넣었으므로 통과됨)
     if (!basicInfo) {
       navigate("/auth/signup", { replace: true });
     }
@@ -55,9 +45,7 @@ export default function SetupPage() {
 
   const toggleField = (value) => {
     setSelected((prev) =>
-      prev.includes(value)
-        ? prev.filter((v) => v !== value)
-        : [...prev, value]
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
 
@@ -73,29 +61,14 @@ export default function SetupPage() {
     setSubmitting(true);
     setError("");
 
-    // 📌 [MOCK 처리] API 호출 대신 콘솔 로그 찍고 성공 처리
-    if (USE_MOCK) {
-      const mockPayload = {
-        email: basicInfo.email,
-        password: basicInfo.password,
-        nickname: basicInfo.nickname,
-        userName: basicInfo.userName,
-        userBirth: basicInfo.userBirth,
-        preference: overridePreference ?? (selected.length ? selected.join(",") : null),
-        goal: overrideGoal ?? (goal || null),
-        dailyWordGoal: overrideDailyWordGoal ?? (level ? Number(level) : 20),
-      };
+    const preferenceValue =
+      overridePreference ?? (selected.length > 0 ? selected.join(",") : null);
 
-      console.log("🔥 [Mock] 회원가입 최종 요청 데이터:", mockPayload);
+    const goalValue = overrideGoal ?? (goal || null);
 
-      setTimeout(() => {
-        alert("목업 모드: 회원가입이 완료되었습니다. (로그인 페이지로 이동)");
-        setSubmitting(false);
-        navigate("/auth/login", { replace: true });
-      }, 1000); // 1초 지연 효과
-      
-      return; // 실제 API 호출 방지
-    }
+    const dailyWordGoalValue =
+      overrideDailyWordGoal ?? (level ? Number(level) : 20);
+
     try {
       await signupApi({
         email: basicInfo.email,
@@ -103,12 +76,9 @@ export default function SetupPage() {
         nickname: basicInfo.nickname,
         userName: basicInfo.userName,
         userBirth: basicInfo.userBirth,
-        preference:
-          overridePreference ??
-          (selected.length ? selected.join(",") : null),
-        goal: overrideGoal ?? (goal || null),
-        dailyWordGoal:
-          overrideDailyWordGoal ?? (level ? Number(level) : 20),
+        preference: preferenceValue,
+        goal: goalValue,
+        dailyWordGoal: dailyWordGoalValue,
       });
 
       navigate("/auth/login", { replace: true });
@@ -136,6 +106,7 @@ export default function SetupPage() {
   return (
     <main className="page-container">
       <div className="setup-card">
+        {/* 왼쪽 비주얼 */}
         <div className="setup-visual">
           <div className="setup-visual-inner">
             <TodayWordCard />
@@ -147,12 +118,14 @@ export default function SetupPage() {
           </div>
         </div>
 
+        {/* 오른쪽 설정 UI */}
         <div className="setup-form-area">
           <h1 className="setup-title">거의 다 되었습니다!</h1>
           <p className="setup-subtitle">
             학습목표를 설정하고 영어 학습을 시작해보세요.
           </p>
 
+          {/* 관심 분야 선택 */}
           <div className="setup-section">
             <label className="setup-label">관심 분야를 선택해주세요</label>
 
@@ -173,6 +146,7 @@ export default function SetupPage() {
             </div>
           </div>
 
+          {/* 학습 목표 */}
           <div className="setup-section">
             <label className="setup-label">학습 목표 (선택)</label>
             <Input
@@ -186,6 +160,7 @@ export default function SetupPage() {
             />
           </div>
 
+          {/* 하루 목표 단어 수 */}
           <div className="setup-section">
             <label className="setup-label">하루 목표 단어 수</label>
 
@@ -196,6 +171,7 @@ export default function SetupPage() {
                 type="range"
                 min={MIN_LEVEL}
                 max={MAX_LEVEL}
+                step={STEP} // ✅ 5 단위로만 이동
                 value={level}
                 onChange={(e) => setLevel(Number(e.target.value))}
                 className="input-range setup-slider"

@@ -10,12 +10,13 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 /**
  * 이메일 찾기
- * Request:  { userName, userBirth: "YYYY-MM-DD" }
- * Response: { email }
+ * Backend: POST /api/auth/find-email
+ * Request: { userName, userBirth }
+ * Response: { email: string }
  */
-export async function findEmail(userName, userBirth) {
+export async function findEmail({ userName, userBirth }) {
   if (USE_MOCK) {
-    // 목업용 더미 응답
+    console.log("[MOCK][authApi] findEmail", { userName, userBirth });
     return {
       email: `${userName || "user"}@mock.local`,
     };
@@ -29,12 +30,14 @@ export async function findEmail(userName, userBirth) {
 }
 
 /**
- * 비밀번호 재설정 (임시 비밀번호 발송)
- * Request:  { userName, email }
- * Response: { message }
+ * 비밀번호 재설정
+ * Backend: POST /api/auth/reset-password
+ * Request: { userName, email }
+ * Response: { message: string }
  */
-export async function resetPassword(userName, email) {
+export async function resetPassword({ userName, email }) {
   if (USE_MOCK) {
+    console.log("[MOCK][authApi] resetPassword", { userName, email });
     return {
       message: "임시 비밀번호가 이메일로 발송되었습니다. (mock)",
     };
@@ -49,13 +52,14 @@ export async function resetPassword(userName, email) {
 
 /**
  * 로그인
+ * Backend: POST /api/auth/login
+ * Request: { email, password }
+ * Response: TokenResponse { accessToken, refreshToken }
  *
- * 실서버 모드:
- *  - POST /api/auth/login → { accessToken, refreshToken }
- *  - 이후 GET /api/user/me → user 정보
- *
- * 목업 모드:
- *  - 서버 호출 없이 로컬에서 토큰/유저 생성
+ * 1) /api/auth/login 으로 JWT 발급
+ * 2) 토큰을 저장
+ * 3) /api/user/me 로 사용자 정보 조회
+ * 4) { user, accessToken, refreshToken } 반환
  */
 export async function login({ email, password }) {
   if (USE_MOCK) {
@@ -70,28 +74,44 @@ export async function login({ email, password }) {
       dailyWordGoal: 10,
     };
 
-    setAccessToken("mock_access_token");
-    setRefreshToken("mock_refresh_token");
-    localStorage.setItem("userInfo", JSON.stringify(mockUser));
+    const accessToken = "mock_access_token";
+    const refreshToken = "mock_refresh_token";
 
-    return { user: mockUser };
+    setAccessToken(accessToken);
+    setRefreshToken(refreshToken);
+
+    return { user: mockUser, accessToken, refreshToken };
   }
 
-  // 1) 토큰 발급
+  // 1) 로그인 요청 → 토큰 응답
   const res = await httpClient.post("/api/auth/login", {
     email,
     password,
   });
 
-  const { accessToken, refreshToken } = res.data;
+  // TokenResponse 필드명에 대비해서 두 가지 케이스 다 처리
+  const {
+    accessToken,
+    refreshToken,
+    access,
+    refresh,
+  } = res.data || {};
 
-  if (accessToken && refreshToken) {
-    setAccessToken(accessToken);
-    setRefreshToken(refreshToken);
+  const finalAccessToken = accessToken || access;
+  const finalRefreshToken = refreshToken || refresh;
+
+  if (!finalAccessToken) {
+    throw new Error("로그인 응답에 accessToken(또는 access)이 없습니다.");
   }
 
-  // 2) 토큰 설정 후 내 정보 조회
-  let user = { email }; // 최소 fallback
+  // 2) 토큰 저장
+  setAccessToken(finalAccessToken);
+  if (finalRefreshToken) {
+    setRefreshToken(finalRefreshToken);
+  }
+
+  // 3) 토큰 기반으로 현재 유저 정보 조회
+  let user = { email };
   try {
     const meRes = await httpClient.get("/api/user/me");
     user = meRes.data;
@@ -99,11 +119,35 @@ export async function login({ email, password }) {
     console.error("Failed to fetch /api/user/me", e);
   }
 
-  return { user };
+  // 4) AuthContext에서 user/토큰을 받아 상태/스토리지 반영
+  return {
+    user,
+    accessToken: finalAccessToken,
+    refreshToken: finalRefreshToken,
+  };
 }
+/**
+ * 이메일 중복 체크
+ * Backend: POST /api/auth/check-email
+ * Request: { email: string }
+ * Response: { duplicated: boolean }
+ */
+export async function checkEmailDuplicate(email) {
+  if (USE_MOCK) {
+    // 목업 모드: 특정 이메일만 중복이라고 가정
+    return {
+      duplicated: email === "test@test.com",
+    };
+  }
 
+  const res = await httpClient.post("/api/auth/check-email", { email });
+  return res.data; // { duplicated: boolean }
+}
 /**
  * 회원가입
+ * Backend: POST /api/auth/signup
+ * Request: SignupRequest
+ * Response: "회원가입 완료" (String)
  */
 export async function signup({
   email,
@@ -111,49 +155,79 @@ export async function signup({
   nickname,
   userName,
   userBirth,
+  preference,
+  goal,
+  dailyWordGoal,
 }) {
   if (USE_MOCK) {
+    console.log("[MOCK][authApi] signup payload:", {
+      email,
+      password,
+      nickname,
+      userName,
+      userBirth,
+      preference,
+      goal,
+      dailyWordGoal,
+    });
     return {
       success: true,
       message: "회원가입 완료 (mock)",
     };
   }
 
-  const res = await httpClient.post("/api/auth/signup", {
+  const payload = {
     email,
     password,
     nickname,
     userName,
     userBirth,
-  });
+    preference: preference ?? null,
+    goal: goal ?? null,
+    dailyWordGoal:
+      typeof dailyWordGoal === "number"
+        ? dailyWordGoal
+        : dailyWordGoal
+        ? Number(dailyWordGoal)
+        : null,
+  };
 
-  return res.data; // { success, message }
+  const res = await httpClient.post("/api/auth/signup", payload);
+
+  // 백엔드는 String("회원가입 완료")을 반환하므로, 프론트에서 통일된 형식으로 재가공
+  const raw = res.data;
+  return {
+    success: true,
+    message:
+      typeof raw === "string"
+        ? raw
+        : raw?.message || "회원가입이 완료되었습니다.",
+  };
 }
 
 /**
  * 로그아웃
+ * Backend: POST /api/auth/logout/{email}
  */
 export async function logout(email) {
-  // 클라이언트 토큰 제거
   clearTokens();
-
-  // 전역 로그아웃 이벤트 (상태 관리용)
   window.dispatchEvent(new Event("auth:logout"));
 
-  // 목업 모드에서는 서버 호출 안 함
   if (USE_MOCK) {
+    console.log("[MOCK][authApi] logout", { email });
     return;
   }
 
   try {
     await httpClient.post(`/api/auth/logout/${email}`);
-  } catch {
-    // 서버 응답 실패해도 클라이언트는 이미 로그아웃 처리된 상태
+  } catch (e) {
+    console.warn("logout request failed (ignored)", e);
   }
 }
 
 /**
  * 현재 로그인한 사용자 정보 조회
+ * Backend: GET /api/user/me
  */
 export async function getMe() {
   if (USE_MOCK) {

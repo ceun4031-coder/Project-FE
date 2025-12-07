@@ -12,10 +12,9 @@ import {
 } from "../api/authApi";
 import {
   getAccessToken,
-  setAccessToken,
-  setRefreshToken,
   clearTokens,
 } from "../utils/storage";
+import useAuthStore from "../store/useAuthStore";
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
@@ -28,28 +27,29 @@ const AuthContext = createContext({
 });
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const { user, setUser, clearUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
 
   // -----------------------------
   // 앱 최초 로드시 세션 복원
   // -----------------------------
   useEffect(() => {
-    // ✅ 목업 모드: 서버 호출 없이 localStorage 만 사용
+    // 목업 모드: 서버 호출 없이 localStorage만 사용
     if (USE_MOCK) {
       const stored = localStorage.getItem("userInfo");
       if (stored) {
         try {
-          setUser(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          setUser(parsed);
         } catch {
-          setUser(null);
+          clearUser();
         }
       }
       setLoading(false);
       return;
     }
 
-    // 실서버 모드: 토큰 있으면 /api/user/me로 검증
+    // 실서버 모드: accessToken 있으면 /api/user/me로 검증
     const initAuth = async () => {
       const token = getAccessToken();
 
@@ -65,27 +65,25 @@ export function AuthProvider({ children }) {
       } catch (e) {
         clearTokens();
         localStorage.removeItem("userInfo");
-        setUser(null);
+        clearUser();
       } finally {
         setLoading(false);
       }
     };
 
     initAuth();
-  }, []);
+  }, [setUser, clearUser]);
 
   // -----------------------------
   // 로그인
   // -----------------------------
   const login = async (email, password) => {
-    if (USE_MOCK) {
-      // 목업용: authApi.login 이 이미 mock 분기 처리하므로 그대로 사용해도 됨
-      const { user: mockUser } = await loginApi({ email, password });
-      setUser(mockUser);
-      return mockUser;
-    }
-
+    // authApi.login 이 내부에서
+    // 1) /api/auth/login → 토큰 발급
+    // 2) 토큰 저장
+    // 3) /api/user/me 호출 후 user 반환
     const { user: userData } = await loginApi({ email, password });
+
     setUser(userData);
     localStorage.setItem("userInfo", JSON.stringify(userData));
     return userData;
@@ -95,12 +93,11 @@ export function AuthProvider({ children }) {
   // 프로필 수정 시 상태/스토리지 동기화
   // -----------------------------
   const updateProfileState = (patch) => {
-    setUser((prev) => {
-      if (!prev) return prev;
-      const nextUser = { ...prev, ...patch };
-      localStorage.setItem("userInfo", JSON.stringify(nextUser));
-      return nextUser;
-    });
+    if (!user) return;
+
+    const nextUser = { ...user, ...patch };
+    setUser(nextUser);
+    localStorage.setItem("userInfo", JSON.stringify(nextUser));
   };
 
   // -----------------------------
@@ -111,29 +108,39 @@ export function AuthProvider({ children }) {
     let email;
 
     try {
-      email = user?.email || (storedUser ? JSON.parse(storedUser).email : undefined);
+      email =
+        user?.email ||
+        (storedUser ? JSON.parse(storedUser).email : undefined);
     } catch {
       email = undefined;
     }
 
-    setUser(null);
+    // 상태/스토리지 초기화
+    clearUser();
     localStorage.removeItem("userInfo");
     clearTokens();
 
+    // 서버 로그아웃 호출 (실패해도 화면 쪽은 그대로 진행)
     try {
       await logoutApi(email);
     } catch {
       // 무시
     }
 
+    // 강제 이동
     window.location.href = "/auth/login";
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, updateProfileState, loading }}
+      value={{
+        user,
+        login,
+        logout,
+        updateProfileState,
+        loading,
+      }}
     >
-      {/* 초기 인증 체크 끝나기 전엔 children 렌더링 안 함 */}
       {!loading && children}
     </AuthContext.Provider>
   );

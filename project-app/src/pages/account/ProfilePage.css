@@ -2,8 +2,8 @@
 
 /* 1. 헤더 영역 스타일 */
 .profile-header {
-  text-align: center;            /* 자식 요소들 중앙 정렬 */
-  margin-bottom: var(--space-8); /* 카드와의 간격 (32px) */
+  text-align: center;
+  margin-bottom: var(--space-8);
 }
 
 .profile-header h1 {
@@ -22,8 +22,8 @@
 .profile-grid {
   display: grid;
   grid-template-columns: 1fr; /* 모바일: 1열 */
-  gap: var(--space-6);        /* 카드 사이 간격 (24px) */
-  align-items: start;         /* 높이가 달라도 상단 정렬 */
+  gap: var(--space-6);
+  align-items: start;
 }
 
 /* PC 화면(1024px 이상): 왼쪽 2 : 오른쪽 1 비율 */
@@ -31,6 +31,15 @@
   .profile-grid {
     grid-template-columns: 2fr 1fr;
   }
+}
+
+/* 2-1. 카드 공통 스타일 (약간 더 입체감) */
+.profile-card,
+.password-card {
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-soft, 0 14px 35px rgba(15, 23, 42, 0.06));
 }
 
 /* 3. 카드 내부 타이틀 */
@@ -43,7 +52,30 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* 4. 폼 내부 2열 배치용 (닉네임/생년월일, 다짐/목표 등) */
+/* 3-1. 섹션 구분 (기본 정보 / 학습 설정) */
+.profile-section {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.profile-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.profile-section-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--neutral-500);
+  margin-bottom: var(--space-4);
+}
+
+/* 4. 폼 내부 2열 배치용 (닉네임/생년월일, 목표/관심 분야 등) */
 .form-row {
   display: grid;
   grid-template-columns: 1fr;
@@ -57,10 +89,39 @@
   }
 }
 
-/* 5. 버튼 우측 정렬 */
+/* 5. 개별 필드 여백/정렬 */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+/* 아이콘이 들어가는 필드 (생년월일) */
+.form-field--with-icon .input-wrapper {
+  position: relative;
+}
+
+/* 6. 버튼 우측 정렬 */
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: var(--space-6); /* 버튼 위 간격 추가 */
+  margin-top: var(--space-6);
 }
 
+/* 7. 반응형 약간 보완 */
+@media (max-width: 768px) {
+  .profile-card,
+  .password-card {
+    padding: var(--space-4);
+  }
+
+  .profile-header {
+    margin-bottom: var(--space-6);
+  }
+}

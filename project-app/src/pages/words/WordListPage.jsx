@@ -1,21 +1,8 @@
-// src/pages/words/WordListPage.jsx
-import {
-  ArrowRight,
-  FileQuestion,
-  LayoutGrid,
-  RotateCcw,
-  Search,
-  Star,
-} from "lucide-react";
-import {
-  addFavorite,
-  getCompletedList,
-  getFavoriteList,
-  getWordList,
-  removeFavorite,
-} from "../../api/wordApi";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, FileQuestion, LayoutGrid, RotateCcw, Search, Star } from "lucide-react";
+import { addFavorite, getCompletedList, getFavoriteList, getWordList, removeFavorite } from "../../api/wordApi";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Card from "../../components/common/Card";
 import Input from "../../components/common/Input";
 import PageHeader from "../../components/common/PageHeader";
@@ -62,17 +49,16 @@ const LEVEL_OPTIONS = [
 ];
 
 const FILTER_INITIAL = { category: "All", domain: "All", level: "All" };
+const WORDS_QUERY_KEY = ["words", "list"];
 
 function WordListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   // =========================================
-  // 상태 관리
+  // 상태 관리 (UI용)
   // =========================================
-  const [words, setWords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("all"); // all | favorite
   const [filter, setFilter] = useState(FILTER_INITIAL);
@@ -80,88 +66,97 @@ function WordListPage() {
   const [openDropdown, setOpenDropdown] = useState(null);
 
   // =========================================
-  // 데이터 로딩
+  // 데이터 로딩 (React Query)
   // =========================================
-  useEffect(() => {
-    let cancelled = false;
+  const {
+  data: words = [],
+  isLoading,
+  isError,
+  error,
+} = useQuery({
+  queryKey: WORDS_QUERY_KEY,
+  queryFn: async () => {
+    const [wordPage, favoriteRes, completedRes] = await Promise.all([
+      getWordList(0, 100),
+      getFavoriteList().catch(() => []),
+      getCompletedList().catch(() => []),
+    ]);
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+    const baseWords = Array.isArray(wordPage?.content)
+      ? wordPage.content
+      : [];
 
-        const [wordRes, favoriteRes, completedRes] = await Promise.all([
-          getWordList(0, 100),
-          getFavoriteList().catch(() => []),
-          getCompletedList().catch(() => []),
-        ]);
+    const favoriteIds = new Set(
+      (favoriteRes || []).map((f) => Number(f.wordId))
+    );
+    const completedIds = new Set(
+      (completedRes || []).map((c) => Number(c.wordId))
+    );
 
-        if (cancelled) return;
+    return baseWords.map((w) => {
+      const id = Number(w.wordId);
+      return {
+        ...w,
+        isFavorite: favoriteIds.has(id) || !!w.isFavorite,
+        isCompleted: completedIds.has(id) || !!w.isCompleted,
+      };
+    });
+  },
+});
 
-        const baseWords = Array.isArray(wordRes?.content)
-          ? wordRes.content
-          : wordRes || [];
 
-        const favoriteIds = new Set(
-          (favoriteRes || []).map((f) => Number(f.wordId))
-        );
-        const completedIds = new Set(
-          (completedRes || []).map((c) => Number(c.wordId))
-        );
+  const errorMessage = isError
+    ? "단어장을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
+    : null;
 
-        const merged = baseWords.map((w) => {
-          const id = Number(w.wordId);
-          return {
-            ...w,
-            isFavorite: favoriteIds.has(id) || !!w.isFavorite,
-            isCompleted: completedIds.has(id) || !!w.isCompleted,
-          };
-        });
-
-        setWords(merged);
-        setError(null);
-      } catch (err) {
-        console.error(err);
-        if (cancelled) return;
-        setError("단어장을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
-      } finally {
-        if (!cancelled) setLoading(false);
+  // =========================================
+  // 즐겨찾기 토글 (React Query Mutation + 업데이트)
+  // =========================================
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async ({ wordId, isFavorite }) => {
+      if (isFavorite) {
+        await removeFavorite(wordId);
+      } else {
+        await addFavorite(wordId);
       }
-    };
+    },
+    onMutate: async ({ wordId, isFavorite }) => {
+      await queryClient.cancelQueries({ queryKey: WORDS_QUERY_KEY });
 
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      const previousWords = queryClient.getQueryData(WORDS_QUERY_KEY);
+
+      queryClient.setQueryData(WORDS_QUERY_KEY, (old = []) =>
+        old.map((w) =>
+          Number(w.wordId) === Number(wordId)
+            ? { ...w, isFavorite: !isFavorite }
+            : w
+        )
+      );
+
+      return { previousWords };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousWords) {
+        queryClient.setQueryData(WORDS_QUERY_KEY, context.previousWords);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: WORDS_QUERY_KEY });
+    },
+  });
 
   // =========================================
   // 이벤트 핸들러
   // =========================================
   const handleCardClick = (wordId) => navigate(`/words/${wordId}`);
 
-  const handleToggleFavorite = async (word, e) => {
+  const handleToggleFavorite = (word, e) => {
     e.stopPropagation();
 
-    const originalWords = [...words];
-    const currentStatus = word.isFavorite;
-
-    // 낙관적 업데이트
-    setWords((prev) =>
-      prev.map((w) =>
-        w.wordId === word.wordId ? { ...w, isFavorite: !currentStatus } : w
-      )
-    );
-
-    try {
-      if (currentStatus) {
-        await removeFavorite(word.wordId);
-      } else {
-        await addFavorite(word.wordId);
-      }
-    } catch (err) {
-      console.error("즐겨찾기 실패", err);
-      setWords(originalWords);
-    }
+    toggleFavoriteMutation.mutate({
+      wordId: word.wordId,
+      isFavorite: word.isFavorite,
+    });
   };
 
   const handleModeChange = (type) => {
@@ -296,49 +291,49 @@ function WordListPage() {
   };
 
   // 완전히 비어있는 단어장 여부
-  const isEmptyAll = !loading && !error && words.length === 0;
+  const isEmptyAll = !isLoading && !errorMessage && words.length === 0;
 
   // =========================================
   // 렌더링
   // =========================================
   return (
     <div className="page-container wordlist-page">
-   {/* 1. 헤더 영역 */}
-    <header className="wordlist-header">
-      <PageHeader
-        title="나의"
-        highlight="단어장"
-        description="오늘의 학습을 시작하세요."
-      />
+      {/* 1. 헤더 영역 */}
+      <header className="wordlist-header">
+        <PageHeader
+          title="나의"
+          highlight="단어장"
+          description="오늘의 학습을 시작하세요."
+        />
 
-      {/* 단어가 있을 때만 카테고리(전체 단어 / 즐겨찾기) 버튼 노출 */}
-      {!isEmptyAll && (
-        <div className="wordlist-stats-wrapper">
-          <nav className="word-stats" aria-label="학습 현황 필터">
-            <div className="word-stats-list">
-              {statItems.map(({ key, label, count, icon, color }) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`stat-card no-select ${
-                    mode === key ? "active" : ""
-                  } ${color}`}
-                  onClick={() => handleModeChange(key)}
-                >
-                  <div className={`stat-icon-wrapper bg-${color}`}>
-                    {icon}
-                  </div>
-                  <div className="stat-info">
-                    <span className="stat-label">{label}</span>
-                    <span className="stat-count">{count}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </nav>
-        </div>
-      )}
-    </header>
+        {/* 단어가 있을 때만 카테고리(전체 단어 / 즐겨찾기) 버튼 노출 */}
+        {!isEmptyAll && (
+          <div className="wordlist-stats-wrapper">
+            <nav className="word-stats" aria-label="학습 현황 필터">
+              <div className="word-stats-list">
+                {statItems.map(({ key, label, count, icon, color }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`stat-card no-select ${
+                      mode === key ? "active" : ""
+                    } ${color}`}
+                    onClick={() => handleModeChange(key)}
+                  >
+                    <div className={`stat-icon-wrapper bg-${color}`}>
+                      {icon}
+                    </div>
+                    <div className="stat-info">
+                      <span className="stat-label">{label}</span>
+                      <span className="stat-count">{count}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </nav>
+          </div>
+        )}
+      </header>
 
       {/* 2. 컨트롤 영역 (단어가 하나도 없을 때는 숨김) */}
       {!isEmptyAll && (
@@ -395,7 +390,7 @@ function WordListPage() {
       {/* 3. 리스트 영역 */}
       <section className="wordlist-content">
         {/* 로딩 상태 */}
-        {loading && (
+        {isLoading && (
           <div className="status-msg loading">
             <Spinner
               fullHeight={false}
@@ -405,9 +400,9 @@ function WordListPage() {
         )}
 
         {/* 에러 상태 */}
-        {!loading && error && (
+        {!isLoading && errorMessage && (
           <div className="status-msg error">
-            <p>{error}</p>
+            <p>{errorMessage}</p>
             <button
               onClick={() => window.location.reload()}
               className="retry-btn"
@@ -418,7 +413,7 @@ function WordListPage() {
         )}
 
         {/* 단어장에 단어가 아예 없는 경우 */}
-        {!loading && !error && isEmptyAll && (
+        {!isLoading && !errorMessage && isEmptyAll && (
           <EmptyState
             icon={FileQuestion}
             title="저장된 단어가 없습니다."
@@ -428,7 +423,7 @@ function WordListPage() {
         )}
 
         {/* 단어는 있는데, 필터/검색 조건으로 0개인 경우 포함 */}
-        {!loading && !error && !isEmptyAll && (
+        {!isLoading && !errorMessage && !isEmptyAll && (
           <>
             {filteredAndSortedWords.length > 0 ? (
               <div className="wordlist-grid">
@@ -473,7 +468,9 @@ function WordListPage() {
                           <span className="tag tag-level">Lv.{w.level}</span>
                         )}
                         {w.partOfSpeech && (
-                          <span className="tag tag-pos">{w.partOfSpeech}</span>
+                          <span className="tag tag-pos">
+                            {w.partOfSpeech}
+                          </span>
                         )}
                         {w.category && (
                           <span className="tag tag-domain">{w.category}</span>
@@ -511,7 +508,7 @@ function WordListPage() {
       </section>
 
       {/* 4. 페이지네이션 */}
-      {!loading && !error && filteredAndSortedWords.length > 0 && (
+      {!isLoading && !errorMessage && filteredAndSortedWords.length > 0 && (
         <Pagination
           page={safeIndex}
           totalPages={totalPages}

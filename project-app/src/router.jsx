@@ -20,7 +20,7 @@ import WrongNotePage from "./pages/learning/WrongNotePage";
 
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import LearningHomePage from './pages/learning/LearningHomePage';
-import LandingPage from "./components/layout/LandingPage";
+import LandingPage from "./pages/home/LandingPage";
 function AppRouter() {
   return (
     <Routes>

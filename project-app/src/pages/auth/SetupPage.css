@@ -1,16 +1,26 @@
+/* src/pages/auth/SetupPage.css */
+
+/* =========================================
+   1. 전체 카드 레이아웃
+   ========================================= */
 .setup-card {
   display: flex;
   width: 100%;
   max-width: 1180px;
-  min-height: 720px;
-  margin: 60px auto;
-  background: white;
-  border-radius: 28px;
+
+  /* 🔹 화면 높이에 따라 자연스럽게 변하는 높이/여백 */
+  min-height: clamp(560px, 78vh, 720px);
+  margin: clamp(24px, 6vh, 48px) auto;
+
+  background: var(--surface-1, #ffffff);
+  border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
 }
 
-/* 왼쪽 비주얼 */
+/* =========================================
+   2. 왼쪽 비주얼
+   ========================================= */
 .setup-visual {
   flex: 1;
   background: linear-gradient(135deg, #ede9ff, #f4f2ff);
@@ -22,65 +32,88 @@
 
 .setup-visual-inner {
   position: relative;
-  width: 85%;
-  height: 90%;
+  width: 86%;
+  max-width: 450px;
+  height: 88%;
+  margin: 0 auto;
 }
 
 /* 일러스트 */
 .setup-visual-graphic {
   position: absolute;
   bottom: -6px;
-  left: 40%;
-  width: 78%;
+  left: 30%;
+  width: 82%;
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 5;
 }
 
-/* 오른쪽 설정 UI */
+/* =========================================
+   3. 오른쪽 설정 UI
+   ========================================= */
 .setup-form-area {
   flex: 1;
-  padding: 60px 70px;
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
 }
 
 .setup-title {
-  font-size: 28px;
+  font-size: 1.75rem; /* 28px */
   font-weight: 700;
+  color: var(--neutral-900);
 }
 
 .setup-subtitle {
-  font-size: 15px;
+  font-size: 0.9375rem; /* 15px */
   color: var(--neutral-500);
   margin-top: 10px;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
-/* 관심 분야 */
+/* 섹션 공통 */
 .setup-section {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .setup-label {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   display: block;
+  color: var(--neutral-800);
 }
 
+/* =========================================
+   4. 관심 분야 태그
+   ========================================= */
 .setup-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .setup-tag {
-  padding: 10px 18px;
+  padding: 8px 16px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 0.875rem;
   background: var(--neutral-100);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: 0.2s;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.setup-tag:hover:not(:disabled) {
+  background: #f3ecff;
+}
+
+.setup-tag:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .setup-tag.active {
@@ -90,36 +123,119 @@
   font-weight: 600;
 }
 
-/* 슬라이더 UI */
+/* =========================================
+   5. 슬라이더 UI
+   ========================================= */
 .setup-slider-box {
-  background: white;
-  border-radius: 20px;
-  padding: 20px 24px;
+  background: var(--surface-1);
+  border-radius: 18px;
+  padding: 18px 20px;
   border: 1px solid var(--border-subtle);
 }
 
 .slider-value {
   float: right;
-  font-size: 28px;
+  font-size: 1.5rem; /* 24px */
   font-weight: 600;
   color: var(--primary-500);
 }
 
+/* range 자체 기본 스타일은 공통 .input-range 사용하고,
+   여기서는 여백만 조정 */
 .setup-slider {
   width: 100%;
-  margin: 20px 0 10px;
+  margin: 18px 0 10px;
 }
 
 .slider-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--neutral-500);
 }
 
+/* =========================================
+   6. "나중에 설정하기" 버튼
+   ========================================= */
 .setup-later {
-  text-align: center;
+  display: inline-flex;
   margin-top: 16px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--neutral-400);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.setup-later:hover:not(:disabled) {
+  color: var(--neutral-500);
+}
+
+/* =========================================
+   7. 반응형 처리
+   ========================================= */
+@media (max-width: 1024px) {
+  .setup-card {
+    max-width: 960px;
+    min-height: clamp(520px, 82vh, 680px);
+  }
+
+  .setup-form-area {
+    padding: 40px 40px;
+  }
+
+  .setup-title {
+    font-size: 1.6rem;
+  }
+
+  .setup-subtitle {
+    margin-bottom: 28px;
+  }
+
+  .setup-section {
+    margin-bottom: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .setup-card {
+    flex-direction: column;
+    border-radius: 20px;
+    margin: 20px auto;
+    min-height: auto;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+  }
+
+  .setup-visual {
+    display: none; /* 모바일에서는 비주얼 숨기고 폼에 집중 */
+  }
+
+  .setup-form-area {
+    padding: 28px 20px 32px;
+  }
+
+  .setup-title {
+    font-size: 1.5rem;
+    margin-bottom: 6px;
+  }
+
+  .setup-subtitle {
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .setup-card {
+    margin: 16px auto;
+    border-radius: 16px;
+  }
+
+  .setup-form-area {
+    padding: 24px 16px 28px;
+  }
+
+  .setup-title {
+    font-size: 1.4rem;
+  }
 }

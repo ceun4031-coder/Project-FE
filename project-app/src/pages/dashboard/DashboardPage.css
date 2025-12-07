@@ -476,3 +476,75 @@
   margin-bottom: 8px;
   opacity: 0.6;
 }
+
+/* 관심 분야 설정 유도 카드 */
+.preference-card {
+  /* 그리드 전체 폭 사용 (2컬럼 레이아웃에서도 가로로 쭉) */
+  grid-column: 1 / -1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  padding: 16px 20px;
+  border-radius: 18px;
+
+  background: var(--surface-2);
+  border: 1px dashed var(--border-subtle);
+}
+
+/* 내용 영역 (아이콘 + 텍스트) */
+.preference-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* 아이콘 배경 (기존 KPI/메트릭 느낌 그대로 유지) */
+.preference-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-1);
+  color: var(--primary-500);
+}
+
+/* 텍스트 묶음 */
+.preference-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preference-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+}
+
+.preference-desc {
+  font-size: 0.8125rem;
+  color: var(--neutral-600);
+}
+
+/* 버튼 영역 */
+.preference-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* 태블릿 이상에서는 좌: 텍스트, 우: 버튼 형태 */
+@media (min-width: 768px) {
+  .preference-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .preference-actions {
+    justify-content: flex-end;
+  }
+}

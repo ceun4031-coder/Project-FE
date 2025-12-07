@@ -1,7 +1,8 @@
 // src/pages/story/StoryListPage.jsx
 import { ChevronRight, Search, FileQuestion } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import Input from "../../components/common/Input";
 import Spinner from "../../components/common/Spinner";
@@ -19,8 +20,30 @@ const StoryListPage = ({ stories = [] }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchValue, setSearchValue] = useState("");
-  const [serverStories, setServerStories] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // ------------------------------
+  // 서버에서 스토리 목록 로딩 (React Query)
+  // ------------------------------
+  const {
+    data: serverStories = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["stories", "list"],
+    queryFn: async () => {
+      const res = await getStoryList();
+      // API 응답 → 화면에서 쓰기 좋은 형태로 매핑
+      return (res || []).map((item) => ({
+        id: item.storyId,
+        title: item.title,
+        excerpt: item.storyEn?.slice(0, 120) || "",
+        date: item.createdAt?.slice(0, 10) || "",
+        words: item.keywords || [],
+      }));
+    },
+  });
 
   // 현재 페이지 인덱스 (URL 쿼리스트링 기준, 0-based)
   const currentPageIndex = Number(searchParams.get("page") || 0);
@@ -31,36 +54,17 @@ const StoryListPage = ({ stories = [] }) => {
     navigate("/learning");
   };
 
-  // 서버에서 스토리 목록 로딩
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const res = await getStoryList();
-        const mapped = (res || []).map((item) => ({
-          id: item.storyId,
-          title: item.title,
-          excerpt: item.storyEn?.slice(0, 120) || "",
-          date: item.createdAt?.slice(0, 10) || "",
-          words: item.keywords || [],
-        }));
-        setServerStories(mapped);
-      } catch (e) {
-        console.error("스토리 목록 로딩 실패:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStories();
-  }, []);
-
+  // ------------------------------
   // 전체 데이터 (서버 데이터 우선, 없으면 props 사용)
+  // ------------------------------
   const sourceStories = useMemo(() => {
     const base = serverStories.length > 0 ? serverStories : stories;
     return [...base].sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [serverStories, stories]);
 
+  // ------------------------------
   // 검색 필터링
+  // ------------------------------
   const filteredStories = useMemo(() => {
     if (searchValue.trim().length === 0) return sourceStories;
 
@@ -74,7 +78,9 @@ const StoryListPage = ({ stories = [] }) => {
     });
   }, [sourceStories, searchValue]);
 
+  // ------------------------------
   // 페이지네이션 계산
+  // ------------------------------
   const totalPages = Math.max(1, Math.ceil(filteredStories.length / PAGE_SIZE));
   const safeIndex = Math.min(Math.max(currentPageIndex, 0), totalPages - 1);
 
@@ -86,10 +92,12 @@ const StoryListPage = ({ stories = [] }) => {
     [filteredStories, startIdx, endIdx]
   );
 
-  const hasAnyStories = !loading && sourceStories.length > 0;
-  const hasFilteredStories = !loading && filteredStories.length > 0;
+  const hasAnyStories = !isLoading && sourceStories.length > 0;
+  const hasFilteredStories = !isLoading && filteredStories.length > 0;
 
+  // ------------------------------
   // 페이지 변경
+  // ------------------------------
   const handlePageChange = (nextIndex) => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
@@ -99,7 +107,9 @@ const StoryListPage = ({ stories = [] }) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // ------------------------------
   // 검색 변경
+  // ------------------------------
   const handleSearchChange = (e) => {
     setSearchValue(e.target.value);
     setSearchParams((prev) => {
@@ -118,6 +128,28 @@ const StoryListPage = ({ stories = [] }) => {
       return params;
     });
   };
+
+  // ------------------------------
+  // 에러 상태 (간단 처리)
+  // ------------------------------
+  if (isError && !isLoading && sourceStories.length === 0) {
+    console.error("스토리 목록 로딩 실패:", error);
+    return (
+      <div className="page-container story-list-page">
+        <PageHeader
+          title="AI"
+          highlight="스토리"
+          description="내가 학습한 단어로 만든 나만의 이야기입니다."
+        />
+        <div className="status-msg error">
+          <p>스토리를 불러오는 중 오류가 발생했습니다.</p>
+          <button className="retry-btn" onClick={() => refetch()}>
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container story-list-page">
@@ -147,7 +179,7 @@ const StoryListPage = ({ stories = [] }) => {
 
       <section className="story-grid">
         {/* 로딩 상태 */}
-        {loading && (
+        {isLoading && (
           <div className="status-msg loading">
             <Spinner
               fullHeight={false}
@@ -157,7 +189,7 @@ const StoryListPage = ({ stories = [] }) => {
         )}
 
         {/* 스토리가 아예 없을 때 */}
-        {!loading && !hasAnyStories && (
+        {!isLoading && !hasAnyStories && (
           <EmptyState
             icon={FileQuestion}
             title="AI 스토리가 아직 없습니다."
@@ -169,7 +201,7 @@ const StoryListPage = ({ stories = [] }) => {
         )}
 
         {/* 스토리는 있는데, 검색/필터 결과가 없을 때 */}
-        {!loading && hasAnyStories && !hasFilteredStories && (
+        {!isLoading && hasAnyStories && !hasFilteredStories && (
           <EmptyState
             icon={FileQuestion}
             title="조건에 맞는 AI 스토리가 없습니다."

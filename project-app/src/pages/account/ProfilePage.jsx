@@ -2,19 +2,36 @@
 import React, { useState, useEffect } from "react";
 import { getMyInfo, updateUserInfo, changePassword } from "../../api/userApi";
 import { useAuth } from "../../context/AuthContext";
-import "./ProfilePage.css";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
+import FilterDropdown from "../../components/common/FilterDropdown";
 import { Calendar } from "lucide-react";
+import "./ProfilePage.css";
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+// 관심 분야 옵션 (회원가입 SetupPage와 의미 맞춰서 사용)
+const INTEREST_OPTIONS = [
+  { label: "선택 안 함", value: "" },
+  { label: "일상생활", value: "DAILY_LIFE" },
+  { label: "사람/감정", value: "PEOPLE_FEELINGS" },
+  { label: "직장/비즈니스", value: "BUSINESS" },
+  { label: "학교/학습", value: "SCHOOL_LEARNING" },
+  { label: "여행/교통", value: "TRAVEL" },
+  { label: "음식/건강", value: "FOOD_HEALTH" },
+  { label: "기술/IT", value: "TECHNOLOGY" },
+];
 
 const ProfilePage = () => {
   const { updateProfileState } = useAuth();
 
   const [loading, setLoading] = useState(true);
-  const [staticInfo, setStaticInfo] = useState({ email: "", userName: "" });
 
+  // 변경 불가 기본 정보
+  const [staticInfo, setStaticInfo] = useState({
+    email: "",
+    userName: "",
+  });
+
+  // 프로필 / 학습 설정 폼
   const [profileForm, setProfileForm] = useState({
     nickname: "",
     userBirth: "",
@@ -23,22 +40,28 @@ const ProfilePage = () => {
     dailyWordGoal: 10,
   });
 
+  // 비밀번호 변경 폼
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
-  // A. 초기 데이터 로드 (목업/실제 모두 userApi 내부에서 처리)
+  // 드롭다운 열림 상태 (관심 분야)
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  // A. 초기 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const data = await getMyInfo();
+
         setStaticInfo({
           email: data.email,
           userName: data.userName,
         });
+
         setProfileForm({
           nickname: data.nickname || "",
           userBirth: data.userBirth || "",
@@ -57,6 +80,7 @@ const ProfilePage = () => {
     fetchData();
   }, []);
 
+  // 프로필 / 학습 설정 입력 변경
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setProfileForm((prev) => ({
@@ -65,27 +89,50 @@ const ProfilePage = () => {
     }));
   };
 
+  // 비밀번호 입력 변경
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // B. 프로필 수정 요청
+  const handleDropdownToggle = (id) => {
+    setOpenDropdown((prev) => (prev === id ? null : id));
+  };
+
+  // 관심 분야 변경
+  const handlePreferenceChange = (_, value) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      preference: value,
+    }));
+    setOpenDropdown(null);
+  };
+
+ // B. 프로필 수정 요청
   const submitProfile = async (e) => {
     e.preventDefault();
 
     try {
       const updated = await updateUserInfo(profileForm);
       alert("회원 정보가 수정되었습니다.");
-      // 헤더 닉네임 갱신
-      updateProfileState({ nickname: updated.nickname ?? profileForm.nickname });
+
+      // ✅ 전역 AuthContext 의 user 상태도 함께 갱신
+      //    (updated 응답이 없으면 폼 값 기준으로 반영)
+      updateProfileState({
+        nickname: updated?.nickname ?? profileForm.nickname,
+        preference: updated?.preference ?? profileForm.preference,
+        goal: updated?.goal ?? profileForm.goal,
+        dailyWordGoal:
+          updated?.dailyWordGoal ?? profileForm.dailyWordGoal,
+        userBirth: updated?.userBirth ?? profileForm.userBirth,
+      });
     } catch (error) {
       console.error("수정 실패:", error);
       alert("정보 수정에 실패했습니다.");
     }
   };
 
-  // C. 비밀번호 변경 요청
+  // C. 비밀번호 변경
   const submitPassword = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -111,124 +158,129 @@ const ProfilePage = () => {
     }
   };
 
-  if (loading)
-    return <div className="page-container mt-24">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="page-container mt-24">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="page-container mt-24">
       <header className="profile-header">
-        <h1>
-          내 정보 관리{" "}
-          {USE_MOCK && (
-            <span style={{ fontSize: "12px", color: "red" }}>(TEST)</span>
-          )}
-        </h1>
-        <p>개인정보와 학습 목표를 설정하세요.</p>
+        <h1>내 정보 관리</h1>
+        <p>기본 정보와 관심 분야, 학습 목표를 관리하세요.</p>
       </header>
 
       <div className="profile-grid mt-24">
-        {/* 기본 정보 & 목표 카드 */}
+        {/* 기본 정보 & 학습 설정 카드 */}
         <section className="card profile-card">
-          <h2 className="card-title">기본 정보 & 목표</h2>
+          <h2 className="card-title">기본 정보 & 학습 설정</h2>
+
           <form onSubmit={submitProfile}>
-            <div className="form-field">
-              <label className="form-label">이메일</label>
-              <Input
-                type="text"
-                value={staticInfo.email}
-                readOnly
-                disabled
-                fullWidth
-              />
-            </div>
+            {/* 기본 정보 섹션 */}
+            <div className="profile-section">
+              <h3 className="profile-section-title">기본 정보</h3>
 
-            <div className="form-field">
-              <label className="form-label">이름</label>
-              <Input
-                type="text"
-                value={staticInfo.userName}
-                readOnly
-                fullWidth
-              />
-            </div>
-
-            <div className="form-row">
               <div className="form-field">
-                <label className="form-label" htmlFor="nickname">
-                  닉네임
-                </label>
+                <label className="form-label">이메일</label>
                 <Input
-                  id="nickname"
                   type="text"
-                  name="nickname"
-                  value={profileForm.nickname}
-                  onChange={handleProfileChange}
-                  fullWidth
-                />
-              </div>
-
-              <div className="form-field" style={{ position: "relative" }}>
-                <label className="form-label" htmlFor="userBirth">
-                  생년월일
-                </label>
-                <Input
-                  id="userBirth"
-                  type="date"
-                  name="userBirth"
-                  value={profileForm.userBirth}
-                  onChange={handleProfileChange}
-                  leftIcon={<Calendar size={18} />}
-                  fullWidth
-                />
-              </div>
-            </div>
-
-            <div className="form-field">
-              <label className="form-label" htmlFor="goal">
-                나의 다짐 (Goal)
-              </label>
-              <Input
-                id="goal"
-                type="text"
-                name="goal"
-                placeholder="예: 올해 안에 토익 900점"
-                value={profileForm.goal}
-                onChange={handleProfileChange}
-                fullWidth
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-field">
-                <label className="form-label" htmlFor="dailyWordGoal">
-                  일일 목표 단어 수
-                </label>
-                <Input
-                  id="dailyWordGoal"
-                  type="number"
-                  name="dailyWordGoal"
-                  value={profileForm.dailyWordGoal}
-                  onChange={handleProfileChange}
+                  value={staticInfo.email}
+                  readOnly
+                  disabled
                   fullWidth
                 />
               </div>
 
               <div className="form-field">
-                <label className="form-label" htmlFor="preference">
-                  선호 스타일
+                <label className="form-label">이름</label>
+                <Input
+                  type="text"
+                  value={staticInfo.userName}
+                  readOnly
+                  fullWidth
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-field">
+                  <label className="form-label" htmlFor="nickname">
+                    닉네임
+                  </label>
+                  <Input
+                    id="nickname"
+                    type="text"
+                    name="nickname"
+                    value={profileForm.nickname}
+                    onChange={handleProfileChange}
+                    fullWidth
+                  />
+                </div>
+
+                <div className="form-field form-field--with-icon">
+                  <label className="form-label" htmlFor="userBirth">
+                    생년월일
+                  </label>
+                  <Input
+                    id="userBirth"
+                    type="date"
+                    name="userBirth"
+                    value={profileForm.userBirth}
+                    onChange={handleProfileChange}
+                    leftIcon={<Calendar size={18} />}
+                    fullWidth
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 학습 설정 섹션 */}
+            <div className="profile-section">
+              <h3 className="profile-section-title">학습 설정</h3>
+
+              <div className="form-field">
+                <label className="form-label" htmlFor="goal">
+                  나의 다짐 (Goal)
                 </label>
-                <select
-                  id="preference"
-                  className="input"
-                  name="preference"
-                  value={profileForm.preference}
+                <Input
+                  id="goal"
+                  type="text"
+                  name="goal"
+                  placeholder="예: 올해 안에 토익 900점"
+                  value={profileForm.goal}
                   onChange={handleProfileChange}
-                >
-                  <option value="">선택하세요</option>
-                  <option value="Narrative">이야기 (Narrative)</option>
-                  <option value="Dialogue">대화 (Dialogue)</option>
-                  <option value="Academic">학술 (Academic)</option>
-                </select>
+                  fullWidth
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-field">
+                  <label className="form-label" htmlFor="dailyWordGoal">
+                    일일 목표 단어 수
+                  </label>
+                  <Input
+                    id="dailyWordGoal"
+                    type="number"
+                    name="dailyWordGoal"
+                    value={profileForm.dailyWordGoal}
+                    onChange={handleProfileChange}
+                    fullWidth
+                  />
+                </div>
+
+                <div className="form-field">
+                  <FilterDropdown
+                    id="preference"
+                    label="관심 분야"
+                    options={INTEREST_OPTIONS}
+                    value={profileForm.preference}
+                    isOpen={openDropdown === "preference"}
+                    onToggle={handleDropdownToggle}
+                    onChange={handlePreferenceChange}
+                  />
+                </div>
               </div>
             </div>
 

@@ -111,6 +111,7 @@ httpClient.interceptors.response.use(
     }
 
     try {
+      // 이미 다른 요청이 refresh 중이면 대기
       if (isRefreshing) {
         return new Promise((resolve) => {
           addRefreshSubscriber((newToken) => {
@@ -131,10 +132,10 @@ httpClient.interceptors.response.use(
         }
       );
 
-      const {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      } = refreshResponse.data || {};
+      // ✅ 백엔드 응답이 {accessToken, refreshToken} 이든 {access, refresh} 이든 모두 처리
+      const data = refreshResponse.data || {};
+      const newAccessToken = data.accessToken ?? data.access;
+      const newRefreshToken = data.refreshToken ?? data.refresh;
 
       if (!newAccessToken) {
         isRefreshing = false;
@@ -150,6 +151,7 @@ httpClient.interceptors.response.use(
       isRefreshing = false;
       onRefreshed(newAccessToken);
 
+      // 실패했던 원래 요청 재시도
       return httpClient(setAuthHeader(originalRequest, newAccessToken));
     } catch (refreshError) {
       isRefreshing = false;

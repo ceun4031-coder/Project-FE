@@ -10,7 +10,7 @@ const mockDelay = (data, delay = 300) =>
 // 프로필 목업 데이터
 let mockUser = {
   email: "test@example.com",
-  userName: "김테스트",
+  userName: "테스트",
   nickname: "열공러",
   userBirth: "1999-01-01",
   preference: "Narrative",
@@ -18,7 +18,10 @@ let mockUser = {
   dailyWordGoal: 30,
 };
 
-/* 내 정보 조회 GET /api/user/me */
+/**
+ * 내 정보 조회
+ * GET /api/user/me
+ */
 export const getMyInfo = async () => {
   if (USE_MOCK) {
     console.log("[MOCK][userApi] getMyInfo");
@@ -29,7 +32,10 @@ export const getMyInfo = async () => {
   return response.data;
 };
 
-/* 회원 정보 수정 PATCH /api/user */
+/**
+ * 회원 정보 수정
+ * PATCH /api/user
+ */
 export const updateUserInfo = async (data) => {
   if (USE_MOCK) {
     console.log("[MOCK][userApi] updateUserInfo", data);
@@ -41,11 +47,14 @@ export const updateUserInfo = async (data) => {
   return response.data;
 };
 
-/* 비밀번호 변경 PATCH /api/user/password */
+/**
+ * 비밀번호 변경
+ * PATCH /api/user/password
+ */
 export const changePassword = async (data) => {
   if (USE_MOCK) {
     console.log("[MOCK][userApi] changePassword", data);
-    // 실제로는 서버에서 검증하지만, 목업에서는 성공 응답만 반환
+    // 실제 서버에서는 검증/예외 처리, 목업은 단순 성공 응답
     return mockDelay({ success: true });
   }
 

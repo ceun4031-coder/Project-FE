@@ -1,7 +1,8 @@
 // src/pages/wrongnote/WrongNotePage.jsx
 import { RotateCcw, FileQuestion, Layers, BookOpen } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import { getWrongList } from "../../api/wrongApi";
 import FilterDropdown from "../../components/common/FilterDropdown";
@@ -46,79 +47,33 @@ const getLastWrongTime = (item) => {
 export default function WrongNotePage() {
   const navigate = useNavigate();
 
-  // 원본 데이터
-  const [rawItems, setRawItems] = useState([]);
-
   // 필터 상태
   const [filters, setFilters] = useState({
     isUsedInStory: "", // "", "Y", "N"
-    sortBy: "latest",  // latest | oldest | mostWrong
+    sortBy: "latest", // latest | oldest | mostWrong
   });
 
   // UI 상태
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]); // wrongWordId[]
   const [page, setPage] = useState(0);
   const [openDropdown, setOpenDropdown] = useState(null); // "story" | "sort" | null
   const [activeAction, setActiveAction] = useState("none"); // quiz | card | story | none
 
+  // React Query: 오답 목록 조회
+  const {
+    data: rawItems = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["wrongNotes", "list"],
+    queryFn: getWrongList,
+  });
+
   // 필터 활성 여부 (초기화 버튼 노출 조건)
   const isFilterActive =
     filters.isUsedInStory !== "" || filters.sortBy !== "latest";
-
-  // 오답 목록 조회
-  const refresh = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await getWrongList();
-      setRawItems(Array.isArray(data) ? data : []);
-      setSelectedIds([]);
-      setPage(0);
-    } catch (e) {
-      console.error("오답 목록 조회 실패:", e);
-      setError("오답 기록을 불러오는 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    refresh();
-  }, []);
-
-  // 필터 변경
-  const handleChangeFilter = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setPage(0);
-  };
-
-  // 드롭다운 토글
-  const handleDropdownToggle = (id) => {
-    setOpenDropdown((prev) => (prev === id ? null : id));
-  };
-
-  // 드롭다운 값 변경
-  const handleDropdownChange = (id, nextValue) => {
-    if (id === "story") {
-      handleChangeFilter("isUsedInStory", nextValue);
-    } else if (id === "sort") {
-      handleChangeFilter("sortBy", nextValue);
-    }
-    setOpenDropdown(null);
-  };
-
-  // 필터 초기화
-  const handleResetFilters = () => {
-    setFilters({
-      isUsedInStory: "",
-      sortBy: "latest",
-    });
-    setPage(0);
-    setOpenDropdown(null);
-  };
 
   // 필터 + 정렬 적용
   const processedItems = useMemo(() => {
@@ -179,6 +134,37 @@ export default function WrongNotePage() {
 
   const selectedCount = selectedIds.length;
 
+  // 필터 변경
+  const handleChangeFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setPage(0);
+  };
+
+  // 드롭다운 토글
+  const handleDropdownToggle = (id) => {
+    setOpenDropdown((prev) => (prev === id ? null : id));
+  };
+
+  // 드롭다운 값 변경
+  const handleDropdownChange = (id, nextValue) => {
+    if (id === "story") {
+      handleChangeFilter("isUsedInStory", nextValue);
+    } else if (id === "sort") {
+      handleChangeFilter("sortBy", nextValue);
+    }
+    setOpenDropdown(null);
+  };
+
+  // 필터 초기화
+  const handleResetFilters = () => {
+    setFilters({
+      isUsedInStory: "",
+      sortBy: "latest",
+    });
+    setPage(0);
+    setOpenDropdown(null);
+  };
+
   // 액션: 퀴즈
   const handleReviewAsQuiz = () => {
     if (selectedCount === 0) return;
@@ -222,12 +208,10 @@ export default function WrongNotePage() {
   const hasAnyItems = rawItems.length > 0;
   const hasProcessedItems = processedItems.length > 0;
 
-  const showEmptyNoData =
-    !loading && !error && !hasAnyItems;
+  const showEmptyNoData = !isLoading && !isError && !hasAnyItems;
   const showEmptyFiltered =
-    !loading && !error && hasAnyItems && !hasProcessedItems;
-  const showTable =
-    !loading && !error && hasProcessedItems;
+    !isLoading && !isError && hasAnyItems && !hasProcessedItems;
+  const showTable = !isLoading && !isError && hasProcessedItems;
 
   return (
     <div className="page-container wrongnote-page">
@@ -333,16 +317,21 @@ export default function WrongNotePage() {
       )}
 
       {/* 로딩 / 에러 */}
-      {loading && (
+      {isLoading && (
         <div className="wrongnote-list__loading">로딩 중...</div>
       )}
 
-      {!loading && error && (
-        <div className="wrongnote-list__error">{error}</div>
+      {isError && !isLoading && (
+        <div className="wrongnote-list__error">
+          <p>오답 기록을 불러오는 중 오류가 발생했습니다.</p>
+          <button className="retry-btn" onClick={() => refetch()}>
+            다시 시도
+          </button>
+        </div>
       )}
 
       {/* Empty 상태 (테이블 테두리/배경 없이, 필터/액션 미노출) */}
-      {!loading && !error && showEmptyNoData && (
+      {!isLoading && !isError && showEmptyNoData && (
         <EmptyState
           icon={FileQuestion}
           title="오답 기록이 없습니다."
@@ -353,7 +342,7 @@ export default function WrongNotePage() {
         />
       )}
 
-      {!loading && !error && showEmptyFiltered && (
+      {!isLoading && !isError && showEmptyFiltered && (
         <EmptyState
           icon={FileQuestion}
           title="조건에 맞는 오답 기록이 없습니다."

@@ -7,7 +7,7 @@ import Input from "../../components/common/Input";
 import Logo from "../../assets/images/StoryLex-logo.svg";
 import { findEmail, resetPassword } from "../../api/authApi";
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 export default function AccountFindPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,7 +25,6 @@ export default function AccountFindPage() {
   const [resetEmail, setResetEmail] = useState("");
 
   const handleChangeTab = (nextTab) => {
-    // 다른 쿼리파라미터 보존하려면 함수형으로 처리
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
       params.set("tab", nextTab);
@@ -51,27 +50,25 @@ export default function AccountFindPage() {
       return;
     }
 
-    // 📌 [MOCK 처리] 이메일 찾기 가로채기
-    if (USE_MOCK) {
-      console.log(`🔥 [Mock] 이메일 찾기 요청: 이름=${name}, 생년월일=${birth}`);
-      setTimeout(() => {
-        // 성공 시뮬레이션
-        alert(`목업 모드: 회원님의 이메일은 mock***@test.com 입니다.`);
-      }, 1000);
-      return;
-    }
-
     try {
-      const { email } = await findEmail(name, birth);
+      // authApi.findEmail은 { userName, userBirth } 객체를 받도록 통일
+      const { email } = await findEmail({
+        userName: name,
+        userBirth: birth,
+      });
+
       alert(`회원님의 이메일은 ${email} 입니다.`);
     } catch (error) {
-      console.error(error);
-      alert("일치하는 정보를 찾을 수 없습니다.");
+      console.error("이메일 찾기 실패:", error);
+      const message =
+        error?.response?.data?.message ||
+        "일치하는 정보를 찾을 수 없습니다.";
+      alert(message);
     }
   };
 
   /**
-   * 비밀번호 재설정
+   * 비밀번호 재설정 (임시 비밀번호 발급)
    */
   const handleResetPassword = async () => {
     const name = resetName.trim();
@@ -81,24 +78,24 @@ export default function AccountFindPage() {
       alert("이름과 이메일을 입력해주세요.");
       return;
     }
-// 📌 [MOCK 처리] 비밀번호 재설정 가로채기
-    if (USE_MOCK) {
-      console.log(`🔥 [Mock] 비밀번호 재설정 요청: 이름=${name}, 이메일=${email}`);
-      setTimeout(() => {
-        // 성공 시뮬레이션
-        alert("목업 모드: 임시 비밀번호가 이메일로 발송되었습니다. (로그인 페이지로 이동)");
-        navigate("/auth/login");
-      }, 1000);
-      return;
-    }
-    
+
     try {
-      const { message } = await resetPassword(name, email);
-      alert(message || "임시 비밀번호가 이메일로 발송되었습니다.");
+      // authApi.resetPassword는 { userName, email } 객체를 받도록 통일
+      const { message } = await resetPassword({
+        userName: name,
+        email,
+      });
+
+      alert(
+        message || "임시 비밀번호가 이메일로 발송되었습니다. 로그인 페이지로 이동합니다."
+      );
       navigate("/auth/login");
     } catch (error) {
-      console.error(error);
-      alert("정보가 일치하지 않거나 오류가 발생했습니다.");
+      console.error("비밀번호 재설정 실패:", error);
+      const message =
+        error?.response?.data?.message ||
+        "정보가 일치하지 않거나 오류가 발생했습니다.";
+      alert(message);
     }
   };
 
@@ -157,12 +154,7 @@ export default function AccountFindPage() {
               />
             </div>
 
-            <Button
-              variant="primary"
-              size="md"
-              full
-              onClick={handleFindEmail}
-            >
+            <Button variant="primary" size="md" full onClick={handleFindEmail}>
               이메일 찾기
             </Button>
           </div>
@@ -212,6 +204,10 @@ export default function AccountFindPage() {
             ← 로그인 페이지로
           </button>
         </div>
+
+        {USE_MOCK && (
+          <p className="find-mock-hint">(현재 MOCK 모드에서는 테스트용 응답이 반환됩니다)</p>
+        )}
       </div>
     </main>
   );
