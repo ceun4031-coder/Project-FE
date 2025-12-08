@@ -420,7 +420,7 @@
 .rank-badge {
   width: 24px;
   height: 24px;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   background-color: var(--neutral-100);
   color: var(--neutral-500);
   font-size: 0.8rem;
@@ -458,7 +458,7 @@
   color: var(--warning-600);
   background: var(--warning-50, #fffbeb);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
 }
 
 .empty-state {
@@ -489,7 +489,7 @@
   padding: 16px 20px;
   border-radius: 18px;
 
-  background: var(--surface-2);
+  background: var(--warning-50);
   border: 1px dashed var(--border-subtle);
 }
 
@@ -509,7 +509,7 @@
   align-items: center;
   justify-content: center;
   background: var(--surface-1);
-  color: var(--primary-500);
+  color: var(--warning-500);
 }
 
 /* 텍스트 묶음 */

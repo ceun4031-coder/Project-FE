@@ -7,18 +7,25 @@
   align-items: center;
   box-sizing: border-box;
 
-  /* 단어장 검색 인풋 기반 스타일 */
-  height: 46px;
+  /* 기본 사이즈 */
+  height: 44px;
+  padding: 0 16px;
+
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
   background: var(--surface-1);
 
   color: var(--neutral-800);
-  font-size: 0.95rem;
-  padding: 0 16px;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-body);
 
   outline: none;
-  transition: all 0.2s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
 }
 
 /* placeholder */
@@ -38,6 +45,7 @@
 .input:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
   border-color: var(--primary-400);
   box-shadow: 0 0 0 2px var(--focus-ring-color);
+  background: var(--surface-1);
 }
 
 .input:active:not(:disabled):not(.input--readonly):not([readonly]) {
@@ -96,55 +104,47 @@
 /* Form Field / Label / Messages  */
 /* ─────────────────────────────── */
 
-/* 각 인풋 블록 래퍼 */
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* label - input - message 간 간격 */
-  margin-bottom: var(--space-4); /* 기본 필드 간 간격 (16px) */
+  gap: 4px;
+  margin-bottom: var(--space-4);
 }
 
-/* 마지막 요소에서만 margin 제거 */
 .form-field:last-child {
   margin-bottom: 0;
 }
 
-/* 라벨 */
 .form-label {
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-label);
   color: var(--neutral-800);
 }
 
-/* 필수 필드 표시용 (선택) */
 .form-label--required::after {
   content: " *";
   color: var(--color-error);
   margin-left: 2px;
 }
 
-/* 메시지 공통 (헬퍼/에러/경고/성공/정보) */
 .form-message,
 .form-helper,
 .form-error,
 .form-warning,
 .form-success,
 .form-info {
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
   line-height: 1.4;
 }
 
-/* 헬퍼 텍스트 (설명, 안내) */
 .form-helper {
   color: var(--color-text-muted);
 }
 
-/* 에러 텍스트 */
 .form-error {
   color: var(--color-error);
 }
 
-/* 경고/성공/정보 메시지 */
 .form-warning {
   color: var(--color-warning);
 }
@@ -157,21 +157,35 @@
   color: var(--color-info);
 }
 
+/* Input.jsx 에서 사용하는 mt-1 / text-xs 보정용 */
+.mt-1 {
+  margin-top: 4px;
+}
+
+.text-xs {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+}
+
 /* ─────────────────────────────── */
 /* Size                            */
 /* ─────────────────────────────── */
 .input--sm {
+  height: 38px;
   padding: 0 12px;
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
 }
 
 .input--md {
+  height: 44px;
   padding: 0 16px;
+  font-size: var(--font-size-md);
 }
 
 .input--lg {
+  height: 48px;
   padding: 0 20px;
-  font-size: 1rem;
+  font-size: var(--font-size-md);
 }
 
 /* ─────────────────────────────── */
@@ -182,14 +196,12 @@
 }
 
 /* ─────────────────────────────── */
-/* Status: Error / Warning / Success / Info
-   - 텍스트는 기본 색, 배경+테두리만 상태 색상 톤 적용 */
+/* Status: Error / Warning / Success / Info */
 /* ─────────────────────────────── */
 
-/* 에러 (폼 검증 실패 등) */
 .input--error {
-  border-color: var(--color-error); /* danger-500 */
-  background: var(--color-error-bg); /* danger-50 */
+  border-color: var(--color-error);
+  background: var(--color-error-bg);
 }
 
 .input--error:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
@@ -197,10 +209,9 @@
   box-shadow: 0 0 0 2px var(--danger-100);
 }
 
-/* 경고 (주의) */
 .input--warning {
-  border-color: var(--color-warning); /* warning-500 */
-  background: var(--color-warning-bg); /* warning-50 */
+  border-color: var(--color-warning);
+  background: var(--color-warning-bg);
 }
 
 .input--warning:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
@@ -208,10 +219,9 @@
   box-shadow: 0 0 0 2px var(--warning-100);
 }
 
-/* 유효값 (성공) */
 .input--success {
-  border-color: var(--color-success); /* success-500 */
-  background: var(--color-success-bg); /* success-50 */
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
 }
 
 .input--success:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
@@ -219,10 +229,9 @@
   box-shadow: 0 0 0 2px var(--success-100);
 }
 
-/* 안내용 (정보) */
 .input--info {
-  border-color: var(--color-info); /* info-500 */
-  background: var(--color-info-bg); /* info-50 */
+  border-color: var(--color-info);
+  background: var(--color-info-bg);
 }
 
 .input--info:focus-visible:not(:disabled):not(.input--readonly):not([readonly]) {
@@ -231,8 +240,7 @@
 }
 
 /* ─────────────────────────────── */
-/* Search 전용 스타일 (옵션)       */
-/* 헤더 검색바 등에서 재사용       */
+/* Search 전용 스타일              */
 /* ─────────────────────────────── */
 .input--search {
   background: var(--surface-1);
@@ -241,10 +249,6 @@
 
 .input--search::placeholder {
   color: var(--color-text-muted);
-}
-
-.input--search:hover:not(:disabled):not(.input--readonly):not([readonly]) {
-  background: var(--surface-1);
 }
 
 /* ─────────────────────────────── */
@@ -260,14 +264,12 @@
 
 /* ─────────────────────────────── */
 /* Icon Wrapper / Icon 스타일      */
-/* 인풋 + 아이콘을 감싸는 래퍼     */
 /* ─────────────────────────────── */
 .input-wrapper {
   position: relative;
   width: 100%;
 }
 
-/* 공통 아이콘 스타일 (기본은 장식용) */
 .input-icon {
   position: absolute;
   top: 50%;
@@ -282,16 +284,14 @@
   pointer-events: none;
 }
 
-/* 방향별 위치 */
 .input-icon--left {
-  left: 16px;
+  left: 14px;
 }
 
 .input-icon--right {
-  right: 16px;
+  right: 14px;
 }
 
-/* 클릭 가능한 아이콘 (버튼용) */
 .input-icon-button {
   pointer-events: auto;
   cursor: pointer;
@@ -348,7 +348,6 @@
   cursor: pointer;
   outline: none;
 
-  /* JS에서 넘겨주는 값: "35%" 이런 식 */
   --range-progress: 0%;
 
   transition:

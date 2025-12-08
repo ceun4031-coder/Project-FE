@@ -242,8 +242,8 @@ const DashboardPage = () => {
             </div>
             <div className="preference-actions">
               <Button
+                variant="warning"
                 size="sm"
-                variant="primary"
                 onClick={() => navigate("/account/profile")}
               >
                 관심 분야 설정하기
