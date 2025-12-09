@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import React, { useEffect } from "react";
+import "./LandingPage.css";
 import mainBg from "@/assets/images/main-bg.png";
 import main2 from "@/assets/images/main-2.svg";
 import StoryLexLogo from "@/assets/images/StoryLex-logo.svg";
@@ -205,7 +206,6 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="landing-footer">
-        <div className="landing-container">
           <div className="footer-content">
             <div className="footer-col" style={{ flex: 1.5 }}>
               <div className="footer-logo">
@@ -238,13 +238,10 @@ const LandingPage = () => {
               <a href="#cs">고객센터</a>
               <a href="#terms">이용약관</a>
             </div>
-
-            
-          </div>
-          <div className="copyright">
+            <div className="copyright">
             &copy; 2025 StoryLex Inc. All rights reserved.
+            </div>
           </div>
-        </div>
       </footer>
     </div>
   );

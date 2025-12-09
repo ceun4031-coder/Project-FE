@@ -292,6 +292,35 @@
   margin: 0;
   white-space: pre-wrap;
 }
+/* =========================================
+   5. 하단 액션 영역 (삭제 버튼)
+   ========================================= */
+.story-main-footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 토큰 기반 삭제 버튼 스타일 */
+.story-delete-btn {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--primary-200);
+  background-color: var(--primary-100);
+  color: var(--primary-600);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.story-delete-btn:hover {
+  background-color: var(--primary-600);
+  color: var(--neutral-50);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
 
 /* 모바일 대응 */
 @media (max-width: 640px) {

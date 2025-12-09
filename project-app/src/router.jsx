@@ -25,8 +25,7 @@ function AppRouter() {
   return (
     <Routes>
       {/* 비회원 홈 */}
-      <Route path="/" element={<div className="page-container"><LandingPage/></div>}
-      />
+     <Route path="/" element={<LandingPage />} />
 
       {/* Auth 페이지 */}
       <Route path="/auth/login" element={<LoginPage />} />

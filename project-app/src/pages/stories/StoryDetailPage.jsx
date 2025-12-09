@@ -1,8 +1,8 @@
 // src/pages/story/StoryDetailPage.jsx
-import React, { useEffect, useState } from 'react';
+import { deleteStory, getStoryDetail, getStoryWords } from '@/api/storyApi';
+import { ArrowLeft, Book, Calendar, Clock, Quote } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Clock, Book, Quote } from 'lucide-react';
-import { getStoryDetail, getStoryWords } from '../../api/storyApi';
 import './StoryDetailPage.css';
 
 // 정규식 특수문자 이스케이프
@@ -60,6 +60,18 @@ const StoryDetailPage = () => {
       navigate('/stories');
     }
   };
+ const handleDelete = async () => {
+  if (!window.confirm('정말 이 스토리를 삭제할까요?')) return;
+
+  try {
+    await deleteStory(id);
+    alert('스토리가 삭제되었습니다.');
+    navigate('/stories');
+  } catch (error) {
+    console.error(error);
+    alert('스토리 삭제에 실패했습니다.');
+  }
+};
 
   // --- 하이라이트 로직 ---
   const keywords = words
@@ -225,6 +237,15 @@ const StoryDetailPage = () => {
                 </p>
               </div>
             </article>
+            <div className="story-main-footer">
+            <button
+              type="button"
+              className="story-delete-btn"
+              onClick={handleDelete}
+            >
+              스토리 삭제
+            </button>
+          </div>
           </main>
         </div>
       </div>
