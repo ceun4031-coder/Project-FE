@@ -20,14 +20,12 @@ import WrongNotePage from "./pages/learning/WrongNotePage";
 
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import LearningHomePage from './pages/learning/LearningHomePage';
+import LandingPage from "./pages/home/LandingPage";
 function AppRouter() {
   return (
     <Routes>
       {/* 비회원 홈 */}
-      <Route
-        path="/"
-        element={<div className="page-container">{/* 홈 내용 */}</div>}
-      />
+      <Route path="/" element={<LandingPage />} />
 
       {/* Auth 페이지 */}
       <Route path="/auth/login" element={<LoginPage />} />
