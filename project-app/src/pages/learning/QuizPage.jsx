@@ -213,62 +213,77 @@ const QuizPage = () => {
   const wrongSafe = Array.isArray(wrongQuizWords) ? wrongQuizWords : [];
 
   // 선택지 클릭
-  const handleOptionClick = (choiceIndex) => {
-    if (selectedOption !== null) return;
+const handleOptionClick = (choiceIndex) => {
+  if (selectedOption !== null) return;
 
-    const currentQ = questions[currentIndex];
-    const isCorrect = choiceIndex === currentQ.answer;
+  const currentQ = questions[currentIndex];
+  const isCorrect = choiceIndex === currentQ.answer;
 
-    setSelectedOption(choiceIndex);
+  setSelectedOption(choiceIndex);
 
-    if (isCorrect) {
-      setScore((prev) => prev + 1);
-    } else {
-      setWrongQuizWords((prev) => {
-        const wordText = extractWordFromQuestion(currentQ);
-        const normalized = (wordText || "").trim();
-        if (!normalized) return prev;
+  if (isCorrect) {
+    setScore((prev) => prev + 1);
+  } else {
+    setWrongQuizWords((prev) => {
+      const wordText = extractWordFromQuestion(currentQ);
+      const normalized = (wordText || "").trim();
+      if (!normalized) return prev;
 
-        const lower = normalized.toLowerCase();
-        if (prev.some((w) => w.text.toLowerCase() === lower)) {
-          return prev;
-        }
+      const lower = normalized.toLowerCase();
+      if (prev.some((w) => w.text.toLowerCase() === lower)) {
+        return prev;
+      }
 
-        const meaning =
-          currentQ.meaningKo ||
-          currentQ.meaning_ko ||
-          currentQ.meaning ||
-          currentQ.korean ||
-          "";
+      // 1) 백엔드에서 온 meaning 계열
+      const meaningFromApi =
+        currentQ.meaningKo ||
+        currentQ.meaning_ko ||
+        currentQ.meaning ||
+        currentQ.korean ||
+        "";
 
-        const newItem = {
-          text: normalized,
-          wordId: currentQ.wordId,
-          wrongWordId: currentQ.wrongWordId,
-          meaning,
-          meaningKo:
-            currentQ.meaningKo ||
-            currentQ.meaning_ko ||
-            currentQ.korean ||
-            "",
-        };
+      // 2) 정답 보기 (보통 뜻이 들어있음)
+      const correctOptionText = Array.isArray(currentQ.options)
+        ? currentQ.options[currentQ.answer] ?? ""
+        : "";
 
-        return [...prev, newItem];
-      });
-    }
+      const finalMeaning = meaningFromApi || correctOptionText || "";
 
-    // 정답/오답 결과 기록
-    const resultItem = {
-      wordId: currentQ.wordId,
-      correct: isCorrect,
-    };
+      // 🔹 레벨 값 정리
+      const resolvedLevel =
+        currentQ.level ??
+        currentQ.wordLevel ??
+        currentQ.word_level ??
+        currentQ.difficulty ??
+        currentQ.levelId ??
+        rawLevel ?? // URL에서 온 레벨 (필터)
+        null;
 
-    setAnswerResults((prev) => {
-      const next = [...prev];
-      next[currentIndex] = resultItem;
-      return next;
+      const newItem = {
+        text: normalized,
+        wordId: currentQ.wordId,
+        wrongWordId: currentQ.wrongWordId,
+        meaning: finalMeaning,
+        meaningKo: finalMeaning,
+        level: resolvedLevel,
+      };
+
+      return [...prev, newItem];
     });
+  }
+
+  const resultItem = {
+    wordId: currentQ.wordId,
+    correct: isCorrect,
   };
+
+  setAnswerResults((prev) => {
+    const next = [...prev];
+    next[currentIndex] = resultItem;
+    return next;
+  });
+};
+
 
   // 다음 문제 / 결과 보기
   const handleNext = async () => {
@@ -431,6 +446,13 @@ const QuizPage = () => {
                 w.korean ||
                 ""
               }
+                getUnknownMetaTags={(w) => {
+    const tags = [];
+    if (w.level != null && w.level !== "") {
+      tags.push(`Lv.${w.level}`);
+    }
+    return tags;
+  }}
               buildMoreHintMessage={(restCount) =>
                 `그 외 ${restCount}개 단어는 오답 노트에서 계속 확인할 수 있어요.`
               }

@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import React, { useEffect } from "react";
-import "./LandingPage.css";
 import mainBg from "@/assets/images/main-bg.png";
 import main2 from "@/assets/images/main-2.svg";
 import StoryLexLogo from "@/assets/images/StoryLex-logo.svg";

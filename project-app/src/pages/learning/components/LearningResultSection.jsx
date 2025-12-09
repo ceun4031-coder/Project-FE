@@ -24,7 +24,7 @@ export function LearningResultSection({
   getUnknownMetaTags,
   buildMoreHintMessage,
 
-  // 통계 카드
+  // 통계 카드(직접 값 전달 방식)
   primaryLabel,
   primaryValue,
   primaryProgress,
@@ -36,16 +36,102 @@ export function LearningResultSection({
   extraLabel,
   extraValue,
 
+  // 통계 카드(카운트만 전달하는 간단 방식)
+  knownCount,
+  unknownCount,
+  total,
+
   // 버튼
   primaryButtonLabel,
   onPrimaryButtonClick,
   secondaryButtonLabel,
   onSecondaryButtonClick,
 }) {
+  // -----------------------------
+  // 1) 헷갈린 단어 리스트 기본값 처리
+  // -----------------------------
   const items = Array.isArray(unknownItems) ? unknownItems : [];
   const limited = items.slice(0, maxUnknownDisplay);
   const restCount =
     items.length > maxUnknownDisplay ? items.length - maxUnknownDisplay : 0;
+
+  const resolvedUnknownTitle =
+    unknownTitle ?? "헷갈렸던 단어";
+
+  const resolvedUnknownSubtitle =
+    unknownSubtitle ?? "";
+
+  const resolvedEmptyUnknownMessage =
+    emptyUnknownMessage ??
+    "이번 학습에서 헷갈린 단어 없이 잘 학습했어요!";
+
+  // 기본 getter들
+  const defaultGetUnknownKey = (item, index) =>
+    item.id ?? item.wordId ?? index;
+
+  const defaultGetUnknownWord = (item) =>
+    item.word ??
+    item.frontText ??
+    item.baseWord ??
+    "";
+
+  const defaultGetUnknownMeaning = (item) =>
+    item.meaningKo ??
+    item.meaning ??
+    item.backText ??
+    "";
+
+  const defaultGetUnknownMetaTags = (item) => {
+    const tags = [];
+    if (item.level !== undefined && item.level !== null) {
+      tags.push(`Lv.${item.level}`);
+    }
+    if (item.partOfSpeech) {
+      tags.push(item.partOfSpeech);
+    }
+    if (item.category) {
+      tags.push(item.category);
+    }
+    return tags;
+  };
+
+  const keyGetter = getUnknownKey || defaultGetUnknownKey;
+  const wordGetter = getUnknownWord || defaultGetUnknownWord;
+  const meaningGetter = getUnknownMeaning || defaultGetUnknownMeaning;
+  const metaGetter = getUnknownMetaTags || defaultGetUnknownMetaTags;
+
+  // -----------------------------
+  // 2) 통계 카드 기본값 처리
+  //    - primaryLabel/Value 등이 직접 넘어오면 그걸 우선 사용
+  //    - 없으면 knownCount / unknownCount / total 기준으로 기본 값 생성
+  // -----------------------------
+  const hasKnown = typeof knownCount === "number";
+  const hasUnknown = typeof unknownCount === "number";
+  const hasTotal = typeof total === "number";
+
+  const resolvedPrimaryLabel =
+    primaryLabel ??
+    (hasKnown ? "알았다로 표시한 단어" : "");
+
+  const resolvedPrimaryValue =
+    primaryValue ??
+    (hasKnown ? `${knownCount}개` : "");
+
+  const resolvedSecondaryLabel =
+    secondaryLabel ??
+    (hasUnknown ? "몰랐다로 표시한 단어" : "");
+
+  const resolvedSecondaryValue =
+    secondaryValue ??
+    (hasUnknown ? `${unknownCount}개` : "");
+
+  const resolvedExtraLabel =
+    extraLabel ??
+    (hasTotal ? "총 학습 단어 수" : "");
+
+  const resolvedExtraValue =
+    extraValue ??
+    (hasTotal ? `${total}개` : "");
 
   return (
     <>
@@ -54,25 +140,21 @@ export function LearningResultSection({
         {/* 헷갈린 단어 카드 */}
         <section className="learning-unknown-card">
           <div className="unknown-header">
-            <h2 className="unknown-title">{unknownTitle}</h2>
-            {unknownSubtitle && (
-              <p className="unknown-subtitle">{unknownSubtitle}</p>
+            <h2 className="unknown-title">{resolvedUnknownTitle}</h2>
+            {resolvedUnknownSubtitle && (
+              <p className="unknown-subtitle">{resolvedUnknownSubtitle}</p>
             )}
           </div>
 
           {limited.length === 0 ? (
-            <p className="unknown-empty">{emptyUnknownMessage}</p>
+            <p className="unknown-empty">{resolvedEmptyUnknownMessage}</p>
           ) : (
             <ul className="unknown-list">
               {limited.map((item, index) => {
-                const key = getUnknownKey ? getUnknownKey(item, index) : index;
-                const word = getUnknownWord ? getUnknownWord(item) : "";
-                const meaning = getUnknownMeaning
-                  ? getUnknownMeaning(item)
-                  : "";
-                const metaTags = getUnknownMetaTags
-                  ? getUnknownMetaTags(item) || []
-                  : [];
+                const key = keyGetter(item, index);
+                const word = wordGetter(item);
+                const meaning = meaningGetter(item);
+                const metaTags = metaGetter(item) || [];
 
                 return (
                   <li className="unknown-item" key={key}>
@@ -109,26 +191,34 @@ export function LearningResultSection({
 
         {/* 통계 카드 */}
         <section className="stats-card">
-          <div className="stat-row">
-            <span className="stat-label">{primaryLabel}</span>
-            <span className={`stat-value ${primaryValueClassName}`}>
-              {primaryValue}
-            </span>
-          </div>
-          {primaryProgress && primaryProgress}
+          {(resolvedPrimaryLabel || resolvedPrimaryValue) && (
+            <>
+              <div className="stat-row">
+                <span className="stat-label">{resolvedPrimaryLabel}</span>
+                <span className={`stat-value ${primaryValueClassName}`}>
+                  {resolvedPrimaryValue}
+                </span>
+              </div>
+              {primaryProgress && primaryProgress}
+            </>
+          )}
 
-          <div className="stat-row">
-            <span className="stat-label">{secondaryLabel}</span>
-            <span className={`stat-value ${secondaryValueClassName}`}>
-              {secondaryValue}
-            </span>
-          </div>
-          {secondaryProgress && secondaryProgress}
+          {(resolvedSecondaryLabel || resolvedSecondaryValue) && (
+            <>
+              <div className="stat-row">
+                <span className="stat-label">{resolvedSecondaryLabel}</span>
+                <span className={`stat-value ${secondaryValueClassName}`}>
+                  {resolvedSecondaryValue}
+                </span>
+              </div>
+              {secondaryProgress && secondaryProgress}
+            </>
+          )}
 
-          {extraLabel && extraValue && (
+          {resolvedExtraLabel && resolvedExtraValue && (
             <div className="stat-row simple">
-              <span className="stat-label">{extraLabel}</span>
-              <span className="stat-value">{extraValue}</span>
+              <span className="stat-label">{resolvedExtraLabel}</span>
+              <span className="stat-value">{resolvedExtraValue}</span>
             </div>
           )}
         </section>
