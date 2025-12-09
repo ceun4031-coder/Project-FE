@@ -1,0 +1,34 @@
+/* src/pages/auth/components/BirthdateSelector.css */
+
+.birthdate-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.birthdate-row {
+  display: flex;
+  gap: 8px;
+}
+
+.birthdate-col {
+  flex: 1;
+}
+
+/* 에러일 때 드롭다운 테두리 컬러 강조 (기존 폼 에러 스타일과 맞춤) */
+.birthdate-group--error .dropdown-btn {
+  border-color: var(--danger-300, #fecaca);
+  background: var(--danger-50, #fef2f2);
+}
+
+.birthdate-error {
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+/* 모바일에서도 가로 3등분 유지 */
+@media (max-width: 480px) {
+  .birthdate-row {
+    gap: 6px;
+  }
+}

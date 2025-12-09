@@ -87,6 +87,8 @@ export function useSetupForm() {
         goal,
         submitting,
         error,
+        setLevel,
+        setGoal,
         toggleField,
         handleComplete,
         handleSkip,

@@ -39,7 +39,7 @@ const normalizeWrongItem = (raw) => {
       raw.meaning ??
       wordObj?.meaning ??
       wordObj?.meaningKo ??
-      wordObj?.exampleSentenceKo ?? // 필요 없으면 이 줄은 빼도 됨
+      wordObj?.exampleSentenceKo ??
       "",
 
     // 난이도
@@ -63,10 +63,12 @@ const normalizeWrongItem = (raw) => {
     isUsedInStory: used ? "Y" : "N",
   };
 };
+
 /* =========================================================
  * MOCK 모드용 인메모리 상태
  *  - addWrongLog / deleteWrongLog / getWrongList /
- *    getUnusedWrongLogs / markWrongUsed 가 같은 배열을 공유
+ *    getUnusedWrongLogs / markWrongUsed / getRecentWrongLogs
+ *    가 같은 배열을 공유
  * ======================================================= */
 
 let mockWrongList = [];
@@ -220,6 +222,47 @@ export const getUnusedWrongLogs = async () => {
     word: raw.word,
     meaning: raw.meaning,
   }));
+};
+
+/**
+ * 최근 퀴즈 오답 (대시보드/홈 등에서 사용)
+ * GET /api/quiz/recent-wrong
+ *
+ * 리턴 형태는 예전 코드와 동일하게 맞춤:
+ *  - { wrongLogId, wordId, word, meaning }
+ */
+export const getRecentWrongLogs = async () => {
+  if (USE_MOCK) {
+    console.log("[Mock] 최근 퀴즈 오답 조회");
+    initMockWrongList();
+
+    // wrongAt 기준 내림차순 정렬 후 상위 5개 예시
+    const sorted = [...mockWrongList].sort((a, b) => {
+      if (!a.wrongAt || !b.wrongAt) return 0;
+      return new Date(b.wrongAt) - new Date(a.wrongAt);
+    });
+
+    return sorted.slice(0, 5).map((item) => ({
+      wrongLogId: item.wrongWordId,
+      wordId: item.wordId,
+      word: item.word,
+      meaning: item.meaning,
+    }));
+  }
+
+  const res = await httpClient.get("/api/quiz/recent-wrong");
+  const arr = Array.isArray(res.data) ? res.data : [];
+
+  // 백엔드 응답을 normalize 한 뒤, 예전 사용 형태에 맞게 필드만 축약해서 리턴
+  return arr
+    .map(normalizeWrongItem)
+    .filter(Boolean)
+    .map((item) => ({
+      wrongLogId: item.wrongWordId,
+      wordId: item.wordId,
+      word: item.word,
+      meaning: item.meaning,
+    }));
 };
 
 /**

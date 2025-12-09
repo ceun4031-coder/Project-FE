@@ -1,51 +1,44 @@
 // src/api/aiStoryApi.js
 import httpClient from "./httpClient";
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
-
-const mockDelay = (result, ms = 800) =>
-  new Promise((resolve) => setTimeout(() => resolve(result), ms));
-
-/**
- * 1) AI 스토리 생성 (POST /api/ai/story)
- *    - USE_MOCK = true  → 프론트 목업으로만 동작
- *    - USE_MOCK = false → 실제 서버(/api/ai/story) 호출
- *
- * Request:
- *   { words: string[], difficulty: string, style: string }
- *
- * Response (예상):
- *   {
- *     storyEn: string,
- *     storyKo: string,
- *     usedWords?: (string | { text: string })[]
- *   }
- */
 export const generateAiStory = async ({ words, difficulty, style }) => {
+  // 기본 검증
   if (!Array.isArray(words) || words.length === 0) {
     throw new Error("generateAiStory: words 배열이 비어 있습니다.");
   }
 
-  if (USE_MOCK) {
-    console.log("[Mock] AI 스토리 생성 요청:", { words, difficulty, style });
+  // form-encoded 요청으로 만들기
+  const form = new URLSearchParams();
 
-    const joined = words.join(", ");
-
-    return mockDelay({
-      success: true,
-      message: "스토리 생성 성공(목업)",
-      storyEn: `Once upon a time, ${joined} were used in a magical story.`,
-      storyKo: `옛날 옛적에 ${joined}이(가) 마법 같은 이야기 속에서 사용되었습니다.`,
-      usedWords: words.map((w) => ({ text: w })),
-    });
-  }
-
-  // 실제 서버 호출
-  const res = await httpClient.post("/api/ai/story", {
-    words,
-    difficulty,
-    style,
+  words.forEach((w) => {
+    const trimmed = String(w || "").trim();
+    if (trimmed) {
+      form.append("words", trimmed);
+    }
   });
 
-  return res.data;
+  const diff = (difficulty || "INTERMEDIATE").toUpperCase();
+  const sty = (style || "NARRATIVE").toUpperCase();
+
+  form.append("difficulty", diff);
+  form.append("style", sty);
+
+  console.log("[generateAiStory] 요청 form:", form.toString());
+
+  try {
+    const res = await httpClient.post("/api/ai/story", form, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+      },
+    });
+    return res.data;
+  } catch (err) {
+    // 백엔드에서 내려준 에러 메시지 같이 출력
+    console.error(
+      "[generateAiStory] 서버 오류:",
+      err.response?.status,
+      err.response?.data
+    );
+    throw err;
+  }
 };

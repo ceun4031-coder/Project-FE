@@ -1,59 +1,77 @@
 // src/pages/story/StoryCreatePage.jsx
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Book, Sparkles, X } from "lucide-react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Button from "../../components/common/Button";
 import "./StoryCreatePage.css";
 
 import { generateAiStory } from "../../api/aiStoryApi";
-import { saveStory } from "../../api/storyApi";      // ← 저장은 storyApi 사용
-import { getUnusedWrongLogs } from "../../api/wrongApi";
+import { saveStory } from "../../api/storyApi";
+import { getRecentWrongLogs } from "../../api/wrongApi";
 
 const MAX_SELECTED_WORDS = 5;
 const MAX_VISIBLE_MISTAKES = 15;
-
 const DEFAULT_DIFFICULTY = "intermediate";
 const DEFAULT_STYLE = "narrative";
+
+const normalize = (v) => (v ? v.trim().toLowerCase() : "");
 
 const StoryCreatePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
 
-  // 오답 데이터
   const [mistakePool, setMistakePool] = useState([]);
   const [loadingMistakes, setLoadingMistakes] = useState(true);
 
-  // 선택된 단어
   const [selectedWords, setSelectedWords] = useState([]);
-
-  // 상태
   const [isGenerating, setIsGenerating] = useState(false);
-  const [initializedFromParams, setInitializedFromParams] = useState(false);
+
+  // Quiz에서 온 단어로 자동 초기화했는지 여부
+  const [initializedFromState, setInitializedFromState] = useState(false);
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/stories");
-    }
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/stories");
   };
 
-  // 1) 스토리에 아직 사용되지 않은 오답 목록 로딩
+  // ---------------------------------------------------------
+  // 1) 최근 오답 불러오기 (id 기준 최신순 정렬)
+  // ---------------------------------------------------------
   useEffect(() => {
     const fetchMistakes = async () => {
       try {
-        const res = await getUnusedWrongLogs();
-        // [{ wrongWordId, word, meaning }, ...] → 내부 공통 포맷
-        const mapped = (res || []).map((item) => ({
-          id: item.wrongWordId,
-          word: item.word,
-          meaning: item.meaning,
-        }));
-        setMistakePool(mapped);
+        const res = await getRecentWrongLogs();
+
+        const mapped = (res || []).map((item) => {
+          const rawWord = item.word;
+
+          const wordText =
+            typeof rawWord === "string"
+              ? rawWord
+              : rawWord?.word ?? "";
+
+          const meaningText =
+            item.meaning ??
+            (typeof rawWord === "object" ? rawWord?.meaning : "") ??
+            "";
+
+          return {
+            id: item.wrongLogId ?? item.id ?? rawWord?.wordId,
+            word: wordText,
+            meaning: meaningText,
+          };
+        });
+
+        // id (wrongLogId) 기준 최신순
+        const sorted = [...mapped].sort((a, b) => {
+          if (a.id == null || b.id == null) return 0;
+          return b.id - a.id;
+        });
+
+        setMistakePool(sorted);
       } catch (e) {
-        console.error("오답 목록 로딩 실패:", e);
+        console.error("오답 목록 불러오기 실패:", e);
       } finally {
         setLoadingMistakes(false);
       }
@@ -62,96 +80,74 @@ const StoryCreatePage = () => {
     fetchMistakes();
   }, []);
 
-  // 2) Quiz / WrongNote 에서 넘어온 단어 자동 선택
-  //    - wrongWords: location.state.wrongWords[]
-  //    - wrongWordIds: ?wrongWordIds=1,2,3
+  // ---------------------------------------------------------
+  // 2) QuizPage에서 넘어온 오답 단어 자동 선택
+  //    - navigate("/stories/create", { state: { wrongWords: [...] } })
+  // ---------------------------------------------------------
   useEffect(() => {
-    // 이미 한 번 초기화 했거나, 아직 오답 목록 로딩 중이면 실행하지 않음
-    if (initializedFromParams || loadingMistakes) return;
+    if (initializedFromState) return;
+    if (!mistakePool.length) return; // 오답 목록 먼저 로딩
 
     const state = location.state || {};
     const wrongWordsFromState = Array.isArray(state.wrongWords)
       ? state.wrongWords
       : [];
 
-    const initialSelected = [];
+    if (!wrongWordsFromState.length) {
+      setInitializedFromState(true);
+      return;
+    }
 
-    // (1) QuizPage 에서 온 wrongWords
-    if (wrongWordsFromState.length > 0) {
-      wrongWordsFromState.forEach((item) => {
-        if (initialSelected.length >= MAX_SELECTED_WORDS) return;
+    const nextSelected = [];
+    const seen = new Set();
 
-        const text = (item.word || item.text || "").trim();
-        if (!text) return;
+    for (const item of wrongWordsFromState) {
+      if (nextSelected.length >= MAX_SELECTED_WORDS) break;
 
-        const lower = text.toLowerCase();
-        if (initialSelected.some((w) => w.text.toLowerCase() === lower)) return;
+      const text = (item.word || item.text || "").trim();
+      if (!text) continue;
 
-        initialSelected.push({
-          text,
-          source: "mistake",
-          wrongLogId: item.wrongWordId ?? item.id ?? null,
-        });
+      const key = normalize(text);
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      // 좌측 리스트(mistakePool)에서 같은 단어 찾기
+      const found = mistakePool.find(
+        (m) => normalize(m.word) === key
+      );
+
+      nextSelected.push({
+        text,
+        wrongLogId:
+          found?.id ??
+          item.wrongLogId ??
+          item.id ??
+          null,
+        source: "mistake",
       });
     }
 
-    // (2) WrongNotePage → /stories/create?wrongWordIds=... 로 온 경우
-    if (initialSelected.length < MAX_SELECTED_WORDS) {
-      const idsParam = searchParams.get("wrongWordIds");
-
-      if (idsParam && mistakePool.length > 0) {
-        const idSet = new Set(
-          idsParam
-            .split(",")
-            .map((id) => Number(id.trim()))
-            .filter(Boolean)
-        );
-
-        mistakePool.forEach((item) => {
-          if (initialSelected.length >= MAX_SELECTED_WORDS) return;
-          if (!idSet.has(item.id)) return;
-
-          const text = (item.word || "").trim();
-          if (!text) return;
-
-          const lower = text.toLowerCase();
-          if (initialSelected.some((w) => w.text.toLowerCase() === lower))
-            return;
-
-          initialSelected.push({
-            text,
-            source: "mistake",
-            wrongLogId: item.id,
-          });
-        });
-      }
+    if (nextSelected.length > 0) {
+      setSelectedWords(nextSelected);
     }
 
-    if (initialSelected.length > 0) {
-      setSelectedWords(initialSelected);
-    }
+    setInitializedFromState(true);
+  }, [location.state, mistakePool, initializedFromState]);
 
-    setInitializedFromParams(true);
-  }, [
-    location.state,
-    searchParams,
-    mistakePool,
-    loadingMistakes,
-    initializedFromParams,
-  ]);
+  // ---------------------------------------------------------
+  // 단어 선택 토글
+  // ---------------------------------------------------------
+  const toggleSelectWord = (wordText, wrongLogId = null) => {
+    const normalizedText = (wordText || "").trim();
+    if (!normalizedText) return;
 
-  // 단어 토글 선택
-  const toggleSelectWord = (wordText, source = "mistake", wrongLogId = null) => {
-    const normalized = wordText.trim();
-    if (!normalized) return;
-
-    const lower = normalized.toLowerCase();
-    const exists = selectedWords.some((w) => w.text.toLowerCase() === lower);
+    const lower = normalize(normalizedText);
+    const exists = selectedWords.some((w) => normalize(w.text) === lower);
 
     if (exists) {
       // 이미 선택 → 해제
       setSelectedWords((prev) =>
-        prev.filter((w) => w.text.toLowerCase() !== lower)
+        prev.filter((w) => normalize(w.text) !== lower)
       );
       return;
     }
@@ -161,38 +157,28 @@ const StoryCreatePage = () => {
       return;
     }
 
+    // source: "mistake" → .word-chip.mistake, .mistake-card.is-selected 적용 트리거
     setSelectedWords((prev) => [
       ...prev,
-      { text: normalized, source, wrongLogId },
+      { text: normalizedText, wrongLogId, source: "mistake" },
     ]);
   };
 
-  const selectWord = (wordObj) => {
-    // mistakePool의 item: { id: wrongWordId, word, meaning }
-    toggleSelectWord(wordObj.word, "mistake", wordObj.id);
+  const selectWord = (item) => {
+    toggleSelectWord(item.word, item.id);
   };
 
   const removeWord = (textToRemove) => {
-    setSelectedWords((prev) => prev.filter((w) => w.text !== textToRemove));
+    setSelectedWords((prev) =>
+      prev.filter((w) => normalize(w.text) !== normalize(textToRemove))
+    );
   };
 
-  const handleClearAll = () => {
-    if (!selectedWords.length) return;
-    setSelectedWords([]);
-  };
+  const handleClearAll = () => setSelectedWords([]);
 
-  const handleOpenMistakePage = () => {
-    // 실제 라우트에 맞게 조정
-    navigate("/learning/wrong-notes");
-  };
-
-  const isFull = selectedWords.length >= MAX_SELECTED_WORDS;
-
-  // 좌측에 표시되는 오답 단어 (최근 N개)
-  const visibleMistakes = mistakePool.slice(0, MAX_VISIBLE_MISTAKES);
-  const hasMoreMistakes = mistakePool.length > MAX_VISIBLE_MISTAKES;
-
-  // 스토리 생성 플로우
+  // ---------------------------------------------------------
+  // 스토리 생성
+  // ---------------------------------------------------------
   const handleGenerate = async () => {
     if (selectedWords.length === 0 || isGenerating) return;
 
@@ -201,21 +187,19 @@ const StoryCreatePage = () => {
 
       const words = selectedWords.map((w) => w.text);
       const wrongLogIds = selectedWords
-        .filter((w) => w.source === "mistake" && w.wrongLogId)
+        .filter((w) => w.wrongLogId)
         .map((w) => w.wrongLogId);
 
-      // 1) AI 스토리 생성 (목업/실서버는 aiStoryApi에서 처리)
       const aiResult = await generateAiStory({
         words,
         difficulty: DEFAULT_DIFFICULTY,
         style: DEFAULT_STYLE,
       });
 
-      if (!aiResult || !aiResult.storyEn || !aiResult.storyKo) {
+      if (!aiResult?.storyEn || !aiResult?.storyKo) {
         throw new Error("AI 스토리 생성 결과가 올바르지 않습니다.");
       }
 
-      // 2) 스토리 저장 (목업일 때는 storyApi.js에서 mockStories에 push)
       const title =
         words.length > 0 ? `Story with ${words.join(", ")}` : "AI Story";
 
@@ -226,7 +210,6 @@ const StoryCreatePage = () => {
         wrongLogIds,
       });
 
-      // 3) 상세 페이지로 이동
       navigate(`/stories/${saved.storyId}`, {
         state: {
           story: {
@@ -244,39 +227,37 @@ const StoryCreatePage = () => {
       });
     } catch (e) {
       console.error("스토리 생성 실패:", e);
-      alert("스토리를 생성하는 중 오류가 발생했습니다.");
+      alert("스토리 생성 중 오류가 발생했습니다.");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const state = location.state || {};
-  const hasQuizWords =
-    Array.isArray(state.wrongWords) && state.wrongWords.length > 0;
+  // ---------------------------------------------------------
+  // 렌더링
+  // ---------------------------------------------------------
+  const visibleMistakes = mistakePool.slice(0, MAX_VISIBLE_MISTAKES);
 
   return (
     <div className="page-container">
       <div className="story-page story-create-page">
-        {/* 상단 네비게이션 */}
+        {/* 상단 네비 */}
         <nav className="story-nav">
-          <button type="button" onClick={handleBack} className="nav-back-btn">
+          <button onClick={handleBack} className="nav-back-btn">
             <ArrowLeft size={18} />
             <span>목록으로</span>
           </button>
           <span className="nav-badge">AI Story</span>
         </nav>
 
-        {/* 메인 레이아웃 */}
         <div className="create-layout">
-          {/* LEFT: 오답 노트 */}
+          {/* LEFT: 오답 목록 */}
           <aside className="mistake-sidebar">
             <div className="mistake-header">
               <h3>
                 <Book size={18} className="text-primary-500" /> 오답 노트
               </h3>
-              <span className="nav-badge" style={{ fontSize: "0.8rem" }}>
-                {mistakePool.length}
-              </span>
+              <span className="nav-badge">{mistakePool.length}</span>
             </div>
 
             <p className="mistake-desc">최근 퀴즈에서 실수한 단어들입니다.</p>
@@ -290,20 +271,21 @@ const StoryCreatePage = () => {
 
               {!loadingMistakes &&
                 visibleMistakes.map((item) => {
-                  const isSelected = selectedWords.some(
-                    (w) => w.text.toLowerCase() === item.word.toLowerCase()
+                  const selected = selectedWords.some(
+                    (w) => normalize(w.text) === normalize(item.word)
                   );
+
                   return (
                     <div
                       key={item.id}
                       className={`mistake-card ${
-                        isSelected ? "is-selected" : ""
+                        selected ? "is-selected" : ""
                       }`}
                       onClick={() => selectWord(item)}
                     >
                       <div className="card-top">
                         <span className="card-word">{item.word}</span>
-                        {isSelected && (
+                        {selected && (
                           <span className="selected-mark">선택됨</span>
                         )}
                       </div>
@@ -312,24 +294,9 @@ const StoryCreatePage = () => {
                   );
                 })}
             </div>
-
-            {hasMoreMistakes && (
-              <div className="mistake-footer">
-                <span className="mistake-more-text">
-                  최근 오답 {MAX_VISIBLE_MISTAKES}개만 표시 중
-                </span>
-                <button
-                  type="button"
-                  className="mistake-more-btn"
-                  onClick={handleOpenMistakePage}
-                >
-                  전체 보기
-                </button>
-              </div>
-            )}
           </aside>
 
-          {/* RIGHT: 스토리 빌더 */}
+          {/* RIGHT: 선택 단어 + 버튼 */}
           <main className="builder-main">
             <header className="builder-header">
               <div className="builder-heading">
@@ -338,22 +305,22 @@ const StoryCreatePage = () => {
                   <h3 className="builder-heading-title">AI 스토리</h3>
                 </div>
                 <p className="builder-heading-desc">
-                  {hasQuizWords
-                    ? "방금 퀴즈에서 틀린 단어들이 자동으로 선택되었습니다. 필요하면 좌측에서 단어를 더 선택하거나 해제하세요."
-                    : "좌측에서 단어를 선택하면, 해당 단어들로 연습용 영어 스토리를 만들어 드립니다."}
+                  좌측 오답 노트에서 단어를 선택하면, 해당 단어들로 영어
+                  스토리를 만들어 드립니다.
                 </p>
               </div>
 
               <span
                 className={`nav-badge nav-badge--small ${
-                  isFull ? "nav-badge--alert" : ""
+                  selectedWords.length >= MAX_SELECTED_WORDS
+                    ? "nav-badge--alert"
+                    : ""
                 }`}
               >
                 {selectedWords.length} / {MAX_SELECTED_WORDS}
               </span>
             </header>
 
-            {/* 선택된 단어 섹션 */}
             <section className="selected-words">
               <div className="selected-words-header">
                 <div className="selected-words-text">
@@ -362,10 +329,11 @@ const StoryCreatePage = () => {
                     최대 {MAX_SELECTED_WORDS}개까지 선택할 수 있어요.
                   </p>
                 </div>
+
                 {selectedWords.length > 0 && (
                   <button
-                    type="button"
                     className="chips-clear-btn"
+                    type="button"
                     onClick={handleClearAll}
                   >
                     전체 해제
@@ -381,7 +349,10 @@ const StoryCreatePage = () => {
                 ) : (
                   <div className="chips-wrap">
                     {selectedWords.map((item, idx) => (
-                      <span key={idx} className={`word-chip ${item.source}`}>
+                      <span
+                        key={idx}
+                        className={`word-chip ${item.source || ""}`}
+                      >
                         {item.text}
                         <button
                           type="button"
@@ -397,7 +368,6 @@ const StoryCreatePage = () => {
               </div>
             </section>
 
-            {/* 하단 버튼 영역 */}
             <div className="builder-footer">
               <Button
                 full
@@ -405,35 +375,13 @@ const StoryCreatePage = () => {
                 disabled={selectedWords.length === 0 || isGenerating}
                 onClick={handleGenerate}
               >
-                {isGenerating ? "AI가 스토리를 만드는 중..." : "스토리 생성하기"}
+                {isGenerating
+                  ? "AI가 스토리를 만드는 중..."
+                  : "스토리 생성하기"}
               </Button>
             </div>
           </main>
-
         </div>
-          {isGenerating && (
-          <div className="story-generate-overlay">
-            <div className="story-generate-modal">
-              <div className="story-generate-spinner" />
-              <p className="story-generate-title">AI가 스토리를 만드는 중입니다</p>
-              <p className="story-generate-desc">
-                선택한 단어들을 자연스러운 문맥 속에 녹이고 있어요.
-                <br />
-                잠시만 기다려 주세요.
-              </p>
-
-              {selectedWords.length > 0 && (
-                <div className="story-generate-words">
-                  {selectedWords.map((w) => (
-                    <span key={w.text} className="story-generate-chip">
-                      {w.text}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -166,20 +166,32 @@
 }
 
 /* =========================================
-   6. 이메일 도움/성공 메시지
+   6. 유효성 안내 메시지 (에러/도움/성공 공통 스타일)
    ========================================= */
-.form-help {
-  margin-top: 4px;
-  font-size: 0.75rem;
-  color: var(--neutral-500);
-}
-
+.form-error,
+.form-help,
 .form-success {
   margin-top: 4px;
   font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--success-600, #16a34a);
+  line-height: 1.4;
 }
+
+/* 에러 메시지 */
+.form-error {
+  color: var(--danger-600, #dc2626);
+}
+
+/* 안내(헬프) 메시지 */
+.form-help {
+  color: var(--neutral-500);
+}
+
+/* 성공(유효) 메시지 */
+.form-success {
+  color: var(--success-600, #16a34a);
+  font-weight: 500;
+}
+
 
 /* =========================================
    7. 반응형 처리

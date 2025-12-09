@@ -24,15 +24,17 @@ const FIELD_OPTIONS = [
 
 export default function SetupPage() {
   const {
-     level,
-        selected,
-        goal,
-        submitting,
-        error,
-        toggleField,
-        handleComplete,
-        handleSkip,
-  }=useSetupForm();
+    level,
+    setLevel,
+    setGoal,
+    selected,
+    goal,
+    submitting,
+    error,
+    toggleField,
+    handleComplete,
+    handleSkip,
+  } = useSetupForm();
   return (
     <main className="page-container">
       <div className="setup-card">
@@ -64,9 +66,8 @@ export default function SetupPage() {
                 <button
                   type="button"
                   key={field.value}
-                  className={`setup-tag ${
-                    selected.includes(field.value) ? "active" : ""
-                  }`}
+                  className={`setup-tag ${selected.includes(field.value) ? "active" : ""
+                    }`}
                   onClick={() => toggleField(field.value)}
                   disabled={submitting}
                 >
@@ -106,10 +107,9 @@ export default function SetupPage() {
                 onChange={(e) => setLevel(Number(e.target.value))}
                 className="input-range setup-slider"
                 style={{
-                  "--range-progress": `${
-                    ((Number(level) - MIN_LEVEL) * 100) /
+                  "--range-progress": `${((Number(level) - MIN_LEVEL) * 100) /
                     (MAX_LEVEL - MIN_LEVEL)
-                  }%`,
+                    }%`,
                 }}
                 disabled={submitting}
               />
