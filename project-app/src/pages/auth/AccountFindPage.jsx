@@ -1,103 +1,28 @@
-// src/pages/AccountFindPage/AccountFindPage.jsx
-import { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+// src/pages/auth/AccountFindPage.jsx
 import "./AccountFindPage.css";
-import Button from "../../components/common/Button";
-import Input from "../../components/common/Input";
-import Logo from "../../assets/images/StoryLex-logo.svg";
-import { findEmail, resetPassword } from "../../api/authApi";
 
+import Button from "@/components/common/Button";
+import Input from "@/components/common/Input";
+import Logo from "@/assets/images/StoryLex-logo.svg";
+import { useAccountFindForm } from "./hooks/useAccountFindForm";
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 export default function AccountFindPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  // URL 기준으로 탭 결정 (기본값 email)
-  const tab = searchParams.get("tab") === "pw" ? "pw" : "email";
-
-  // 이메일 찾기 입력값
-  const [findName, setFindName] = useState("");
-  const [findBirth, setFindBirth] = useState("");
-
-  // 비밀번호 찾기 입력값
-  const [resetName, setResetName] = useState("");
-  const [resetEmail, setResetEmail] = useState("");
-
-  const handleChangeTab = (nextTab) => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      params.set("tab", nextTab);
-      return params;
-    });
-  };
-
-  /**
-   * 이메일 찾기
-   */
-  const handleFindEmail = async () => {
-    const name = findName.trim();
-    const birth = findBirth.trim();
-
-    if (!name || !birth) {
-      alert("이름과 생년월일을 입력해주세요.");
-      return;
-    }
-
-    const birthRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!birthRegex.test(birth)) {
-      alert("생년월일을 YYYY-MM-DD 형식으로 입력해주세요. (예: 2000-01-01)");
-      return;
-    }
-
-    try {
-      // authApi.findEmail은 { userName, userBirth } 객체를 받도록 통일
-      const { email } = await findEmail({
-        userName: name,
-        userBirth: birth,
-      });
-
-      alert(`회원님의 이메일은 ${email} 입니다.`);
-    } catch (error) {
-      console.error("이메일 찾기 실패:", error);
-      const message =
-        error?.response?.data?.message ||
-        "일치하는 정보를 찾을 수 없습니다.";
-      alert(message);
-    }
-  };
-
-  /**
-   * 비밀번호 재설정 (임시 비밀번호 발급)
-   */
-  const handleResetPassword = async () => {
-    const name = resetName.trim();
-    const email = resetEmail.trim();
-
-    if (!name || !email) {
-      alert("이름과 이메일을 입력해주세요.");
-      return;
-    }
-
-    try {
-      // authApi.resetPassword는 { userName, email } 객체를 받도록 통일
-      const { message } = await resetPassword({
-        userName: name,
-        email,
-      });
-
-      alert(
-        message || "임시 비밀번호가 이메일로 발송되었습니다. 로그인 페이지로 이동합니다."
-      );
-      navigate("/auth/login");
-    } catch (error) {
-      console.error("비밀번호 재설정 실패:", error);
-      const message =
-        error?.response?.data?.message ||
-        "정보가 일치하지 않거나 오류가 발생했습니다.";
-      alert(message);
-    }
-  };
+  const {
+    tab,
+    handleChangeTab,
+    findName,
+    findBirth,
+    resetName,
+    resetEmail,
+    setFindName,
+    setFindBirth,
+    setResetName,
+    setResetEmail,
+    handleFindEmail,
+    handleResetPassword,
+    handleGoLogin,
+  } = useAccountFindForm();
 
   return (
     <main className="find-page">
@@ -198,7 +123,7 @@ export default function AccountFindPage() {
         <div className="find-back">
           <button
             type="button"
-            onClick={() => navigate("/auth/login")}
+            onClick={handleGoLogin}
             className="find-back-link"
           >
             ← 로그인 페이지로
@@ -206,7 +131,9 @@ export default function AccountFindPage() {
         </div>
 
         {USE_MOCK && (
-          <p className="find-mock-hint">(현재 MOCK 모드에서는 테스트용 응답이 반환됩니다)</p>
+          <p className="find-mock-hint">
+            (현재 MOCK 모드에서는 테스트용 응답이 반환됩니다)
+          </p>
         )}
       </div>
     </main>

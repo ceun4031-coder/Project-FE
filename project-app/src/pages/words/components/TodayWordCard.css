@@ -5,7 +5,6 @@
   top: var(--space-6);
   right: var(--space-6);
   z-index: 20;
-  transform: rotate(-3deg);
   pointer-events: none; /* 카드만 클릭 가능하게 */
 }
 
@@ -15,11 +14,10 @@
   border-radius: 20px;
   padding: var(--space-4) var(--space-5);
   box-shadow: var(--shadow-soft);
-  min-width: 260px;
+  min-width: 270px;
   border: 1px solid var(--border-subtle);
-
-  transform: scale(1.05) rotate(-3deg);
   pointer-events: auto;
+    transform: rotate(-3deg);
 }
 
 /* 상단 작은 라벨 */

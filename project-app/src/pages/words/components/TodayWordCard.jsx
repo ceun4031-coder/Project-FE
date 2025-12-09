@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getTodayWord } from "../../../api/wordApi";
+import { getTodayWord } from "@/api/wordApi";
 import "./TodayWordCard.css";
 
 export default function TodayWordCard() {
