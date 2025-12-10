@@ -8,7 +8,7 @@ import {
   Star,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams,useLocation  } from "react-router-dom";
 import {
   addFavorite,
   getCompletedList,
@@ -24,6 +24,7 @@ import "./WordDetailPage.css";
 function WordDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+ const location = useLocation();
 
   // 기본 단어 정보
   const [word, setWord] = useState(null);
@@ -199,7 +200,18 @@ function WordDetailPage() {
       });
   };
 
-  const handleBack = () => navigate(-1);
+const handleBack = () => {
+  const fromList = location.state?.from === "word-list";
+  const search = location.state?.search || "";
+
+  if (fromList) {
+    // 단어장 → 상세로 온 경우: 원래 쿼리 그대로 복원
+    navigate(`/words${search}`);
+  } else {
+    // 직접 진입 등: 기본 목록으로
+    navigate("/words");
+  }
+};
 
   // ------------------------------------------------
   // 로딩 / 에러 처리

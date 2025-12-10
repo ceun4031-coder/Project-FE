@@ -13,7 +13,7 @@ import {
   getAllWords,
 } from "../../api/wordApi";
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Card from "../../components/common/Card";
 import Input from "../../components/common/Input";
@@ -65,18 +65,43 @@ const WORDS_QUERY_KEY = ["words", "list"];
 
 function WordListPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  // URL 쿼리 → 초기 상태 복원
+  const initialMode = searchParams.get("mode") || "all";
+  const initialSearch = searchParams.get("q") || "";
+  const initialCategory = searchParams.get("category") || "All";
+  const initialDomain = searchParams.get("domain") || "All";
+  const initialLevel = searchParams.get("level") || "All";
+  const initialSortKey = searchParams.get("sort") || "default";
 
   // =========================================
   // 로컬 상태 (검색/필터/모드)
   // =========================================
-  const [search, setSearch] = useState("");
-  const [mode, setMode] = useState("all"); // all | favorite
-  const [filter, setFilter] = useState(FILTER_INITIAL);
-  const [sortKey, setSortKey] = useState("default"); // default | alphabet | level (확장용)
+  const [search, setSearch] = useState(initialSearch);
+  const [mode, setMode] = useState(initialMode); // all | favorite
+  const [filter, setFilter] = useState({
+    category: initialCategory,
+    domain: initialDomain,
+    level: initialLevel,
+  });
+  const [sortKey, setSortKey] = useState(initialSortKey); // default | alphabet | level (확장용)
   const [openDropdown, setOpenDropdown] = useState(null);
 
+  // 공통: 쿼리 파라미터 업데이트 헬퍼
+  const updateSearchParams = (patch) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(patch).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "") {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+    });
+    setSearchParams(next);
+  };
   // =========================================
   // 데이터 로딩 (전체 단어 /api/words/all)
   // =========================================
@@ -135,7 +160,13 @@ function WordListPage() {
   // =========================================
   // 이벤트 핸들러
   // =========================================
-  const handleCardClick = (wordId) => navigate(`/words/${wordId}`);
+  const handleCardClick = (wordId) =>
+    navigate(`/words/${wordId}`, {
+      state: {
+        from: "word-list",
+        search: location.search, // 현재 ?... 그대로 저장
+      },
+    });
 
   const handleToggleFavorite = (word, e) => {
     e.stopPropagation();
@@ -145,10 +176,9 @@ function WordListPage() {
       isFavorite: word.isFavorite,
     });
   };
-
   const handleModeChange = (type) => {
     setMode(type);
-    setSearchParams({ page: "0" });
+    updateSearchParams({ page: 0, mode: type });
   };
 
   const toggleDropdown = (id) =>
@@ -157,20 +187,37 @@ function WordListPage() {
   const selectFilterOption = (type, value) => {
     setFilter((prev) => ({ ...prev, [type]: value }));
     setOpenDropdown(null);
-    setSearchParams({ page: "0" });
+    updateSearchParams({
+      page: 0,
+      [type]: value === "All" ? undefined : value,
+    });
   };
+
 
   const handleFilterReset = () => {
     setFilter(FILTER_INITIAL);
-    setSearchParams({ page: "0" });
+    updateSearchParams({
+      page: 0,
+      category: undefined,
+      domain: undefined,
+      level: undefined,
+    });
   };
-
   const resetFilters = () => {
     setFilter(FILTER_INITIAL);
     setSearch("");
     setMode("all");
-    setSearchParams({ page: "0" });
+    updateSearchParams({
+      page: 0,
+      q: undefined,
+      mode: "all",
+      category: undefined,
+      domain: undefined,
+      level: undefined,
+      sort: undefined,
+    });
   };
+
 
   // =========================================
   // 파생 값 (카운트/필터링/정렬)
@@ -271,10 +318,10 @@ function WordListPage() {
     startIdx + PAGE_SIZE
   );
 
-  const handlePageChange = (nextIndex) => {
-    setSearchParams({ page: String(nextIndex) });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+ const handlePageChange = (nextIndex) => {
+  updateSearchParams({ page: nextIndex });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
   const isEmptyAll = !isLoading && !errorMessage && words.length === 0;
 
@@ -300,9 +347,8 @@ function WordListPage() {
                   <button
                     key={key}
                     type="button"
-                    className={`stat-card no-select ${
-                      mode === key ? "active" : ""
-                    } ${color}`}
+                    className={`stat-card no-select ${mode === key ? "active" : ""
+                      } ${color}`}
                     onClick={() => handleModeChange(key)}
                   >
                     <div className={`stat-icon-wrapper bg-${color}`}>
@@ -364,9 +410,14 @@ function WordListPage() {
                 fullWidth
                 placeholder="단어 검색..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearch(value);
+                  updateSearchParams({ q: value || undefined, page: 0 });
+                }}
                 aria-label="단어 검색"
               />
+
             </div>
           </div>
         </section>
@@ -429,9 +480,8 @@ function WordListPage() {
                       meta={
                         <button
                           type="button"
-                          className={`star-btn no-select ${
-                            w.isFavorite ? "active" : ""
-                          }`}
+                          className={`star-btn no-select ${w.isFavorite ? "active" : ""
+                            }`}
                           onClick={(e) => handleToggleFavorite(w, e)}
                           title={
                             w.isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"
