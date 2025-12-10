@@ -326,6 +326,21 @@ export const getWordList = async (page = 0, size = 100) => {
 };
 
 // =====================================================
+// 1-1. 전체 단어 목록 (단어장용 /api/words/all)
+// =====================================================
+export const getAllWords = async () => {
+  if (USE_MOCK) {
+    // 목업에서는 전부 한 번에 반환
+    const mapped = mockWordList.map(mapWordFromApi);
+    return mockDelay(mapped);
+  }
+
+  const res = await httpClient.get("/api/words/all");
+  const arr = Array.isArray(res.data) ? res.data : [];
+  return arr.map(mapWordFromApi);
+};
+
+// =====================================================
 // 2. 오늘의 단어
 // =====================================================
 export const getTodayWord = async () => {

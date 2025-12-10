@@ -79,6 +79,9 @@ const QuizPage = () => {
   };
   const domainLabel = DOMAIN_LABEL_MAP[rawDomain] || rawDomain;
 
+  // 백엔드 category 파라미터로 넘길 값
+  const categoryForApi = rawDomain === "All" ? null : rawDomain;
+
   // 배지에 찍을 텍스트
   const badgeText = `${domainLabel} | Lv.${levelLabel}`;
 
@@ -128,6 +131,7 @@ const QuizPage = () => {
           limit: Number(limit),
           level: levelForApi,
           wordIds,
+          category: categoryForApi,
         });
 
         if (!data || data.length === 0) {
@@ -151,7 +155,7 @@ const QuizPage = () => {
 
     loadData();
     // wordIdsParam 이 바뀌면 다시 로드
-  }, [source, limit, levelForApi, wordIdsParam]);
+  }, [source, limit, levelForApi, wordIdsParam, categoryForApi]);
 
   const wrapperClassName = [
     "quiz-page-wrapper",
@@ -213,77 +217,76 @@ const QuizPage = () => {
   const wrongSafe = Array.isArray(wrongQuizWords) ? wrongQuizWords : [];
 
   // 선택지 클릭
-const handleOptionClick = (choiceIndex) => {
-  if (selectedOption !== null) return;
+  const handleOptionClick = (choiceIndex) => {
+    if (selectedOption !== null) return;
 
-  const currentQ = questions[currentIndex];
-  const isCorrect = choiceIndex === currentQ.answer;
+    const currentQ = questions[currentIndex];
+    const isCorrect = choiceIndex === currentQ.answer;
 
-  setSelectedOption(choiceIndex);
+    setSelectedOption(choiceIndex);
 
-  if (isCorrect) {
-    setScore((prev) => prev + 1);
-  } else {
-    setWrongQuizWords((prev) => {
-      const wordText = extractWordFromQuestion(currentQ);
-      const normalized = (wordText || "").trim();
-      if (!normalized) return prev;
+    if (isCorrect) {
+      setScore((prev) => prev + 1);
+    } else {
+      setWrongQuizWords((prev) => {
+        const wordText = extractWordFromQuestion(currentQ);
+        const normalized = (wordText || "").trim();
+        if (!normalized) return prev;
 
-      const lower = normalized.toLowerCase();
-      if (prev.some((w) => w.text.toLowerCase() === lower)) {
-        return prev;
-      }
+        const lower = normalized.toLowerCase();
+        if (prev.some((w) => w.text.toLowerCase() === lower)) {
+          return prev;
+        }
 
-      // 1) 백엔드에서 온 meaning 계열
-      const meaningFromApi =
-        currentQ.meaningKo ||
-        currentQ.meaning_ko ||
-        currentQ.meaning ||
-        currentQ.korean ||
-        "";
+        // 1) 백엔드에서 온 meaning 계열
+        const meaningFromApi =
+          currentQ.meaningKo ||
+          currentQ.meaning_ko ||
+          currentQ.meaning ||
+          currentQ.korean ||
+          "";
 
-      // 2) 정답 보기 (보통 뜻이 들어있음)
-      const correctOptionText = Array.isArray(currentQ.options)
-        ? currentQ.options[currentQ.answer] ?? ""
-        : "";
+        // 2) 정답 보기 (보통 뜻이 들어있음)
+        const correctOptionText = Array.isArray(currentQ.options)
+          ? currentQ.options[currentQ.answer] ?? ""
+          : "";
 
-      const finalMeaning = meaningFromApi || correctOptionText || "";
+        const finalMeaning = meaningFromApi || correctOptionText || "";
 
-      // 🔹 레벨 값 정리
-      const resolvedLevel =
-        currentQ.level ??
-        currentQ.wordLevel ??
-        currentQ.word_level ??
-        currentQ.difficulty ??
-        currentQ.levelId ??
-        rawLevel ?? // URL에서 온 레벨 (필터)
-        null;
+        // 레벨 값 정리
+        const resolvedLevel =
+          currentQ.level ??
+          currentQ.wordLevel ??
+          currentQ.word_level ??
+          currentQ.difficulty ??
+          currentQ.levelId ??
+          rawLevel ??
+          null;
 
-      const newItem = {
-        text: normalized,
-        wordId: currentQ.wordId,
-        wrongWordId: currentQ.wrongWordId,
-        meaning: finalMeaning,
-        meaningKo: finalMeaning,
-        level: resolvedLevel,
-      };
+        const newItem = {
+          text: normalized,
+          wordId: currentQ.wordId,
+          wrongWordId: currentQ.wrongWordId,
+          meaning: finalMeaning,
+          meaningKo: finalMeaning,
+          level: resolvedLevel,
+        };
 
-      return [...prev, newItem];
+        return [...prev, newItem];
+      });
+    }
+
+    const resultItem = {
+      wordId: currentQ.wordId,
+      correct: isCorrect,
+    };
+
+    setAnswerResults((prev) => {
+      const next = [...prev];
+      next[currentIndex] = resultItem;
+      return next;
     });
-  }
-
-  const resultItem = {
-    wordId: currentQ.wordId,
-    correct: isCorrect,
   };
-
-  setAnswerResults((prev) => {
-    const next = [...prev];
-    next[currentIndex] = resultItem;
-    return next;
-  });
-};
-
 
   // 다음 문제 / 결과 보기
   const handleNext = async () => {
@@ -420,7 +423,6 @@ const handleOptionClick = (choiceIndex) => {
                   </footer>
                 </main>
               </section>
-              
             </div>
           </>
         ) : (
@@ -446,13 +448,13 @@ const handleOptionClick = (choiceIndex) => {
                 w.korean ||
                 ""
               }
-                getUnknownMetaTags={(w) => {
-    const tags = [];
-    if (w.level != null && w.level !== "") {
-      tags.push(`Lv.${w.level}`);
-    }
-    return tags;
-  }}
+              getUnknownMetaTags={(w) => {
+                const tags = [];
+                if (w.level != null && w.level !== "") {
+                  tags.push(`Lv.${w.level}`);
+                }
+                return tags;
+              }}
               buildMoreHintMessage={(restCount) =>
                 `그 외 ${restCount}개 단어는 오답 노트에서 계속 확인할 수 있어요.`
               }
@@ -493,9 +495,7 @@ const handleOptionClick = (choiceIndex) => {
             />
           </section>
         )}
-        
       </div>
-      
     </div>
   );
 };

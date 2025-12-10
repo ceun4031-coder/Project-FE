@@ -1,5 +1,17 @@
-import { ArrowRight, FileQuestion, LayoutGrid, RotateCcw, Search, Star } from "lucide-react";
-import { addFavorite, getCompletedList, getFavoriteList, getWordList, removeFavorite } from "../../api/wordApi";
+// src/pages/words/WordListPage.jsx
+import {
+  ArrowRight,
+  FileQuestion,
+  LayoutGrid,
+  RotateCcw,
+  Search,
+  Star,
+} from "lucide-react";
+import {
+  addFavorite,
+  removeFavorite,
+  getAllWords,
+} from "../../api/wordApi";
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,7 +37,7 @@ const CATEGORY_OPTIONS = [
   { label: "부사 (Adv)", value: "Adv" },
 ];
 
-// 분야 필터 (값은 category 컬럼과 동일하게)
+// 분야 필터 (값은 category 컬럼과 동일)
 const DOMAIN_OPTIONS = [
   { label: "전체 분야", value: "All" },
   { label: "일상생활", value: "Daily Life" },
@@ -57,60 +69,35 @@ function WordListPage() {
   const queryClient = useQueryClient();
 
   // =========================================
-  // 상태 관리 (UI용)
+  // 로컬 상태 (검색/필터/모드)
   // =========================================
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("all"); // all | favorite
   const [filter, setFilter] = useState(FILTER_INITIAL);
-  const [sortKey, setSortKey] = useState("default"); // default | alphabet | level
+  const [sortKey, setSortKey] = useState("default"); // default | alphabet | level (확장용)
   const [openDropdown, setOpenDropdown] = useState(null);
 
   // =========================================
-  // 데이터 로딩 (React Query)
+  // 데이터 로딩 (전체 단어 /api/words/all)
   // =========================================
   const {
-  data: words = [],
-  isLoading,
-  isError,
-  error,
-} = useQuery({
-  queryKey: WORDS_QUERY_KEY,
-  queryFn: async () => {
-    const [wordPage, favoriteRes, completedRes] = await Promise.all([
-      getWordList(0, 100),
-      getFavoriteList().catch(() => []),
-      getCompletedList().catch(() => []),
-    ]);
-
-    const baseWords = Array.isArray(wordPage?.content)
-      ? wordPage.content
-      : [];
-
-    const favoriteIds = new Set(
-      (favoriteRes || []).map((f) => Number(f.wordId))
-    );
-    const completedIds = new Set(
-      (completedRes || []).map((c) => Number(c.wordId))
-    );
-
-    return baseWords.map((w) => {
-      const id = Number(w.wordId);
-      return {
-        ...w,
-        isFavorite: favoriteIds.has(id) || !!w.isFavorite,
-        isCompleted: completedIds.has(id) || !!w.isCompleted,
-      };
-    });
-  },
-});
-
+    data: words = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: WORDS_QUERY_KEY,
+    queryFn: async () => {
+      const allWords = await getAllWords();
+      return Array.isArray(allWords) ? allWords : [];
+    },
+  });
 
   const errorMessage = isError
     ? "단어장을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
     : null;
 
   // =========================================
-  // 즐겨찾기 토글 (React Query Mutation + 업데이트)
+  // 즐겨찾기 토글 (낙관적 업데이트)
   // =========================================
   const toggleFavoriteMutation = useMutation({
     mutationFn: async ({ wordId, isFavorite }) => {
@@ -186,7 +173,7 @@ function WordListPage() {
   };
 
   // =========================================
-  // 파생 값
+  // 파생 값 (카운트/필터링/정렬)
   // =========================================
   const isFilterActive =
     filter.category !== "All" ||
@@ -227,7 +214,7 @@ function WordListPage() {
     },
   ];
 
-  // 필터 + 정렬 적용
+  // 필터 + 검색 + 정렬
   const filteredAndSortedWords = useMemo(() => {
     let result = words.filter((w) => {
       if (mode === "favorite" && !w.isFavorite) return false;
@@ -239,7 +226,7 @@ function WordListPage() {
       if (filter.category !== "All" && w.partOfSpeech !== filter.category)
         return false;
 
-      // 분야 필터: filter.domain 값은 category 컬럼과 동일하게 사용
+      // 분야 필터 (category 컬럼 사용)
       if (filter.domain !== "All" && w.category !== filter.domain) return false;
 
       // 난이도 필터
@@ -259,7 +246,6 @@ function WordListPage() {
       return true;
     });
 
-    // 정렬 (현재 UI에서 sortKey 변경은 없지만, 확장 대비)
     if (sortKey === "alphabet") {
       result.sort((a, b) => (a.word || "").localeCompare(b.word || ""));
     } else if (sortKey === "level") {
@@ -270,7 +256,7 @@ function WordListPage() {
   }, [words, mode, filter, search, sortKey]);
 
   // =========================================
-  // 페이지네이션
+  // 페이지네이션 (프론트 단에서만 처리)
   // =========================================
   const PAGE_SIZE = 12;
   const totalPages = Math.max(
@@ -290,7 +276,6 @@ function WordListPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 완전히 비어있는 단어장 여부
   const isEmptyAll = !isLoading && !errorMessage && words.length === 0;
 
   // =========================================
@@ -298,7 +283,7 @@ function WordListPage() {
   // =========================================
   return (
     <div className="page-container wordlist-page">
-      {/* 1. 헤더 영역 */}
+      {/* 헤더 */}
       <header className="wordlist-header">
         <PageHeader
           title="나의"
@@ -306,7 +291,7 @@ function WordListPage() {
           description="오늘의 학습을 시작하세요."
         />
 
-        {/* 단어가 있을 때만 카테고리(전체 단어 / 즐겨찾기) 버튼 노출 */}
+        {/* 전체/즐겨찾기 탭 */}
         {!isEmptyAll && (
           <div className="wordlist-stats-wrapper">
             <nav className="word-stats" aria-label="학습 현황 필터">
@@ -335,7 +320,7 @@ function WordListPage() {
         )}
       </header>
 
-      {/* 2. 컨트롤 영역 (단어가 하나도 없을 때는 숨김) */}
+      {/* 필터/검색 영역 */}
       {!isEmptyAll && (
         <section className="wordlist-controls">
           <div className="controls-left">
@@ -387,9 +372,9 @@ function WordListPage() {
         </section>
       )}
 
-      {/* 3. 리스트 영역 */}
+      {/* 리스트 영역 */}
       <section className="wordlist-content">
-        {/* 로딩 상태 */}
+        {/* 로딩 */}
         {isLoading && (
           <div className="status-msg loading">
             <Spinner
@@ -399,7 +384,7 @@ function WordListPage() {
           </div>
         )}
 
-        {/* 에러 상태 */}
+        {/* 에러 */}
         {!isLoading && errorMessage && (
           <div className="status-msg error">
             <p>{errorMessage}</p>
@@ -412,7 +397,7 @@ function WordListPage() {
           </div>
         )}
 
-        {/* 단어장에 단어가 아예 없는 경우 */}
+        {/* 단어가 완전히 없을 때 */}
         {!isLoading && !errorMessage && isEmptyAll && (
           <EmptyState
             icon={FileQuestion}
@@ -422,7 +407,7 @@ function WordListPage() {
           />
         )}
 
-        {/* 단어는 있는데, 필터/검색 조건으로 0개인 경우 포함 */}
+        {/* 단어는 있는데, 필터/검색으로 0개일 수 있는 경우 */}
         {!isLoading && !errorMessage && !isEmptyAll && (
           <>
             {filteredAndSortedWords.length > 0 ? (
@@ -507,7 +492,7 @@ function WordListPage() {
         )}
       </section>
 
-      {/* 4. 페이지네이션 */}
+      {/* 페이지네이션 */}
       {!isLoading && !errorMessage && filteredAndSortedWords.length > 0 && (
         <Pagination
           page={safeIndex}

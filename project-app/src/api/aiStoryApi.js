@@ -1,39 +1,31 @@
 // src/api/aiStoryApi.js
 import httpClient from "./httpClient";
 
-export const generateAiStory = async ({ words, difficulty, style }) => {
-  // 기본 검증
-  if (!Array.isArray(words) || words.length === 0) {
-    throw new Error("generateAiStory: words 배열이 비어 있습니다.");
+/**
+ * AI 스토리 생성 + 저장 요청
+ * POST /api/ai/story
+ *
+ * 백엔드 AIStoryRequest:
+ *   {
+ *     wrongAnswerLogIds: [Long, Long, ...]
+ *   }
+ */
+export const generateAiStory = async ({ wrongAnswerLogIds }) => {
+  if (!Array.isArray(wrongAnswerLogIds) || wrongAnswerLogIds.length === 0) {
+    throw new Error("generateAiStory: wrongAnswerLogIds 배열이 비어 있습니다.");
   }
 
-  // form-encoded 요청으로 만들기
-  const form = new URLSearchParams();
+  const payload = {
+    wrongAnswerLogIds,
+  };
 
-  words.forEach((w) => {
-    const trimmed = String(w || "").trim();
-    if (trimmed) {
-      form.append("words", trimmed);
-    }
-  });
-
-  const diff = (difficulty || "INTERMEDIATE").toUpperCase();
-  const sty = (style || "NARRATIVE").toUpperCase();
-
-  form.append("difficulty", diff);
-  form.append("style", sty);
-
-  console.log("[generateAiStory] 요청 form:", form.toString());
+  console.log("[generateAiStory] 요청 payload:", payload);
 
   try {
-    const res = await httpClient.post("/api/ai/story", form, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-      },
-    });
+    const res = await httpClient.post("/api/ai/story", payload);
+    // 기대 응답: { success, message, title, storyEn, storyKo, usedWords, storyId }
     return res.data;
   } catch (err) {
-    // 백엔드에서 내려준 에러 메시지 같이 출력
     console.error(
       "[generateAiStory] 서버 오류:",
       err.response?.status,

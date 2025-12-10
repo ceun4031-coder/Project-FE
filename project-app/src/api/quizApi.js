@@ -36,12 +36,17 @@ const normalizeQuizItem = (raw, index) => {
     }
   }
 
-  // 보기
+  // 보기: 항상 string[]으로 정규화
   const optionsRaw = raw.options ?? raw.choices ?? [];
-  const options = Array.isArray(optionsRaw) ? optionsRaw : [];
+  const options = (Array.isArray(optionsRaw) ? optionsRaw : []).map((opt) => {
+    if (typeof opt === "string") return opt;
+    if (opt && typeof opt.text === "string") return opt.text;
+    if (opt && typeof opt.label === "string") return opt.label;
+    return String(opt);
+  });
 
-  // 정답 인덱스
-  const rawAnswer =
+  // 정답 인덱스 (0 기반 기준)
+  const rawAnswerCandidate =
     typeof raw.answerIndex === "number"
       ? raw.answerIndex
       : typeof raw.correctIndex === "number"
@@ -52,7 +57,28 @@ const normalizeQuizItem = (raw, index) => {
       ? raw.answer
       : 0;
 
-  const answer = Number.isFinite(rawAnswer) ? rawAnswer : 0;
+  let answer = Number.isFinite(rawAnswerCandidate)
+    ? rawAnswerCandidate
+    : 0;
+
+  // answerIndex 0 기반 보정:
+  // - 정상 범위(0 ~ options.length-1)가 아니고
+  // - 1 ~ options.length 범위면 1 기반으로 간주하고 -1
+  if (options.length > 0) {
+    const maxIndex = options.length - 1;
+
+    if (answer < 0 || answer > maxIndex) {
+      if (answer >= 1 && answer <= options.length) {
+        // 1 기반으로 들어온 케이스 → 0 기반으로 보정
+        answer = answer - 1;
+      } else {
+        // 범위 밖이면 0번 보기로 강제
+        answer = 0;
+      }
+    }
+  } else {
+    answer = 0;
+  }
 
   // 한글 뜻 / 의미 필드 정규화
   const meaningKoSource =
@@ -121,13 +147,19 @@ const normalizeQuizListResponse = (data) => {
 // ============================================================
 // [API 1] 퀴즈 데이터 가져오기 (GET /api/quiz)
 //    프론트 파라미터:
-//      { source: 'quiz' | 'wrong-note', limit: number, level: string|null, wordIds?: number[] }
+//      {
+//        source: 'quiz' | 'wrong-note',
+//        limit: number,
+//        level: string|null,
+//        wordIds?: number[],
+//        category?: string | null
+//      }
 // ============================================================
 export const fetchQuizzes = async (params) => {
-  const { source, limit, level, wordIds } = params;
+  const { source, limit, level, wordIds, category } = params;
 
   if (USE_MOCK) {
-    return mockFetchQuizzes({ source, limit, wordIds });
+    return mockFetchQuizzes({ source, limit, wordIds, category });
   }
 
   try {
@@ -152,6 +184,11 @@ export const fetchQuizzes = async (params) => {
     // all / null 이면 레벨 필터 안 보냄
     if (normalizedLevel && normalizedLevel !== "all") {
       query.level = normalizedLevel;
+    }
+
+    // 카테고리(분야) 연동
+    if (category && category !== "All") {
+      query.category = category;
     }
 
     if (Array.isArray(wordIds) && wordIds.length > 0) {
