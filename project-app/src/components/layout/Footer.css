@@ -1,9 +1,3 @@
-/* src/components/layout/Footer.css */
-
-/* =========================================================
-   FOOTER COMPONENT
-========================================================= */
-
 .lp-footer {
   background: var(--neutral-900);
   color: var(--neutral-300);
@@ -30,7 +24,7 @@
   height: 32px;
   width: auto;
   margin-bottom: var(--space-4);
-  filter: brightness(0) invert(1); /* 로고 흰색 반전 */
+  filter: brightness(0) invert(1);
   opacity: 0.9;
 }
 
@@ -51,6 +45,7 @@
   margin-bottom: var(--space-2);
   transition: color 0.2s;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .lp-footer-col a:hover {
@@ -62,4 +57,21 @@
   margin-top: 32px;
   color: var(--neutral-600);
   font-size: 0.8rem;
+}
+
+/* ===========================
+   메뉴/서비스 링크 가로 정렬
+=========================== */
+
+.lp-footer-menu .lp-footer-links {
+  display: flex;
+  flex-wrap: wrap;           /* 줄바꿈 허용 */
+  gap: 8px 16px;             /* 행/열 간격 */
+}
+
+.lp-footer-menu .lp-footer-links a {
+  display: inline-flex;      /* 위 block 설정 덮어쓰기 */
+  align-items: center;
+  margin-bottom: 0;          /* 세로 간격 제거 */
+  font-size: 0.9rem;
 }

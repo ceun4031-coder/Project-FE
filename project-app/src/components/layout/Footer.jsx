@@ -1,12 +1,25 @@
 import React from "react";
-import "./Footer.css"; // 분리된 CSS import
+import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import "./Footer.css";
 import StoryLexLogo from "@/assets/images/StoryLex-logo.svg";
 
+const AUTH_FOOTER_ITEMS = [
+  { to: "/dashboard", label: "대시보드" },
+  { to: "/words", label: "단어장" },
+  { to: "/stories", label: "AI 스토리" },
+  { to: "/learning", label: "학습하기" },
+];
+
 const Footer = () => {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+
   return (
     <footer className="lp-footer">
       <div className="page-container">
         <div className="lp-footer-inner">
+          {/* 1. 로고 및 설명 섹션 */}
           <div className="lp-footer-col lp-footer-logo">
             <img src={StoryLexLogo} alt="StoryLex Logo" />
             <p className="lp-footer-description">
@@ -15,27 +28,35 @@ const Footer = () => {
             </p>
           </div>
 
-          <div className="lp-footer-col">
-            <h4>서비스</h4>
-            {/* 참고: 랜딩 페이지 내의 섹션 이동이므로 <a> 태그와 ID(#)를 유지했습니다.
-              다른 페이지(로그인 등)에서도 이 푸터를 쓴다면, 
-              react-router-dom의 Link를 사용하거나 절대 경로("/")를 포함해야 할 수 있습니다. 
-            */}
-            <a href="/#features">주요 기능</a>
-            <a href="/#how-it-works">학습 과정</a>
-            <a href="/#home">메인으로</a>
+          {/* 2. 메뉴 / 서비스 섹션 */}
+          <div className="lp-footer-col lp-footer-menu">
+            <h4>{isAuthenticated ? "메뉴" : "서비스"}</h4>
+
+            <nav className="lp-footer-links">
+              {isAuthenticated ? (
+                <>
+                  {AUTH_FOOTER_ITEMS.map((item) => (
+                    <Link key={item.to} to={item.to}>
+                      {item.label}
+                    </Link>
+                  ))}
+                  <Link to="/account/profile">계정 설정</Link>
+                </>
+              ) : (
+                <>
+                  <a href="/#features">주요 기능</a>
+                  <a href="/#how-it-works">학습 과정</a>
+                  <a href="/#home">메인으로</a>
+                </>
+              )}
+            </nav>
           </div>
 
-          <div className="lp-footer-col">
-            <h4>지원</h4>
-            <a href="#faq">자주 묻는 질문</a>
-            <a href="#terms">이용약관</a>
-            <a href="#privacy">개인정보처리방침</a>
-          </div>
+          {/* 3. 추가 정보 섹션 있으면 여기 사용 */}
         </div>
 
         <div className="lp-footer-copy">
-          &copy; 2025 StoryLex Inc. All rights reserved.
+          &copy; {new Date().getFullYear()} StoryLex Inc. All rights reserved.
         </div>
       </div>
     </footer>

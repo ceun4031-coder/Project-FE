@@ -267,7 +267,7 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              // 비회원: 로그인 / 무료 시작 버튼
+              // 비회원: 로그인 / 회원가입 버튼
               <>
                 <Button
                   variant="outline"
