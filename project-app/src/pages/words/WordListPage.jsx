@@ -35,6 +35,10 @@ const CATEGORY_OPTIONS = [
   { label: "동사 (Verb)", value: "Verb" },
   { label: "형용사 (Adj)", value: "Adj" },
   { label: "부사 (Adv)", value: "Adv" },
+   { label: "기능어", value: "Function" },
+  { label: "관사", value: "Article" },
+  { label: "특수 동사", value: "SpecialVerb" },
+  { label: "수사", value: "NumberGroup" },
 ];
 
 // 분야 필터 (값은 category 컬럼과 동일)

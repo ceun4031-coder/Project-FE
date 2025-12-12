@@ -12,6 +12,9 @@ import { fetchCardItems, submitCardResult } from "../../api/cardApi";
 import { LearningProgressHeader } from "../learning/components/LearningProgressHeader";
 import { LearningResultSection } from "../learning/components/LearningResultSection";
 
+// ✅ 공통 스피너
+import Spinner from "../../components/common/Spinner";
+
 const MAX_UNKNOWN_DISPLAY = 20;
 
 export default function CardLearningPage() {
@@ -30,13 +33,32 @@ export default function CardLearningPage() {
   const limit = Number(searchParams.get("limit") || 20);
 
   // UI 표시용
-  const rawLevel = searchParams.get("level") || "All";
+  // 분야(domain)
   const rawDomain = searchParams.get("domain") || "All";
 
-  const levelLabel = rawLevel === "All" ? "All" : rawLevel;
-  const domainLabel = rawDomain;
+  const DOMAIN_LABEL_MAP = {
+    All: "전체 분야",
+    "Daily Life": "일상생활",
+    "People & Feelings": "사람/감정",
+    Business: "직장/비즈니스",
+    "School & Learning": "학교/학습",
+    Travel: "여행/교통",
+    "Food & Health": "음식/건강",
+    Technology: "기술/IT",
+  };
 
+  const domainLabel = DOMAIN_LABEL_MAP[rawDomain] || rawDomain;
+
+  // 레벨(level)
+  const rawLevel = searchParams.get("level");
+  const rawLevelLower = rawLevel ? rawLevel.toLowerCase() : null;
+
+  const levelLabel =
+    !rawLevelLower || rawLevelLower === "all" ? "All" : rawLevel;
+
+  // 최종 라벨 텍스트
   const badgeText = `${domainLabel} | Lv.${levelLabel}`;
+
   const isWrongMode = source === "wrong-note";
 
   // API용
@@ -52,40 +74,6 @@ export default function CardLearningPage() {
   const [unknownWords, setUnknownWords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFinished, setIsFinished] = useState(false);
-
-  useEffect(() => {
-    const loadCards = async () => {
-      setLoading(true);
-
-      try {
-        const data = await fetchCardItems({
-          source,
-          wordIds,
-          limit,
-          level: apiLevel,
-          category: apiCategory,
-        });
-
-        setCards(data || []);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setKnownCount(0);
-        setUnknownCount(0);
-        setUnknownWords([]);
-        setIsFinished(false);
-      } catch (err) {
-        console.error(
-          "❌ 카드 로드 실패:",
-          err.response?.status,
-          err.response?.data || err.message
-        );
-      }
-
-      setLoading(false);
-    };
-
-    loadCards();
-  }, [source, wordIdsParam, limit, apiLevel, apiCategory]);
 
   const total = cards.length;
   const current = cards[currentIndex] || null;
@@ -111,6 +99,79 @@ export default function CardLearningPage() {
     .filter(Boolean)
     .join(" ");
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCards = async () => {
+      setLoading(true);
+
+      try {
+        const data = await fetchCardItems({
+          source,
+          wordIds,
+          limit,
+          level: apiLevel,
+          category: apiCategory,
+        });
+
+        if (cancelled) return;
+
+        setCards(data || []);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setKnownCount(0);
+        setUnknownCount(0);
+        setUnknownWords([]);
+        setIsFinished(false);
+      } catch (err) {
+        if (cancelled) return;
+
+        console.error(
+          "❌ 카드 로드 실패:",
+          err.response?.status,
+          err.response?.data || err.message
+        );
+        // 실패 시 이전 카드 잔상 방지
+        setCards([]);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setKnownCount(0);
+        setUnknownCount(0);
+        setUnknownWords([]);
+        setIsFinished(false);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadCards();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [source, wordIdsParam, limit, apiLevel, apiCategory]);
+
+  // ✅ 로딩 화면(스피너 적용)
+  if (loading) {
+    return (
+      <div className={pageClassName}>
+        <section className={learningSectionClass}>
+          <LearningProgressHeader
+            title={isWrongMode ? "오답 카드 학습" : "카드 학습"}
+            subtitle="학습 카드를 불러오는 중입니다."
+            badgeLabel={badgeText}
+            badgeVariant={isWrongMode ? "orange" : "purple"}
+            showBackButton
+            onBack={() => navigate("/learning")}
+          />
+          <div className="cl-main">
+            <Spinner fullHeight={false} message="카드 준비 중..." />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   // 카드가 하나도 없을 때
   if (!loading && total === 0) {
     return (
@@ -124,9 +185,7 @@ export default function CardLearningPage() {
             showBackButton
             onBack={() => navigate("/learning")}
           />
-          <div className="cl-empty">
-            현재 조건에 맞는 학습 카드가 없습니다.
-          </div>
+          <div className="cl-empty">현재 조건에 맞는 학습 카드가 없습니다.</div>
         </section>
       </div>
     );
@@ -180,8 +239,6 @@ export default function CardLearningPage() {
       setIsFinished(true);
     }
   };
-
-  if (loading) return <div className={pageClassName}>로딩 중...</div>;
 
   const accuracy = total > 0 ? Math.round((knownCount / total) * 100) : 0;
 

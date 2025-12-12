@@ -397,11 +397,19 @@
 }
 
 .chip-header-row {
-  display: flex;
+   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: 10px;
 }
-
+.chip-meaning-inline {
+  font-size: 12px;
+  opacity: 0.85;
+  max-width: 60%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 /* 단어 텍스트 */
 .chip-word {
   font-size: 0.9rem;

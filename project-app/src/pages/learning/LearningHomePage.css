@@ -409,6 +409,15 @@
   color: #ffffff;
   transform: translateX(4px);
 }
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-strong);
+  opacity: 0.25;
+  align-self: center;
+  flex-shrink: 0;
+  transform: translateY(10px);   
+}
 
 /* =========================================
    4. 반응형

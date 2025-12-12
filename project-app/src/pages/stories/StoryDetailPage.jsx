@@ -1,9 +1,10 @@
 // src/pages/story/StoryDetailPage.jsx
 import { deleteStory, getStoryDetail, getStoryWords } from "@/api/storyApi";
-import { ArrowLeft, Book, Calendar, Clock, Quote } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Book, Calendar, Clock, Quote, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "./StoryDetailPage.css";
+import { toKoreanPOS } from "@/utils/posUtils";
 
 // 정규식 특수문자 이스케이프
 const escapeRegExp = (str = "") =>
@@ -13,7 +14,7 @@ const escapeRegExp = (str = "") =>
 const estimateReadTime = (text = "") => {
   if (!text.trim()) return "";
   const wordCount = text.trim().split(/\s+/).length;
-  const minutes = Math.max(1, Math.round(wordCount / 150)); // 150 wpm 기준
+  const minutes = Math.max(1, Math.round(wordCount / 150));
   return `${minutes} min read`;
 };
 
@@ -38,42 +39,65 @@ const StoryDetailPage = () => {
   const location = useLocation();
 
   const initialStory = location.state?.story ?? null;
+
   const [story, setStory] = useState(initialStory);
-  const [loading, setLoading] = useState(!initialStory);
+  const [storyLoading, setStoryLoading] = useState(!initialStory);
+
+  // 단어 로딩은 story 로딩과 분리 (생성 직후: story는 보여주고 단어만 갱신)
+  const [wordsLoading, setWordsLoading] = useState(false);
 
   // 현재 호버 중인 단어(소문자 기준)
   const [activeWord, setActiveWord] = useState(null);
-  const [words, setWords] = useState(initialStory?.words || []);
+
+  // 생성 직후 initialStory.words가 string[]일 수 있음
+  const [words, setWords] = useState(
+    Array.isArray(initialStory?.words) ? initialStory.words : []
+  );
 
   useEffect(() => {
-    if (!id || initialStory) return;
+    if (!id) return;
 
-    const fetchStory = async () => {
+    let cancelled = false;
+
+    const fetchAll = async () => {
       try {
-        setLoading(true);
-        const data = await getStoryDetail(id);
-        setStory(data);
+        // initialStory가 있으면 화면은 먼저 그리고 백그라운드 갱신만
+        if (!initialStory) setStoryLoading(true);
+        setWordsLoading(true);
 
-        const wordList = await getStoryWords(id);
-        setWords(wordList || []);
+        const [detail, wordList] = await Promise.all([
+          getStoryDetail(id),
+          getStoryWords(id),
+        ]);
+
+        if (cancelled) return;
+
+        if (detail) setStory(detail);
+        setWords(Array.isArray(wordList) ? wordList : []);
       } catch (error) {
+        if (cancelled) return;
         console.error("스토리 로딩 실패:", error);
         alert("스토리를 불러올 수 없습니다.");
         navigate("/stories");
       } finally {
-        setLoading(false);
+        if (cancelled) return;
+        setStoryLoading(false);
+        setWordsLoading(false);
       }
     };
 
-    fetchStory();
-  }, [id, initialStory, navigate]);
+    fetchAll();
+
+    return () => {
+      cancelled = true;
+    };
+    // initialStory를 deps에 넣지 않음: 있어도 항상 words를 새로 받아야 함
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, navigate]);
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/stories");
-    }
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/stories");
   };
 
   const handleDelete = async () => {
@@ -89,15 +113,15 @@ const StoryDetailPage = () => {
     }
   };
 
-  // --- 하이라이트 로직 ---
-
   // keywords: words 배열에서 안전하게 문자열만 추출
-  const keywords = Array.isArray(words)
-    ? words
-        .map(toSafeWord)
-        .map((s) => (typeof s === "string" ? s.trim() : ""))
-        .filter((s) => s.length > 0)
-    : [];
+  const keywords = useMemo(() => {
+    return Array.isArray(words)
+      ? words
+          .map(toSafeWord)
+          .map((s) => (typeof s === "string" ? s.trim() : ""))
+          .filter((s) => s.length > 0)
+      : [];
+  }, [words]);
 
   const highlightKeywords = (text) => {
     if (!keywords.length || !text) return text;
@@ -118,19 +142,19 @@ const StoryDetailPage = () => {
       const isKeyword = keywords.some(
         (k) => k && k.toLowerCase() === part.toLowerCase()
       );
-
       if (!isKeyword) return part;
 
       const normalized = part.toLowerCase();
       const isActive = activeWord && activeWord === normalized;
-      const className = isActive
-        ? "highlighted-word highlighted-word--active"
-        : "highlighted-word";
 
       return (
         <span
           key={`${part}-${i}`}
-          className={className}
+          className={
+            isActive
+              ? "highlighted-word highlighted-word--active"
+              : "highlighted-word"
+          }
           data-word={normalized}
         >
           {part}
@@ -139,7 +163,8 @@ const StoryDetailPage = () => {
     });
   };
 
-  if (loading) {
+  // story 자체가 없고 로딩 중이면 전체 로딩
+  if (storyLoading && !story) {
     return (
       <div className="story-detail-loading">
         <p>스토리를 불러오는 중입니다... ⏳</p>
@@ -155,7 +180,6 @@ const StoryDetailPage = () => {
   const translation = storyKo || "";
   const date = createdAt ? createdAt.slice(0, 10) : "";
   const readTime = estimateReadTime(content);
-
   const lines = content ? content.split("\n") : [];
 
   return (
@@ -178,7 +202,7 @@ const StoryDetailPage = () => {
                 <Book size={18} className="text-primary-500" /> 학습 단어
               </h3>
               <span className="nav-badge" style={{ fontSize: "0.8rem" }}>
-                {words.length}
+                {Array.isArray(words) ? words.length : 0}
               </span>
             </div>
 
@@ -189,7 +213,11 @@ const StoryDetailPage = () => {
             </p>
 
             <div className="vocab-list">
-              {Array.isArray(words) && words.length > 0 ? (
+              {wordsLoading && (
+                <p className="vocab-empty">단어 정보를 불러오는 중...</p>
+              )}
+
+              {!wordsLoading && Array.isArray(words) && words.length > 0 ? (
                 words.map((item, idx) => {
                   const isString = typeof item === "string";
 
@@ -201,13 +229,12 @@ const StoryDetailPage = () => {
                       ? String(rawText)
                       : "";
 
+                  // ✅ string이면 pos/meaning 없음 (생성 직후 임시 상태)
+                  // ✅ getStoryWords()로 받아온 객체면 pos/meaning 표시됨
                   const pos = !isString
-                    ? item.pos || item.type || "Word"
-                    : "Word";
-
-                  const meaning = !isString
-                    ? item.meaning || item.kor || ""
+                    ? toKoreanPOS(item?.pos || item?.type || item?.partOfSpeech || "")
                     : "";
+                  const meaning = !isString ? item?.meaning || item?.kor || "" : "";
 
                   const normalized = text ? text.toLowerCase() : "";
 
@@ -215,24 +242,20 @@ const StoryDetailPage = () => {
                     <div
                       key={idx}
                       className="mini-word-card"
-                      onMouseEnter={() =>
-                        normalized && setActiveWord(normalized)
-                      }
+                      onMouseEnter={() => normalized && setActiveWord(normalized)}
                       onMouseLeave={() => setActiveWord(null)}
                     >
                       <div className="mini-word-header">
                         <span className="mini-word-text">{text}</span>
-                        <span className="mini-word-pos">{pos}</span>
+                        {pos && <span className="mini-word-pos">{pos}</span>}
                       </div>
-                      {meaning && (
-                        <p className="mini-word-meaning">{meaning}</p>
-                      )}
+                      {meaning && <p className="mini-word-meaning">{meaning}</p>}
                     </div>
                   );
                 })
-              ) : (
+              ) : !wordsLoading ? (
                 <p className="vocab-empty">등록된 단어가 없습니다.</p>
-              )}
+              ) : null}
             </div>
           </aside>
 
@@ -282,7 +305,8 @@ const StoryDetailPage = () => {
                 className="story-delete-btn"
                 onClick={handleDelete}
               >
-                스토리 삭제
+                <Trash2 size={16} />
+                삭제
               </button>
             </div>
           </main>

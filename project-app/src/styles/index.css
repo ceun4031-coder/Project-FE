@@ -11,20 +11,40 @@
   --layout-header-offset: 76px;
 }
 
-/* 기본 타이포/배경 */
-html {
-  font-size: 100%;
+/* ----------------------------------------- */
+/* Sticky Footer를 위한 전역 높이/레이아웃    */
+/* ----------------------------------------- */
+html,
+body {
+  height: 100%;
 }
 
 body {
+  margin: 0;
+
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
   background: var(--color-bg);
   color: var(--color-text);
+}
 
-  /* 헤더가 fixed라 본문이 가려지지 않도록 위 여백 확보 */
+/* ✅ root를 flex column으로 만들어 footer를 바닥으로 내림 */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ✅ Header가 fixed라면, 본문(main)에만 offset을 준다 (body에 주지 말 것) */
+.app-main {
+  flex: 1;
   padding-top: var(--layout-header-offset);
+}
+
+/* footer는 줄어들지 않게 */
+.lp-footer {
+  flex-shrink: 0;
 }
 
 a:hover {
@@ -39,7 +59,6 @@ a:hover {
    - 모바일/태블릿: 양쪽 padding = outer-margin-*
    - Web 이상: container-width + “디자인 기준” outer-margin 구조를 유지
 */
-
 .page-container {
   width: 100%;
   margin-left: auto;
@@ -61,9 +80,7 @@ a:hover {
 /* 1280px: container 1120 + margin 80 기준 */
 @media (min-width: 1280px) {
   .page-container {
-    max-width: calc(
-      var(--container-web-width) + var(--outer-margin-web) * 2
-    );
+    max-width: calc(var(--container-web-width) + var(--outer-margin-web) * 2);
     padding-left: var(--outer-margin-web);
     padding-right: var(--outer-margin-web);
   }
@@ -84,7 +101,6 @@ a:hover {
 /* ----------------------------------------- */
 /* 선택 불가 유틸리티 (필요한 곳에만 사용)  */
 /* ----------------------------------------- */
-
 .no-select {
   user-select: none;
   -webkit-user-select: none; /* Safari/Chrome */
@@ -93,7 +109,6 @@ a:hover {
 /* ----------------------------------------- */
 /* Utility Spacing                           */
 /* ----------------------------------------- */
-
 .mt-12 {
   margin-top: 12px;
 }
@@ -103,10 +118,8 @@ a:hover {
 }
 
 /* ----------------------------------------- */
-/* 반응형에서 헤더 높이 맞춰 padding 보정    */
+/* 반응형에서 헤더 높이 맞춰 offset 보정     */
 /* ----------------------------------------- */
-/* Header.css에서 max-width: 1024px일 때 헤더 높이를 줄였으므로
-   본문 offset도 같이 줄여서 불필요한 빈 공간 방지 */
 @media (max-width: 1024px) {
   :root {
     --layout-header-offset: 64px;

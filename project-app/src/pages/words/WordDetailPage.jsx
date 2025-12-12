@@ -7,8 +7,10 @@ import {
   Plus,
   Star,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useNavigate, useParams,useLocation  } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+
 import {
   addFavorite,
   getCompletedList,
@@ -18,13 +20,13 @@ import {
   addWordFromCluster,
 } from "../../api/wordApi";
 import { getClustersByCenter, createCluster } from "../../api/wordClusterApi";
-import Button from "../../components/common/Button"; // ✅ 공통 버튼 추가
+import Button from "../../components/common/Button";
 import "./WordDetailPage.css";
 
 function WordDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
- const location = useLocation();
+  const location = useLocation();
 
   // 기본 단어 정보
   const [word, setWord] = useState(null);
@@ -34,12 +36,13 @@ function WordDetailPage() {
 
   // 클러스터 상태
   const [clusterTab, setClusterTab] = useState("전체");
-  const [clusterData, setClusterData] = useState({
-    similar: [],
-    opposite: [],
-  });
+  const [clusterData, setClusterData] = useState({ similar: [], opposite: [] });
   const [clusterLoading, setClusterLoading] = useState(false);
-  const [clusterLoaded, setClusterLoaded] = useState(false); // 실제로 한 번이라도 조회/생성했는지
+  const [clusterLoaded, setClusterLoaded] = useState(false); // 조회/생성 시도 여부
+  const [clusterError, setClusterError] = useState(null);
+
+  // 같은 id에 대해 자동 로딩 중복 방지
+  const autoClusterLoadedRef = useRef(null);
 
   // ------------------------------------------------
   // 단어 상세 + 즐겨찾기/학습완료
@@ -93,16 +96,23 @@ function WordDetailPage() {
       cancelled = true;
     };
   }, [id]);
+// 즐겨찾기 캐시 데이터 낙관적 업데이트
+  const queryClient = useQueryClient();
+const WORDS_QUERY_KEY = ["words", "list"]; // WordListPage와 동일해야 함
 
   // ------------------------------------------------
-  // 클러스터 조회: 버튼 눌렀을 때만 호출
+  // 클러스터 조회 (실제 호출 함수)
+  // - 페이지 진입 시 자동으로 실행되도록 아래 useEffect에서 호출
+  // - 오래 걸려도 UI는 단어 상세부터 먼저 렌더링되도록 "idle/timeout"로 살짝 뒤에 붙임
   // ------------------------------------------------
-  const loadClusters = async () => {
+  const fetchClusters = async ({ useCache = true } = {}) => {
     if (!id || clusterLoading) return;
 
     try {
+      setClusterError(null);
       setClusterLoading(true);
-      const grouped = await getClustersByCenter(id); // 내부 캐시 사용
+
+      const grouped = await getClustersByCenter(id, { useCache });
       setClusterData({
         similar: grouped.similar || [],
         opposite: grouped.opposite || [],
@@ -110,11 +120,56 @@ function WordDetailPage() {
       setClusterLoaded(true);
     } catch (e) {
       console.error("연관 단어 로딩 실패", e);
-      alert("연관 단어를 불러오는 중 오류가 발생했습니다.");
+      setClusterError("연관 단어를 불러오지 못했습니다.");
+      setClusterLoaded(true); // '없음'과 구분하려면 error 상태를 별도로 봄
     } finally {
       setClusterLoading(false);
     }
   };
+
+  // ------------------------------------------------
+  // ✅ 페이지 진입 시 자동으로 클러스터 조회
+  // - 단어 상세(loading=false) 이후에 실행해서 초기 체감 속도 우선
+  // - 같은 id에 대해 재렌더링으로 중복 호출 방지
+  // ------------------------------------------------
+  useEffect(() => {
+    if (!id) return;
+    if (loading) return; // 상세 렌더 우선
+    if (autoClusterLoadedRef.current === String(id)) return;
+
+    autoClusterLoadedRef.current = String(id);
+
+    // 새 단어로 이동 시 이전 데이터 잔상 방지
+    setClusterData({ similar: [], opposite: [] });
+    setClusterLoaded(false);
+    setClusterError(null);
+
+    let cancelled = false;
+    let idleHandle = null;
+    let timeoutHandle = null;
+
+    const run = async () => {
+      if (cancelled) return;
+      await fetchClusters({ useCache: true });
+    };
+
+    // requestIdleCallback 지원 시: 브라우저가 한가할 때 실행
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleHandle = window.requestIdleCallback(run, { timeout: 1200 });
+    } else {
+      // 미지원 환경: 짧게 지연해서 첫 렌더 먼저 보여줌
+      timeoutHandle = window.setTimeout(run, 150);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleHandle && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle) window.clearTimeout(timeoutHandle);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, loading]);
 
   // ------------------------------------------------
   // 클러스터 생성: 서버에서 DeepSeek + 임베딩 계산
@@ -123,7 +178,9 @@ function WordDetailPage() {
     if (!id || clusterLoading) return;
 
     try {
+      setClusterError(null);
       setClusterLoading(true);
+
       const grouped = await createCluster(id); // 생성 + 최신 데이터 반환
       setClusterData({
         similar: grouped.similar || [],
@@ -132,7 +189,8 @@ function WordDetailPage() {
       setClusterLoaded(true);
     } catch (e) {
       console.error("연관 단어 생성 실패", e);
-      alert("연관 단어 생성 중 오류가 발생했습니다.");
+      setClusterError("연관 단어 생성 중 오류가 발생했습니다.");
+      setClusterLoaded(true);
     } finally {
       setClusterLoading(false);
     }
@@ -141,26 +199,48 @@ function WordDetailPage() {
   // ------------------------------------------------
   // 즐겨찾기 토글
   // ------------------------------------------------
-  const handleToggleFavorite = async () => {
-    if (!word || favLoading) return;
-    const wordId = Number(word.wordId);
-    if (!wordId) return;
+const handleToggleFavorite = async () => {
+  if (!word || favLoading) return;
+  const wordId = Number(word.wordId);
+  if (!wordId) return;
 
-    setFavLoading(true);
-    const current = !!word.isFavorite;
-    setWord((prev) => (prev ? { ...prev, isFavorite: !current } : prev));
+  setFavLoading(true);
+  const current = !!word.isFavorite;
 
-    try {
-      if (current) await removeFavorite(wordId);
-      else await addFavorite(wordId);
-    } catch (e) {
-      console.error("즐겨찾기 실패", e);
-      setWord((prev) => (prev ? { ...prev, isFavorite: current } : prev));
-      alert("오류가 발생했습니다.");
-    } finally {
-      setFavLoading(false);
+  // ✅ WordDetail 낙관적 업데이트
+  setWord((prev) => (prev ? { ...prev, isFavorite: !current } : prev));
+
+  // ✅ WordList 캐시도 낙관적 업데이트 (캐시가 있을 때만)
+  const previousWords = queryClient.getQueryData(WORDS_QUERY_KEY);
+  if (previousWords) {
+    queryClient.setQueryData(WORDS_QUERY_KEY, (old = []) =>
+      old.map((w) =>
+        Number(w.wordId) === wordId ? { ...w, isFavorite: !current } : w
+      )
+    );
+  }
+
+  try {
+    if (current) await removeFavorite(wordId);
+    else await addFavorite(wordId);
+
+    // 서버와 동기화(백그라운드)
+    queryClient.invalidateQueries({ queryKey: WORDS_QUERY_KEY });
+  } catch (e) {
+    console.error("즐겨찾기 실패", e);
+
+    // 롤백
+    setWord((prev) => (prev ? { ...prev, isFavorite: current } : prev));
+    if (previousWords) {
+      queryClient.setQueryData(WORDS_QUERY_KEY, previousWords);
     }
-  };
+
+    alert("오류가 발생했습니다.");
+  } finally {
+    setFavLoading(false);
+  }
+};
+
 
   // ------------------------------------------------
   // 연관 단어 → 단어장에 추가
@@ -200,18 +280,16 @@ function WordDetailPage() {
       });
   };
 
-const handleBack = () => {
-  const fromList = location.state?.from === "word-list";
-  const search = location.state?.search || "";
+  const handleBack = () => {
+    const fromList = location.state?.from === "word-list";
+    const search = location.state?.search || "";
 
-  if (fromList) {
-    // 단어장 → 상세로 온 경우: 원래 쿼리 그대로 복원
-    navigate(`/words${search}`);
-  } else {
-    // 직접 진입 등: 기본 목록으로
-    navigate("/words");
-  }
-};
+    if (fromList) {
+      navigate(`/words${search}`);
+    } else {
+      navigate("/words");
+    }
+  };
 
   // ------------------------------------------------
   // 로딩 / 에러 처리
@@ -337,199 +415,197 @@ const handleBack = () => {
                   {["전체", "similar", "opposite"].map((tab) => (
                     <button
                       key={tab}
-                      className={`cluster-tab ${
-                        clusterTab === tab ? "active" : ""
-                      }`}
+                      className={`cluster-tab ${clusterTab === tab ? "active" : ""
+                        }`}
                       onClick={() => setClusterTab(tab)}
                     >
                       {tab === "전체"
                         ? "All"
                         : tab === "similar"
-                        ? "유의어"
-                        : "반의어"}
+                          ? "유의어"
+                          : "반의어"}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="cluster-content">
-                {/* 로딩 스피너 (오른쪽 카드 안) */}
+                {/* 로딩 스피너 */}
                 {clusterLoading && (
                   <div className="cluster-loading">
                     <div className="spinner small" />
-                    <span>연관 단어를 처리 중입니다...</span>
+                    <span>연관 단어를 불러오는 중입니다...</span>
                   </div>
                 )}
 
-                {/* 아직 한 번도 로딩/생성 안 했을 때 */}
-                {!clusterLoading && !clusterLoaded && (
+                {/* 에러 */}
+                {!clusterLoading && clusterLoaded && clusterError && (
                   <div className="cluster-empty-box">
-                    <p className="no-data-text">
-                      연관 단어를 아직 불러오지 않았습니다.
-                    </p>
-                    {/* ✅ 공통 Button 사용 */}
+                    <p className="no-data-text">{clusterError}</p>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={loadClusters}
+                      onClick={() => fetchClusters({ useCache: false })}
                     >
-                      연관 단어 불러오기
+                      다시 시도
                     </Button>
                   </div>
                 )}
 
                 {/* 조회는 했는데 아무 것도 없을 때 → 생성 버튼 */}
-                {!clusterLoading && clusterLoaded && !hasAnyCluster && (
-                  <div className="cluster-empty-box">
-                    <p className="no-data-text">
-                      현재 저장된 연관 단어가 없습니다.
-                    </p>
-                    {/* ✅ 공통 Button 사용 */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCreateCluster}
-                    >
-                      연관 단어 생성하기
-                    </Button>
+                {!clusterLoading &&
+                  clusterLoaded &&
+                  !clusterError &&
+                  !hasAnyCluster && (
+                    <div className="cluster-empty-box">
+                      <p className="no-data-text">
+                        현재 저장된 연관 단어가 없습니다.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCreateCluster}
+                      >
+                        연관 단어 생성하기
+                      </Button>
+                    </div>
+                  )}
+
+                {/* 클러스터가 있을 때 */}
+                {!clusterLoading &&
+                  clusterLoaded &&
+                  !clusterError &&
+                  hasAnyCluster && (
+                    <>
+                      {/* 유의어 */}
+                      {(clusterTab === "전체" || clusterTab === "similar") && (
+                        <div className="cluster-group">
+                          <div className="group-title-row">
+                            <h4>유의어 (Similar)</h4>
+                            <button
+                              className="text-btn-small"
+                              onClick={() => handleAddAll("similar")}
+                            >
+                              모두 추가
+                            </button>
+                          </div>
+                          <div className="chip-grid">
+                            {clusterData.similar.map((item) => (
+                              <div
+                                className={`word-chip ${item.inMyList
+                                    ? "word-chip--selected"
+                                    : "word-chip--unselected"
+                                  }`}
+                                key={item.text}
+                              >
+                                <div className="chip-main">
+                                  <div className="chip-header-row">
+                                    <span className="chip-word">{item.text}</span>
+                                    {item.meaning && (
+                                      <span className="chip-meaning-inline">{item.meaning}</span>
+                                    )}
+                                  </div>
+
+                                 
+                                </div>
+
+                                {item.inMyList ? (
+                                  <span className="chip-check">
+                                    <Check size={14} />
+                                  </span>
+                                ) : (
+                                  <button
+                                    className="chip-add-btn"
+                                    onClick={() =>
+                                      handleAddClusterWord(
+                                        item.text,
+                                        item.level
+                                      )
+                                    }
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 반의어 */}
+                      {(clusterTab === "전체" || clusterTab === "opposite") && (
+                        <div className="cluster-group">
+                          <div className="group-title-row">
+                            <h4>반의어 (Opposite)</h4>
+                            <button
+                              className="text-btn-small"
+                              onClick={() => handleAddAll("opposite")}
+                            >
+                              모두 추가
+                            </button>
+                          </div>
+                          <div className="chip-grid">
+                            {clusterData.opposite.map((item) => (
+                              <div
+                                className={`word-chip ${item.inMyList
+                                    ? "word-chip--selected"
+                                    : "word-chip--unselected"
+                                  }`}
+                                key={item.text}
+                              >
+                                <div className="chip-main">
+                                  <div className="chip-header-row">
+                                    <span className="chip-word">
+                                      {item.text}
+                                    </span>
+                                    {typeof item.level === "number" && (
+                                      <span
+                                        className={`chip-lv chip-lv--${item.level}`}
+                                      >
+                                        Lv.{item.level}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {item.meaning && (
+                                    <p className="chip-meaning">
+                                      {item.meaning}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {item.inMyList ? (
+                                  <span className="chip-check">
+                                    <Check size={14} />
+                                  </span>
+                                ) : (
+                                  <button
+                                    className="chip-add-btn"
+                                    onClick={() =>
+                                      handleAddClusterWord(
+                                        item.text,
+                                        item.level
+                                      )
+                                    }
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                {/* 아직 자동 로딩이 시작되기 전(극히 짧은 구간) */}
+                {!clusterLoading && !clusterLoaded && (
+                  <div className="cluster-loading">
+                    <div className="spinner small" />
+                    <span>연관 단어 준비 중...</span>
                   </div>
-                )}
-
-                {/* 클러스터가 있을 때만 그룹 렌더링 */}
-                {!clusterLoading && clusterLoaded && hasAnyCluster && (
-                  <>
-                    {/* 유의어 */}
-                    {(clusterTab === "전체" || clusterTab === "similar") && (
-                      <div className="cluster-group">
-                        <div className="group-title-row">
-                          <h4>유의어 (Similar)</h4>
-                          <button
-                            className="text-btn-small"
-                            onClick={() => handleAddAll("similar")}
-                          >
-                            모두 추가
-                          </button>
-                        </div>
-                        <div className="chip-grid">
-                          {clusterData.similar.map((item) => (
-                            <div
-                              className={`word-chip ${
-                                item.inMyList
-                                  ? "word-chip--selected"
-                                  : "word-chip--unselected"
-                              }`}
-                              key={item.text}
-                            >
-                              <div className="chip-main">
-                                <div className="chip-header-row">
-                                  <span className="chip-word">
-                                    {item.text}
-                                  </span>
-                                  {typeof item.level === "number" && (
-                                    <span
-                                      className={`chip-lv chip-lv--${item.level}`}
-                                    >
-                                      Lv.{item.level}
-                                    </span>
-                                  )}
-                                </div>
-                                {item.meaning && (
-                                  <p className="chip-meaning">
-                                    {item.meaning}
-                                  </p>
-                                )}
-                              </div>
-
-                              {item.inMyList ? (
-                                <span className="chip-check">
-                                  <Check size={14} />
-                                </span>
-                              ) : (
-                                <button
-                                  className="chip-add-btn"
-                                  onClick={() =>
-                                    handleAddClusterWord(
-                                      item.text,
-                                      item.level
-                                    )
-                                  }
-                                >
-                                  <Plus size={14} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 반의어 */}
-                    {(clusterTab === "전체" || clusterTab === "opposite") && (
-                      <div className="cluster-group">
-                        <div className="group-title-row">
-                          <h4>반의어 (Opposite)</h4>
-                          <button
-                            className="text-btn-small"
-                            onClick={() => handleAddAll("opposite")}
-                          >
-                            모두 추가
-                          </button>
-                        </div>
-                        <div className="chip-grid">
-                          {clusterData.opposite.map((item) => (
-                            <div
-                              className={`word-chip ${
-                                item.inMyList
-                                  ? "word-chip--selected"
-                                  : "word-chip--unselected"
-                              }`}
-                              key={item.text}
-                            >
-                              <div className="chip-main">
-                                <div className="chip-header-row">
-                                  <span className="chip-word">
-                                    {item.text}
-                                  </span>
-                                  {typeof item.level === "number" && (
-                                    <span
-                                      className={`chip-lv chip-lv--${item.level}`}
-                                    >
-                                      Lv.{item.level}
-                                    </span>
-                                  )}
-                                </div>
-                                {item.meaning && (
-                                  <p className="chip-meaning">
-                                    {item.meaning}
-                                  </p>
-                                )}
-                              </div>
-
-                              {item.inMyList ? (
-                                <span className="chip-check">
-                                  <Check size={14} />
-                                </span>
-                              ) : (
-                                <button
-                                  className="chip-add-btn"
-                                  onClick={() =>
-                                    handleAddClusterWord(
-                                      item.text,
-                                      item.level
-                                    )
-                                  }
-                                >
-                                  <Plus size={14} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
                 )}
               </div>
             </section>

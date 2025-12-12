@@ -34,14 +34,17 @@ const StoryListPage = ({ stories = [] }) => {
     queryKey: ["stories", "list"],
     queryFn: async () => {
       const res = await getStoryList();
-      // API 응답 → 화면에서 쓰기 좋은 형태로 매핑
-      return (res || []).map((item) => ({
-        id: item.storyId,
-        title: item.title,
-        excerpt: item.storyEn?.slice(0, 120) || "",
-        date: item.createdAt?.slice(0, 10) || "",
-        words: item.keywords || [],
-      }));
+      return (res || []).map((item) => {
+        const createdAtRaw = item.createdAt || ""; // ✅ 원본 보관(ISO 기대)
+        return {
+          id: item.storyId,
+          title: item.title,
+          excerpt: item.storyEn?.slice(0, 120) || "",
+          date: createdAtRaw ? createdAtRaw.slice(0, 10) : "",
+          createdAtRaw, // ✅ 정렬용
+          words: item.keywords || [],
+        };
+      });
     },
   });
 
@@ -56,10 +59,23 @@ const StoryListPage = ({ stories = [] }) => {
 
   // ------------------------------
   // 전체 데이터 (서버 데이터 우선, 없으면 props 사용)
+  // ✅ 항상 최신순 정렬(createdAtRaw 기준)
   // ------------------------------
   const sourceStories = useMemo(() => {
     const base = serverStories.length > 0 ? serverStories : stories;
-    return [...base].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // stories(props)에도 createdAtRaw가 없을 수 있으니 방어
+    const normalized = (base || []).map((s) => ({
+      ...s,
+      createdAtRaw: s.createdAtRaw || s.createdAt || "",
+      date: s.date || (s.createdAt ? String(s.createdAt).slice(0, 10) : ""),
+    }));
+
+    return normalized.sort((a, b) => {
+      const ta = Date.parse(a.createdAtRaw) || Date.parse(a.date) || 0;
+      const tb = Date.parse(b.createdAtRaw) || Date.parse(b.date) || 0;
+      return tb - ta; // ✅ 최신순
+    });
   }, [serverStories, stories]);
 
   // ------------------------------
@@ -73,7 +89,7 @@ const StoryListPage = ({ stories = [] }) => {
       return (
         story.title?.toLowerCase().includes(q) ||
         story.excerpt?.toLowerCase().includes(q) ||
-        (story.words || []).some((w) => w.toLowerCase().includes(q))
+        (story.words || []).some((w) => (w || "").toLowerCase().includes(q))
       );
     });
   }, [sourceStories, searchValue]);
@@ -181,10 +197,7 @@ const StoryListPage = ({ stories = [] }) => {
         {/* 로딩 상태 */}
         {isLoading && (
           <div className="status-msg loading">
-            <Spinner
-              fullHeight={false}
-              message="스토리를 불러오는 중입니다..."
-            />
+            <Spinner fullHeight={false} message="스토리를 불러오는 중입니다..." />
           </div>
         )}
 
@@ -251,11 +264,7 @@ const StoryListPage = ({ stories = [] }) => {
       </section>
 
       {hasFilteredStories && (
-        <Pagination
-          page={safeIndex}
-          totalPages={totalPages}
-          onChange={handlePageChange}
-        />
+        <Pagination page={safeIndex} totalPages={totalPages} onChange={handlePageChange} />
       )}
     </div>
   );
