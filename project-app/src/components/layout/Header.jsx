@@ -188,24 +188,25 @@ export default function Header() {
         </div>
 
         {/* Center: Navigation */}
-        <div className="header-center">
-          <nav className="header-nav" aria-label="메인 메뉴">
+          <div className="header-center">
             {isAuthenticated ? (
-              // 회원 전용 메뉴 (대시보드/단어장/AI 스토리/학습하기)
-              <div className="header-nav-group">
+              // 회원: 캡슐형 탭 네비
+              <nav className="header-tabs" aria-label="메인 메뉴">
                 {AUTH_NAV_ITEMS.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    className={getNavClass}
+                    className={({ isActive }) =>
+                      "header-tab" + (isActive ? " header-tab--active" : "")
+                    }
                   >
                     {item.label}
                   </NavLink>
                 ))}
-              </div>
+              </nav>
             ) : isLandingGuest ? (
-              // 비회원 랜딩 전용 메뉴 (섹션 스크롤)
-              <div className="header-nav-landing">
+              // 비회원 랜딩: 기존 섹션 스크롤 네비 유지
+              <nav className="header-nav-landing" aria-label="랜딩 메뉴">
                 <button
                   type="button"
                   onClick={() => scrollToSection("how-it-works")}
@@ -218,11 +219,9 @@ export default function Header() {
                 >
                   주요 기능
                 </button>
-              </div>
+              </nav>
             ) : null}
-          </nav>
-        </div>
-
+          </div>
         {/* Right: Actions */}
         <div className="header-right">
           <div className="header-actions">
