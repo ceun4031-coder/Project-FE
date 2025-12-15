@@ -176,13 +176,12 @@ const submitProfile = async (e) => {
       <div className="profile-grid mt-24">
         {/* 기본 정보 & 비밀번호 설정 */}
         <section className="card profile-card">
-          <h2 className="card-title">기본 정보 & 비밀번호 설정</h2>
+          <h2 className="card-title">개인 정보 설정</h2>
 
           {/* 하나의 form만 사용 */}
           <form onSubmit={submitProfile}>
             {/* ================= 기본 정보 ================= */}
             <div className="profile-section">
-              <h3 className="profile-section-title">기본 정보</h3>
 
               <div className="form-field">
                 <label className="form-label">이메일</label>
@@ -239,7 +238,6 @@ const submitProfile = async (e) => {
 
             {/* ================= 비밀번호 변경 ================= */}
             <div className="profile-section">
-              <h3 className="profile-section-title">비밀번호 변경</h3>
 
               <div className="form-field">
                 <label className="form-label" htmlFor="currentPassword">

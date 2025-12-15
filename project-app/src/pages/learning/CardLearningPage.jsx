@@ -12,29 +12,40 @@ import { fetchCardItems, submitCardResult } from "../../api/cardApi";
 import { LearningProgressHeader } from "../learning/components/LearningProgressHeader";
 import { LearningResultSection } from "../learning/components/LearningResultSection";
 
-// ✅ 공통 스피너
 import Spinner from "../../components/common/Spinner";
 
 const MAX_UNKNOWN_DISPLAY = 20;
+const DEFAULT_LIMIT = 20;
 
 export default function CardLearningPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const source = searchParams.get("source") || "card";
+
+  // ✅ limit 쿼리(선택): 없으면 기본 20
+  const limitParam = searchParams.get("limit");
+  const parsedLimit = Number(limitParam);
+
+  // ✅ wordIds
   const wordIdsParam = searchParams.get("wordIds");
   const wordIds = wordIdsParam
     ? wordIdsParam
         .split(",")
-        .map(Number)
-        .filter((n) => !isNaN(n))
+        .map((v) => Number(v))
+        .filter((n) => Number.isFinite(n))
     : undefined;
 
+  // ✅ 핵심: wordIds가 있으면 "선택 개수"만큼 카드 수를 강제
+  const resolvedLimit =
+    Array.isArray(wordIds) && wordIds.length > 0
+      ? wordIds.length
+      : Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? parsedLimit
+      : DEFAULT_LIMIT;
 
-  // UI 표시용
-  // 분야(domain)
+  // UI 표시용 domain/level
   const rawDomain = searchParams.get("domain") || "All";
-
   const DOMAIN_LABEL_MAP = {
     All: "전체",
     "Daily Life": "일상생활",
@@ -45,23 +56,18 @@ export default function CardLearningPage() {
     "Food & Health": "음식/건강",
     Technology: "기술/IT",
   };
-
   const domainLabel = DOMAIN_LABEL_MAP[rawDomain] || rawDomain;
 
-  // 레벨(level)
   const rawLevel = searchParams.get("level");
   const rawLevelLower = rawLevel ? rawLevel.toLowerCase() : null;
+  const levelLabel = !rawLevelLower || rawLevelLower === "all" ? "All" : rawLevel;
 
-  const levelLabel =
-    !rawLevelLower || rawLevelLower === "all" ? "All" : rawLevel;
-
-  // 최종 라벨 텍스트
   const badgeText = `${domainLabel} ${levelLabel}`;
-
   const isWrongMode = source === "wrong-note";
 
-  // API용
-  const apiLevel = rawLevel === "All" ? undefined : rawLevel;
+  // API용 (null/All/all이면 undefined로 제거)
+  const apiLevel =
+    !rawLevelLower || rawLevelLower === "all" ? undefined : rawLevel;
   const apiCategory = rawDomain === "All" ? undefined : rawDomain;
 
   // 상태값
@@ -77,10 +83,7 @@ export default function CardLearningPage() {
   const total = cards.length;
   const current = cards[currentIndex] || null;
 
-  const pageClassName = [
-    "card-page",
-    isWrongMode ? "card-page--wrong" : null,
-  ]
+  const pageClassName = ["card-page", isWrongMode ? "card-page--wrong" : null]
     .filter(Boolean)
     .join(" ");
 
@@ -108,6 +111,7 @@ export default function CardLearningPage() {
         const data = await fetchCardItems({
           source,
           wordIds,
+          limit: resolvedLimit, // ✅ 여기 추가
           level: apiLevel,
           category: apiCategory,
         });
@@ -129,6 +133,7 @@ export default function CardLearningPage() {
           err.response?.status,
           err.response?.data || err.message
         );
+
         // 실패 시 이전 카드 잔상 방지
         setCards([]);
         setCurrentIndex(0);
@@ -147,9 +152,9 @@ export default function CardLearningPage() {
     return () => {
       cancelled = true;
     };
-  }, [source, wordIdsParam, apiLevel, apiCategory]);
+  }, [source, wordIdsParam, resolvedLimit, apiLevel, apiCategory]);
 
-  // ✅ 로딩 화면(스피너 적용)
+  // 로딩 화면
   if (loading) {
     return (
       <div className={pageClassName}>
@@ -199,17 +204,13 @@ export default function CardLearningPage() {
     }
 
     // 통계 계산
-    if (result === "known") {
-      setKnownCount((v) => v + 1);
-    } else {
-      setUnknownCount((v) => v + 1);
-    }
+    if (result === "known") setKnownCount((v) => v + 1);
+    else setUnknownCount((v) => v + 1);
 
     // unknown 기록 저장
     if (result === "unknown") {
       setUnknownWords((prev) => {
         if (prev.some((w) => w.wordId === wordId)) return prev;
-
         return [
           ...prev,
           {
@@ -277,16 +278,10 @@ export default function CardLearningPage() {
             />
 
             <footer className="cl-actions actions-ox">
-              <button
-                className="btn-unknown"
-                onClick={() => handleAnswer("unknown")}
-              >
+              <button className="btn-unknown" onClick={() => handleAnswer("unknown")}>
                 <X size={32} />
               </button>
-              <button
-                className="btn-known"
-                onClick={() => handleAnswer("known")}
-              >
+              <button className="btn-known" onClick={() => handleAnswer("known")}>
                 <Circle size={28} strokeWidth={3} />
               </button>
             </footer>

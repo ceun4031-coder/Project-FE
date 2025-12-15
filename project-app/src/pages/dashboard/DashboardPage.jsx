@@ -368,7 +368,7 @@ weeklyDataSorted.forEach((day) => {
             <div>
                <h3 className="section-title">주간 학습 활동량</h3>
       <p className="section-subtitle">
-        최근 7일 동안 퀴즈·카드에서 학습한 횟수 기준입니다.
+        이번 주 퀴즈·카드에서 학습한 횟수 기준입니다.
       </p>
             </div>
             <div className="chart-legend">

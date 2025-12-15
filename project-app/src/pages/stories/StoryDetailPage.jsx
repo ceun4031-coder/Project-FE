@@ -1,21 +1,15 @@
 import { deleteStory, getStoryDetail, getStoryWords } from "@/api/storyApi";
-import { ArrowLeft, Book, Calendar, Clock, Quote, Trash2 } from "lucide-react";
+import { ArrowLeft, Book, Calendar, Quote, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./StoryDetailPage.css";
 import { toKoreanPOS } from "@/utils/posUtils";
+import Spinner from "@/components/common/Spinner";
 
 /* ---------------- utils ---------------- */
 
 const escapeRegExp = (str = "") =>
   str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const estimateReadTime = (text = "") => {
-  if (!text.trim()) return "";
-  const wordCount = text.trim().split(/\s+/).length;
-  const minutes = Math.max(1, Math.round(wordCount / 150));
-  return `${minutes} min read`;
-};
 
 const toSafeWord = (item) => {
   if (!item) return "";
@@ -142,7 +136,7 @@ const StoryDetailPage = () => {
   if (storyLoading) {
     return (
       <div className="story-detail-loading">
-        <p>스토리를 불러오는 중입니다... ⏳</p>
+          <Spinner fullHeight={true} message="스토리를 불러오는 중입니다..." />
       </div>
     );
   }
@@ -156,7 +150,6 @@ const StoryDetailPage = () => {
   const content = storyEn || "";
   const lines = content.split("\n");
   const date = createdAt?.slice(0, 10);
-  const readTime = estimateReadTime(content);
 
   /* -------- render -------- */
 
@@ -180,6 +173,12 @@ const StoryDetailPage = () => {
               </h3>
               <span className="nav-badge">{words.length}</span>
             </div>
+              <p className="vocab-desc">
+              이 스토리에 사용된 핵심 단어입니다.
+              <br />
+              문맥 속에서 의미를 확인해보세요.
+            </p>
+
 
             <div className="vocab-list">
               {wordsLoading ? (
@@ -236,11 +235,6 @@ const StoryDetailPage = () => {
                 {date && (
                   <span className="meta-item">
                     <Calendar size={14} /> {date}
-                  </span>
-                )}
-                {readTime && (
-                  <span className="meta-item">
-                    <Clock size={14} /> {readTime}
                   </span>
                 )}
               </div>

@@ -305,6 +305,15 @@ const mockFetchQuizzes = (params) => {
 
       const numericLimit =
         typeof limit === "number" ? limit : Number(limit);
+        
+// ✅ wordIds가 있으면 count는 wordIds.length로 강제
+const effectiveLimit =
+  Array.isArray(wordIds) && wordIds.length > 0 ? wordIds.length : numericLimit;
+
+if (Number.isFinite(effectiveLimit) && effectiveLimit > 0) {
+  query.count = effectiveLimit;
+}
+
 
       const normalized = normalizeQuizListResponse(list);
 
