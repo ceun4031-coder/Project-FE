@@ -33,7 +33,11 @@ const StoryCreatePage = () => {
     Array.isArray(state.wrongWords) && state.wrongWords.length > 0;
 
   const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
       navigate("/stories");
+    }
   };
 
   // 1) 스토리에 아직 사용되지 않은 오답 목록 로딩

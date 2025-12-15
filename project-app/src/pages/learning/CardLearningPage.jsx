@@ -30,7 +30,6 @@ export default function CardLearningPage() {
         .filter((n) => !isNaN(n))
     : undefined;
 
-  const limit = Number(searchParams.get("limit") || 20);
 
   // UI 표시용
   // 분야(domain)
@@ -109,7 +108,6 @@ export default function CardLearningPage() {
         const data = await fetchCardItems({
           source,
           wordIds,
-          limit,
           level: apiLevel,
           category: apiCategory,
         });
@@ -149,7 +147,7 @@ export default function CardLearningPage() {
     return () => {
       cancelled = true;
     };
-  }, [source, wordIdsParam, limit, apiLevel, apiCategory]);
+  }, [source, wordIdsParam, apiLevel, apiCategory]);
 
   // ✅ 로딩 화면(스피너 적용)
   if (loading) {

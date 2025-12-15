@@ -53,7 +53,6 @@ const QuizPage = () => {
   const [searchParams] = useSearchParams();
 
   const source = searchParams.get("source") || "quiz"; // "quiz" | "wrong-note"
-  const limit = searchParams.get("limit") || 10;
 
   // 레벨
   const rawLevel = searchParams.get("level");
@@ -128,7 +127,6 @@ const QuizPage = () => {
       try {
         const data = await fetchQuizzes({
           source,
-          limit: Number(limit),
           level: levelForApi,
           wordIds,
           category: categoryForApi,
@@ -155,7 +153,7 @@ const QuizPage = () => {
 
     loadData();
     // wordIdsParam 이 바뀌면 다시 로드
-  }, [source, limit, levelForApi, wordIdsParam, categoryForApi]);
+  }, [source, levelForApi, wordIdsParam, categoryForApi]);
 
   const wrapperClassName = [
     "quiz-page-wrapper",

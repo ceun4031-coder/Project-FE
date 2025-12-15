@@ -1,11 +1,61 @@
-/* WrongNoteItem row */
+/* src/pages/wrongnote/components/WrongNoteItem.css (또는 WrongNotePage.css에 추가) */
+/* 기존 .wrongnote-item 관련 최소 유지 + 선택/말줄임/정렬 보강 */
 
-.wrongnote-item td:first-child {
-  width: 40px;
+.wrongnote-item {
+  cursor: pointer;
 }
 
-/* 행 hover는 테이블 hover와 동일하게 맞춰도 되고,
-   더 강조하고 싶으면 아래처럼 사용 */
+.wrongnote-item td:first-child {
+  width: 46px;
+}
+
 .wrongnote-item:hover {
   background-color: #f9fafb;
+}
+
+.wrongnote-item.is-selected {
+  background: var(--wrongnote-accent-bg);
+}
+
+.wrongnote-item.is-selected:hover {
+  background: var(--wrongnote-accent-bg-strong);
+}
+
+/* 셀 유틸 */
+.wn-cell--check {
+  width: 46px;
+}
+
+.wn-ellipsis {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 컬럼별 너비 힌트(테이블 레이아웃 안정) */
+.wn-cell--word {
+  max-width: 160px;
+  font-weight: 800;
+}
+
+.wn-cell--meaning {
+  max-width: 360px;
+  color: #374151;
+}
+
+.wn-cell--level,
+.wn-cell--date,
+.wn-cell--count,
+.wn-cell--badge {
+  white-space: nowrap;
+}
+
+/* 작은 화면에서 말줄임 폭 완화 */
+@media (max-width: 768px) {
+  .wn-cell--word,
+  .wn-cell--meaning {
+    max-width: 100%;
+  }
 }

@@ -1,25 +1,43 @@
 /* src/pages/wrongnote/WrongNotePage.css */
 
 /* =========================================================
-   1. 페이지 레이아웃 & 오렌지 테마 변수
+   0) Local tokens (tokens.css 재사용)
    ========================================================= */
 .wrongnote-page {
-  max-width: 1200px;
+  max-width: var(--container-web-wide-width, 1200px);
   margin: 0 auto;
-  padding: 32px 24px 40px;
+  padding: var(--space-8) var(--space-6) var(--space-10);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 
-  --wrongnote-accent-bg:        var(--warning-50);
-  --wrongnote-accent-bg-strong: var(--warning-100);
-  --wrongnote-accent-border:    var(--warning-200);
-  --wrongnote-accent-main:      var(--warning-500);
-  --wrongnote-accent-main-dark: var(--warning-600);
+  /* page */
+  --wn-surface: var(--surface-1);
+  --wn-surface-soft: var(--neutral-100);
+  --wn-border: var(--border-subtle);
+  --wn-border-strong: var(--border-strong);
+  --wn-text: var(--neutral-900);
+  --wn-text-muted: var(--color-text-muted);
+  --wn-shadow: 0 20px 60px rgba(15, 23, 42, 0.04);
+
+  /* warning theme */
+  --wn-accent-bg: var(--warning-50);
+  --wn-accent-bg-strong: var(--warning-100);
+  --wn-accent-border: var(--warning-200);
+  --wn-accent: var(--warning-500);
+  --wn-accent-dark: var(--warning-600);
+
+  /* radius */
+  --wn-radius-card: 22px;
+  --wn-radius-panel: 18px;
+  --wn-radius-pill: var(--radius-pill);
+
+  /* focus */
+  --wn-focus: var(--focus-ring-color);
 }
 
 /* =========================================================
-   2. 헤더
+   1) Header
    ========================================================= */
 .wrongnote-header {
   text-align: center;
@@ -29,111 +47,247 @@
   margin: 0;
   font-size: 1.6rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--wn-text);
 }
 
 .wrongnote-header__subtitle {
-  margin-top: 6px;
+  margin-top: var(--space-2);
   font-size: 0.95rem;
-  color: #9ca3af;
+  color: var(--wn-text-muted);
 }
 
 /* =========================================================
-   3. 헤더 하단 필터 + 초기화
+   2) Loading / Error
    ========================================================= */
-.wrongnote-header__filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-  margin-top: 8px;
+.wrongnote-list__loading,
+.wrongnote-list__error {
+  padding: calc(var(--space-6) + var(--space-2)) var(--space-5);
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--wn-text-muted);
 }
 
+/* =========================================================
+   3) Dropdown overrides (기존 컴포넌트 스타일 유지하면서 warning 테마만 적용)
+   ========================================================= */
 .wrongnote-page .dropdown-btn:hover {
-  background-color: var(--wrongnote-accent-bg);
+  background-color: var(--wn-accent-bg);
 }
 
 .wrongnote-page .dropdown-btn.selected {
-  background-color: var(--wrongnote-accent-bg-strong);
-  border-color: var(--wrongnote-accent-main);
-  color: var(--wrongnote-accent-main-dark);
-  font-weight: 600;
+  background-color: var(--wn-accent-bg-strong);
+  border-color: var(--wn-accent);
+  color: var(--wn-accent-dark);
+  font-weight: 700;
 }
 
 .wrongnote-page .dropdown-menu {
   background-color: var(--surface-1);
-  border-color: var(--wrongnote-accent-border);
+  border-color: var(--wn-accent-border);
 }
 
 .wrongnote-page .dropdown-item:hover {
-  background-color: var(--wrongnote-accent-bg);
+  background-color: var(--wn-accent-bg);
 }
 
 .wrongnote-page .dropdown-item.active {
-  background-color: var(--wrongnote-accent-bg-strong);
-  color: var(--wrongnote-accent-main-dark);
-  font-weight: 600;
+  background-color: var(--wn-accent-bg-strong);
+  color: var(--wn-accent-dark);
+  font-weight: 700;
 }
 
-.wrongnote-page .filter-reset-btn:hover {
-  background-color: var(--wrongnote-accent-bg);
-  border-color: var(--wrongnote-accent-main);
-  color: var(--wrongnote-accent-main-dark);
+/* =========================================================
+   4) Reset button
+   ========================================================= */
+.filter-reset-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--wn-radius-pill);
+  border: 1px solid var(--wn-border);
+  background: var(--wn-surface);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease,
+    border-color 0.18s ease, color 0.18s ease;
+}
+
+.filter-reset-btn:hover {
+  background-color: var(--wn-accent-bg);
+  border-color: var(--wn-accent);
+  color: var(--wn-accent-dark);
   transform: rotate(-180deg);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
-.wrongnote-page .filter-reset-btn:active {
+.filter-reset-btn:active {
   transform: scale(0.95) rotate(-180deg);
 }
 
+.filter-reset-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--wn-focus);
+}
+
 /* =========================================================
-   4. 선택 액션 영역
+   5) Card container
+   ========================================================= */
+.wrongnote-list {
+  background-color: var(--wn-surface);
+  border-radius: var(--wn-radius-card);
+  padding: 0;
+  border: 1px solid var(--wn-border);
+  box-shadow: var(--wn-shadow);
+  overflow: hidden;
+}
+
+/* =========================================================
+   6) Topbar
+   ========================================================= */
+.wrongnote-topbar {
+  padding: var(--space-4) var(--space-4) calc(var(--space-3) + var(--space-1));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  border-bottom: 1px solid #f3f4f6; /* (기존 느낌 유지) */
+  background: var(--wn-surface);
+}
+
+.wrongnote-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* =========================================================
+   7) Tabs
+   ========================================================= */
+.wrongnote-tablist {
+  display: inline-flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--wn-radius-pill);
+  background: #f9fafb; /* (기존 톤 유지) */
+  border: 1px solid var(--wn-border);
+}
+
+.wrongnote-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--wn-radius-pill);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--neutral-700);
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.wrongnote-tab:hover {
+  background: var(--wn-accent-bg);
+}
+
+.wrongnote-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--wn-focus);
+}
+
+.wrongnote-tab.is-active {
+  background: var(--wn-surface);
+  border-color: var(--wn-accent-border);
+  color: var(--wn-accent-dark);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--space-2);
+  border-radius: var(--wn-radius-pill);
+  background: #eef2f7; /* (기존 톤 유지) */
+  color: var(--neutral-500);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.wrongnote-tab.is-active .tab-count {
+  background: rgba(245, 158, 11, 0.12); /* warning-500 기반 */
+  color: var(--wn-accent-dark);
+}
+
+/* =========================================================
+   8) Actions panel
    ========================================================= */
 .wrongnote-actions {
-  margin-top: 8px;
+  margin: var(--space-3) var(--space-4) var(--space-4);
   background: #f9fafb;
-  border-radius: 20px;
-  padding: 10px 16px;
-  border: 1px solid #e5e7eb;
+  border-radius: var(--wn-radius-panel);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--wn-border);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.03);
+  gap: var(--space-3);
 }
 
 .wrongnote-actions__left {
-  font-size: 0.86rem;
-  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .wrongnote-selected-count {
-  font-weight: 500;
-  color: #4b5563;
+  font-weight: 900;
+  color: var(--wn-text);
+  font-size: 0.92rem;
+}
+
+.wn-hint {
+  font-size: 0.82rem;
+  color: var(--neutral-500);
+}
+
+.wn-warn {
+  color: var(--wn-accent-dark);
+  font-weight: 800;
 }
 
 .wrongnote-actions__right {
   display: flex;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
 }
 
+/* =========================================================
+   9) Buttons (퀴즈/카드/스토리 모두 warning 테마)
+   ========================================================= */
 .sl-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background-color: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  color: #111827 !important;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--wn-radius-pill);
+  background-color: var(--wn-surface) !important;
+  border: 1px solid var(--wn-border) !important;
+  color: var(--wn-text) !important;
   font-size: 0.86rem;
-  font-weight: 500;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease, background-color 0.18s ease, border-color 0.18s ease,
+    color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .sl-btn svg {
@@ -141,63 +295,55 @@
 }
 
 .sl-btn:hover:not(:disabled) {
-  background-color: var(--wrongnote-accent-main) !important;
-  border-color: var(--wrongnote-accent-main) !important;
-  color: #ffffff !important;
+  background-color: var(--wn-accent) !important;
+  border-color: var(--wn-accent) !important;
+  color: var(--surface-1) !important;
 }
 
+.sl-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.sl-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--wn-focus);
+}
+
+/* Primary도 warning으로 통일 */
 .sl-btn-primary {
-  background-color: var(--primary-500) !important;
-  border-color: var(--primary-500) !important;
-  color: #ffffff !important;
+  background-color: var(--wn-accent) !important;
+  border-color: var(--wn-accent) !important;
+  color: var(--surface-1) !important;
 }
 
 .sl-btn-primary:hover:not(:disabled) {
-  background-color: var(--wrongnote-accent-bg) !important;
+  background-color: var(--wn-accent-dark) !important;
+  border-color: var(--wn-accent-dark) !important;
+  color: var(--surface-1) !important;
+}
+
+/* story 버튼 테두리 강조(원하면 유지) */
+.sl-btn-story {
+  border-color: var(--wn-accent) !important;
 }
 
 .sl-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: default;
   box-shadow: none;
+  transform: none;
 }
 
 /* =========================================================
-   5. 리스트 카드 / 테이블
+   10) Empty inside card
    ========================================================= */
-.wrongnote-list {
-  background-color: #ffffff;
-  border-radius: 24px;
-  padding: 0;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.04);
-  overflow: hidden;
+.wrongnote-list__empty {
+  padding: var(--space-2) 0 var(--space-5);
 }
 
-/* EmptyState가 표시될 때는 카드 테두리/배경 제거 */
-.wrongnote-list--empty {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-/* 로딩 / 에러 텍스트 */
-.wrongnote-list__loading,
-.wrongnote-list__error {
-  padding: 28px 20px;
-  text-align: center;
-  font-size: 0.95rem;
-  color: #9ca3af;
-}
-
-/* EmptyState가 리스트 카드 안에 올 때 패딩 보정 */
-.wrongnote-list .empty-state.empty-state--page {
-  padding-left: 24px;
-  padding-right: 24px;
-}
-
-/* 테이블 기본 */
+/* =========================================================
+   11) Table
+   ========================================================= */
 .wrongnote-table {
   width: 100%;
   border-collapse: collapse;
@@ -210,20 +356,20 @@
 
 .wrongnote-table th,
 .wrongnote-table td {
-  padding: 10px 14px;
+  padding: 10px 14px; /* 테이블은 기존 감성 유지 */
   text-align: left;
 }
 
 .wrongnote-table th {
   font-size: 0.78rem;
-  font-weight: 600;
-  color: #9ca3af;
-  border-bottom: 1px solid #e5e7eb;
+  font-weight: 900;
+  color: var(--neutral-500);
+  border-bottom: 1px solid var(--wn-border);
 }
 
 .wrongnote-table td {
   border-bottom: 1px solid #f3f4f6;
-  color: #111827;
+  color: var(--wn-text);
 }
 
 .wrongnote-table tbody tr:last-child td {
@@ -235,29 +381,7 @@
 }
 
 /* =========================================================
-   6. 스토리 뱃지
-   ========================================================= */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.badge--used {
-  background-color: rgba(251, 146, 60, 0.12);
-  color: #ea580c;
-}
-
-.badge--unused {
-  background-color: rgba(148, 163, 184, 0.12);
-  color: #6b7280;
-}
-
-/* =========================================================
-   7. 체크박스
+   12) Checkbox (warning 테마)
    ========================================================= */
 .wrongnote-page .sl-checkbox {
   appearance: none !important;
@@ -272,12 +396,12 @@
 }
 
 .wrongnote-page .sl-checkbox:hover {
-  border-color: var(--wrongnote-accent-main) !important;
+  border-color: var(--wn-accent) !important;
 }
 
 .wrongnote-page .sl-checkbox:checked {
-  background: var(--wrongnote-accent-main) !important;
-  border-color: var(--wrongnote-accent-main) !important;
+  background: var(--wn-accent) !important;
+  border-color: var(--wn-accent) !important;
 }
 
 .wrongnote-page .sl-checkbox:checked::after {
@@ -286,27 +410,27 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -56%);
-  color: #ffffff;
+  color: var(--surface-1);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 900;
   line-height: 1;
   pointer-events: none;
 }
 
 /* =========================================================
-   8. 페이지네이션
+   13) Pagination
    ========================================================= */
 .wrongnote-pagination {
-  margin-top: 16px;
+  margin: var(--space-4) 0 var(--space-5);
   display: flex;
   justify-content: center;
 }
 
 .wrongnote-page .wrongnote-pagination button.is-active,
 .wrongnote-page .wrongnote-pagination button[aria-current="page"] {
-  background-color: var(--wrongnote-accent-main);
-  border-color: var(--wrongnote-accent-main);
-  color: #ffffff;
+  background-color: var(--wn-accent);
+  border-color: var(--wn-accent);
+  color: var(--surface-1);
 }
 
 .wrongnote-page .wrongnote-pagination button:disabled {
@@ -315,25 +439,21 @@
 }
 
 /* =========================================================
-   9. 반응형
+   14) Responsive
    ========================================================= */
 @media (max-width: 768px) {
   .wrongnote-page {
-    padding: 20px 12px 28px;
+    padding: var(--space-5) var(--space-3) var(--space-8);
   }
 
-  .wrongnote-header__filters {
-    flex-direction: column;
+  .wrongnote-topbar {
     align-items: flex-start;
-  }
-
-  .wrongnote-page .filter-reset-btn {
-    align-self: flex-start;
   }
 
   .wrongnote-actions {
+    margin: var(--space-3) var(--space-3) var(--space-4);
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .wrongnote-actions__right {
@@ -354,8 +474,8 @@
   }
 
   .wrongnote-table tr {
-    border-bottom: 1px solid #e5e7eb;
-    padding: 6px 0;
+    border-bottom: 1px solid var(--wn-border);
+    padding: var(--space-2) 0;
   }
 
   .wrongnote-table td {
@@ -369,109 +489,47 @@
 }
 
 /* =========================================================
-   10. “이미 스토리에 사용된 단어” 안내 모달
+   [추가] 8-1) Selection Row & Clear Button
    ========================================================= */
-.wrongnote-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.35);
+
+/* 선택 개수와 버튼을 가로로 정렬 */
+.wn-selected-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 50;
-  backdrop-filter: blur(2px);
+  gap: var(--space-2);
 }
 
-.wrongnote-modal {
-  width: 100%;
-  max-width: 420px;
-  margin: 0 16px;
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 22px 20px 18px;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.25);
-  border: 1px solid #e5e7eb;
-  animation: wrongnote-modal-fade-in 0.18s ease-out;
-}
-
-.wrongnote-modal__title {
-  margin: 0;
-  font-size: 1.1rem;
+/* 전체 해제 버튼: 작고 은은한 고스트 스타일 */
+.wn-clear-btn {
+  appearance: none;
+  background-color: transparent;
+  border: 1px solid var(--neutral-300); /* 평소엔 연한 회색 테두리 */
+  border-radius: var(--wn-radius-pill);
+  
+  /* 크기 조절: 텍스트보다 살짝만 크게 */
+  padding: 2px 9px;
+  font-size: 0.75rem; 
   font-weight: 700;
-  color: #111827;
-}
-
-.wrongnote-modal__body {
-  margin-top: 8px;
-  font-size: 0.9rem;
-  color: #4b5563;
-  line-height: 1.6;
-  white-space: pre-line; /* \n 그대로 줄바꿈 */
-}
-
-.wrongnote-modal__list {
-  margin: 12px 0 0;
-  padding-left: 18px;
-  max-height: 140px;
-  overflow-y: auto;
-  font-size: 0.86rem;
-  color: #374151;
-}
-
-.wrongnote-modal__list li {
-  margin-bottom: 4px;
-}
-
-.wrongnote-modal__button {
-  margin-top: 16px;
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--wrongnote-accent-main);
-  background-color: var(--wrongnote-accent-main);
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: var(--neutral-500);
+  
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.wrongnote-modal__button:hover {
-  background-color: var(--wrongnote-accent-main-dark);
-  border-color: var(--wrongnote-accent-main-dark);
-  box-shadow: 0 10px 30px rgba(234, 88, 12, 0.25);
+/* 호버 시: 워닝 테마 색상으로 강조 */
+.wn-clear-btn:hover:not(:disabled) {
+  border-color: var(--wn-accent);       /* 테두리 오렌지 */
+  color: var(--wn-accent-dark);         /* 글자 진한 오렌지 */
+  background-color: var(--wn-surface);  /* 배경 흰색 유지 */
+  box-shadow: 0 2px 5px rgba(245, 158, 11, 0.15);
 }
-
-.wrongnote-modal__button:active {
+.wn-clear-btn:active:not(:disabled) {
   transform: scale(0.96);
-  box-shadow: none;
+  background-color: var(--wn-accent-bg);
 }
 
-/* 모달 간단 등장 애니메이션 */
-@keyframes wrongnote-modal-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (max-width: 480px) {
-  .wrongnote-modal {
-    padding: 18px 16px 16px;
-  }
-
-  .wrongnote-modal__title {
-    font-size: 1.02rem;
-  }
-
-  .wrongnote-modal__body {
-    font-size: 0.88rem;
-  }
+.wn-clear-btn:disabled {
+  opacity: 0;           /* 아예 안 보이게 숨김 (깔끔함 선호 시) */
+  pointer-events: none; 
+  transform: scale(0.9);
 }

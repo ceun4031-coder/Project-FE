@@ -19,6 +19,14 @@ const clusterCache = new Map();
 // 생성 중복 방지: key=wordId(string) -> Promise<grouped>
 const createPromiseCache = new Map();
 
+/** sleep */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** 빈 grouped 판정 */
+const isEmptyGrouped = (g) =>
+  !g ||
+  ((g.similar?.length ?? 0) === 0 && (g.opposite?.length ?? 0) === 0);
+
 /**
  * grouped 표준 형태 보장
  * - 서버가 grouped를 그대로 주거나, { data: grouped }로 감싸거나,
@@ -51,7 +59,7 @@ const normalizeGrouped = (data) => {
 
 /**
  * List<ClusterWord> 또는 유사 구조를 grouped로 매핑
- * - 백엔드 응답이 달라도 최대한 안전하게 처리
+ * - 백엔드 엔티티 기준: relationType (RELATION_TYPE)
  * - text 없으면 UI 렌더에서 깨지므로 제외
  */
 const mapRawClusters = (raw) => {
@@ -72,18 +80,24 @@ const mapRawClusters = (raw) => {
       (item?.word && typeof item.word === "object" && item.word) ||
       {};
 
-    const type = item?.type;
+    // ✅ 핵심: relationType 우선
+    const typeRaw = item?.relationType ?? item?.type ?? item?.relation ?? item?.relation_type;
+    const type = typeof typeRaw === "string" ? typeRaw.trim().toLowerCase() : "";
 
     const text = related?.word ?? related?.text ?? related?.name;
     if (!text) return;
 
+    const centerWordId = center?.wordId ?? item?.centerWordId ?? item?.wordId;
+    const relatedWordId = related?.wordId ?? item?.relatedWordId;
+
     const dto = {
       id:
+        item?.clusterId ?? // 엔티티: clusterId
         item?.clusterWordId ??
         item?.id ??
-        `${center?.wordId ?? ""}-${related?.wordId ?? text}`,
-      centerWordId: center?.wordId ?? item?.centerWordId ?? item?.wordId,
-      wordId: related?.wordId ?? item?.relatedWordId,
+        `${centerWordId ?? ""}-${relatedWordId ?? text}`,
+      centerWordId,
+      wordId: relatedWordId,
       text,
       meaning: related?.meaning ?? related?.definition,
       level:
@@ -97,7 +111,8 @@ const mapRawClusters = (raw) => {
       inMyList: !!(item?.inMyList || related?.inMyList),
     };
 
-    if (type === "antonym") grouped.opposite.push(dto);
+    // ✅ antonym만 opposite로, 나머지는 similar
+    if (type === "antonym" || type === "opposite") grouped.opposite.push(dto);
     else grouped.similar.push(dto);
   });
 
@@ -107,10 +122,6 @@ const mapRawClusters = (raw) => {
 /**
  * 특정 중심 단어의 클러스터 조회
  * GET /api/cluster?wordId={wordId}
- *
- * @param {string|number} wordId
- * @param {{useCache?: boolean}} options
- * @returns {Promise<{similar:any[], opposite:any[]}>}
  */
 export const getClustersByCenter = async (wordId, options = {}) => {
   if (!wordId) throw new Error("getClustersByCenter: wordId가 필요합니다.");
@@ -122,9 +133,7 @@ export const getClustersByCenter = async (wordId, options = {}) => {
 
   const res = await httpClient.get("/api/cluster", { params: { wordId: key } });
 
-  // 1) grouped가 오면 우선 사용
   const groupedDirect = normalizeGrouped(res?.data);
-  // 2) 아니면 raw list로 매핑
   const grouped = groupedDirect ?? mapRawClusters(res?.data);
 
   clusterCache.set(key, grouped);
@@ -135,12 +144,8 @@ export const getClustersByCenter = async (wordId, options = {}) => {
  * 클러스터 생성
  * POST /api/cluster/create?wordId={wordId}
  *
- * - 같은 wordId에 대해 중복 호출 방지: Promise 재사용
- * - 응답이 grouped면 그대로 사용
- * - 응답이 없거나 다른 형태면 GET 재조회(캐시 무시)로 최신 grouped 확보
- *
- * @param {string|number} wordId
- * @returns {Promise<{similar:any[], opposite:any[]}>}
+ * 백엔드가 "생성 중"일 때 빈 리스트를 반환할 수 있음.
+ * => create 결과가 비면 짧게 GET 재조회(폴링)로 채운다.
  */
 export const createCluster = async (wordId) => {
   if (!wordId) throw new Error("createCluster: wordId가 필요합니다.");
@@ -154,12 +159,35 @@ export const createCluster = async (wordId) => {
       params: { wordId: key },
     });
 
+    // 1) grouped 형태면 우선
     const groupedFromCreate = normalizeGrouped(res?.data);
-    const grouped =
-      groupedFromCreate ?? (await getClustersByCenter(key, { useCache: false }));
 
-    clusterCache.set(key, grouped);
-    return grouped;
+    // 2) raw list면 매핑
+    const mappedFromCreate =
+      groupedFromCreate ?? (Array.isArray(res?.data) ? mapRawClusters(res.data) : null);
+
+    // 3) create 결과가 비면(생성 중 빈 리스트 등) GET 폴링
+    let finalGrouped = mappedFromCreate;
+
+    if (isEmptyGrouped(finalGrouped)) {
+      // 3회 정도면 충분 (총 ~900ms)
+      for (let i = 0; i < 3; i++) {
+        await sleep(250 + i * 150);
+        const g = await getClustersByCenter(key, { useCache: false });
+        if (!isEmptyGrouped(g)) {
+          finalGrouped = g;
+          break;
+        }
+      }
+    }
+
+    // 그래도 비면 마지막으로 GET 한 번 더 (안전망)
+    if (isEmptyGrouped(finalGrouped)) {
+      finalGrouped = await getClustersByCenter(key, { useCache: false });
+    }
+
+    clusterCache.set(key, finalGrouped);
+    return finalGrouped;
   })();
 
   createPromiseCache.set(key, promise);

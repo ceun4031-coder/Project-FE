@@ -1,6 +1,5 @@
 // src/pages/wrongnote/components/WrongNoteItem.jsx
-
-export function WrongNoteItem({ item, selected, onToggleSelect, onClick }) {
+export function WrongNoteItem({ item, selected, onToggle, onClick }) {
   // --- 단어/뜻: 문자열로 강제 변환 ---
   const rawWord = item.word || item.wordText || null;
 
@@ -30,18 +29,12 @@ export function WrongNoteItem({ item, selected, onToggleSelect, onClick }) {
     item.level ??
     (rawWord && typeof rawWord === "object" ? rawWord.level : null);
 
-  const getLevelLabel = (lv) => {
-    if (lv == null) return "-";
-
-    const n = Number(lv);
-    if (Number.isNaN(n)) return lv; // "EASY" / "HARD" 같은 문자열이면 그대로
-    if (n <= 1) return "초급";
-    if (n === 2) return "중급";
-    if (n >= 3) return "고급";
+  const levelLabel = (() => {
+    if (rawLevel == null) return "-";
+    const n = Number(rawLevel);
+    if (Number.isNaN(n)) return String(rawLevel);
     return `Lv.${n}`;
-  };
-
-  const levelLabel = getLevelLabel(rawLevel);
+  })();
 
   // --- 마지막 오답 일시 ---
   const rawLastWrongAt = item.wrongAt || item.lastWrongAt || item.wrong_at;
@@ -54,42 +47,67 @@ export function WrongNoteItem({ item, selected, onToggleSelect, onClick }) {
       lastWrongAtDate = d.toLocaleDateString("ko-KR");
       lastWrongAtFull = d.toLocaleString("ko-KR");
     } else {
-      lastWrongAtDate = rawLastWrongAt;
-      lastWrongAtFull = rawLastWrongAt;
+      lastWrongAtDate = String(rawLastWrongAt);
+      lastWrongAtFull = String(rawLastWrongAt);
     }
   }
 
   // --- 오답 횟수 ---
   const totalWrong = item.totalWrong ?? item.wrongCount ?? item.wrong ?? 0;
 
-  // --- 스토리 사용 여부 ---
-  const used =
-    item.isUsedInStory === "Y" ||
-    item.isUsedInStory === "y" ||
-    item.isUsedInStory === true;
+  const ellipsisStyle = {
+    maxWidth: 320,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    display: "inline-block",
+    verticalAlign: "bottom",
+  };
+
+  const handleRowClick = () => {
+    onToggle?.();
+    onClick?.(item);
+  };
 
   return (
-    <tr className="wrongnote-item" onClick={onClick}>
-      <td>
+    <tr
+      className="wrongnote-item"
+      onClick={handleRowClick}
+      role="row"
+      aria-selected={selected}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleRowClick();
+        }
+      }}
+      style={{ cursor: "pointer" }}
+    >
+      <td onClick={(e) => e.stopPropagation()}>
         <input
           type="checkbox"
           className="sl-checkbox"
           checked={selected}
-          onChange={onToggleSelect}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggle?.();
+          }}
+          aria-label="오답 선택"
         />
       </td>
-      <td>{word}</td>
-      <td>{meaning}</td>
-      <td>{levelLabel}</td>
-      <td title={lastWrongAtFull || undefined}>{lastWrongAtDate}</td>
-      <td>{totalWrong}회</td>
-      <td>
-        {used ? (
-          <span className="badge badge--used">사용됨</span>
-        ) : (
-          <span className="badge badge--unused">미사용</span>
-        )}
+
+      <td title={word || undefined}>
+        <span style={ellipsisStyle}>{word}</span>
       </td>
+
+      <td title={meaning || undefined}>
+        <span style={ellipsisStyle}>{meaning}</span>
+      </td>
+
+      <td>{levelLabel}</td>
+      <td>{totalWrong}회</td>
+      <td title={lastWrongAtFull || undefined}>{lastWrongAtDate}</td>
     </tr>
   );
 }
