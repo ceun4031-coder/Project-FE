@@ -10,11 +10,12 @@ import { QuizQuestion } from "./components/QuizQuestion";
 import "./QuizPage.css";
 
 import { fetchQuizzes, submitQuizResult } from "../../api/quizApi";
-
+import { recordStudyCorrect, recordStudyWrong } from "../../api/studyApi";
 import { LearningProgressHeader } from "../learning/components/LearningProgressHeader";
 import { LearningResultSection } from "../learning/components/LearningResultSection";
 
 const MAX_WRONG_DISPLAY = 20;
+const DEFAULT_LIMIT = 10;
 
 // 문제 객체에서 단어만 추출
 const extractWordFromQuestion = (q) => {
@@ -32,14 +33,10 @@ const extractWordFromQuestion = (q) => {
   if (!src) return "";
 
   const singleMatch = src.match(/'([^']+)'/);
-  if (singleMatch && singleMatch[1]) {
-    return singleMatch[1].trim();
-  }
+  if (singleMatch && singleMatch[1]) return singleMatch[1].trim();
 
   const doubleMatch = src.match(/"([^"]+)"/);
-  if (doubleMatch && doubleMatch[1]) {
-    return doubleMatch[1].trim();
-  }
+  if (doubleMatch && doubleMatch[1]) return doubleMatch[1].trim();
 
   return src
     .split(/\s+/)[0]
@@ -47,13 +44,37 @@ const extractWordFromQuestion = (q) => {
     .replace(/[\]\)\?:]+$/, "")
     .trim();
 };
+const runWithConcurrency = async (tasks, concurrency = 4) => {
+  const results = [];
+  let idx = 0;
+
+  const worker = async () => {
+    while (idx < tasks.length) {
+      const cur = idx++;
+      try {
+        results[cur] = await tasks[cur]();
+      } catch (e) {
+        console.error("study 기록 실패:", e?.response?.data || e);
+        results[cur] = null; // 실패해도 전체는 계속
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker())
+  );
+  return results;
+};
 
 const QuizPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const source = searchParams.get("source") || "quiz"; // "quiz" | "wrong-note"
-  const limit = searchParams.get("limit") || 10;
+
+  // limit (없으면 기본 10)
+  const limitParam = searchParams.get("limit");
+  const parsedLimit = Number(limitParam);
 
   // 레벨
   const rawLevel = searchParams.get("level");
@@ -96,6 +117,14 @@ const QuizPage = () => {
 
   const isWrongMode = source === "wrong-note";
 
+  // ✅ 핵심: wordIds가 있으면 "선택 개수"만큼만 출제되게 limit을 덮어씀
+  const resolvedLimit =
+    Array.isArray(wordIds) && wordIds.length > 0
+      ? wordIds.length
+      : Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? parsedLimit
+      : DEFAULT_LIMIT;
+
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -128,7 +157,7 @@ const QuizPage = () => {
       try {
         const data = await fetchQuizzes({
           source,
-          limit: Number(limit),
+          limit: resolvedLimit,
           level: levelForApi,
           wordIds,
           category: categoryForApi,
@@ -154,8 +183,7 @@ const QuizPage = () => {
     };
 
     loadData();
-    // wordIdsParam 이 바뀌면 다시 로드
-  }, [source, limit, levelForApi, wordIdsParam, categoryForApi]);
+  }, [source, resolvedLimit, levelForApi, wordIdsParam, categoryForApi]);
 
   const wrapperClassName = [
     "quiz-page-wrapper",
@@ -185,11 +213,7 @@ const QuizPage = () => {
             <h3>오류 발생</h3>
             <p>{error}</p>
             <div className="quiz-error-actions">
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => navigate(-1)}
-              >
+              <Button variant="secondary" size="md" onClick={() => navigate(-1)}>
                 뒤로 가기
               </Button>
             </div>
@@ -203,8 +227,7 @@ const QuizPage = () => {
   const totalCount = questions.length || 1;
   const currentStep = Math.min(currentIndex + 1, totalCount);
   const incorrectCount = totalCount - score;
-  const accuracy =
-    totalCount > 0 ? Math.round((score / totalCount) * 100) : 0;
+  const accuracy = totalCount > 0 ? Math.round((score / totalCount) * 100) : 0;
 
   const isAnswered = selectedOption !== null;
   const currentQuestion = !isFinished ? questions[currentIndex] : null;
@@ -234,11 +257,11 @@ const QuizPage = () => {
         if (!normalized) return prev;
 
         const lower = normalized.toLowerCase();
-        if (prev.some((w) => w.text.toLowerCase() === lower)) {
+        if (prev.some((w) => (w.text || "").toLowerCase() === lower)) {
           return prev;
         }
 
-        // 1) 백엔드에서 온 meaning 계열
+        // 1) 백엔드 meaning 계열
         const meaningFromApi =
           currentQ.meaningKo ||
           currentQ.meaning_ko ||
@@ -246,14 +269,14 @@ const QuizPage = () => {
           currentQ.korean ||
           "";
 
-        // 2) 정답 보기 (보통 뜻이 들어있음)
+        // 2) 정답 보기 텍스트
         const correctOptionText = Array.isArray(currentQ.options)
           ? currentQ.options[currentQ.answer] ?? ""
           : "";
 
         const finalMeaning = meaningFromApi || correctOptionText || "";
 
-        // 레벨 값 정리
+        // 레벨
         const resolvedLevel =
           currentQ.level ??
           currentQ.wordLevel ??
@@ -263,27 +286,23 @@ const QuizPage = () => {
           rawLevel ??
           null;
 
-        const newItem = {
-          text: normalized,
-          wordId: currentQ.wordId,
-          wrongWordId: currentQ.wrongWordId,
-          meaning: finalMeaning,
-          meaningKo: finalMeaning,
-          level: resolvedLevel,
-        };
-
-        return [...prev, newItem];
+        return [
+          ...prev,
+          {
+            text: normalized,
+            wordId: currentQ.wordId,
+            wrongWordId: currentQ.wrongWordId,
+            meaning: finalMeaning,
+            meaningKo: finalMeaning,
+            level: resolvedLevel,
+          },
+        ];
       });
     }
 
-    const resultItem = {
-      wordId: currentQ.wordId,
-      correct: isCorrect,
-    };
-
     setAnswerResults((prev) => {
       const next = [...prev];
-      next[currentIndex] = resultItem;
+      next[currentIndex] = { wordId: currentQ.wordId, correct: isCorrect };
       return next;
     });
   };
@@ -312,6 +331,13 @@ const QuizPage = () => {
         mode: isWrongMode ? "wrong" : "normal",
         answers: answersPayload,
       });
+      // ✅ WordDetailPage가 보는 study status 업데이트
+   const tasks = answersPayload
+     .filter((a) => a.wordId != null && !Number.isNaN(Number(a.wordId)))
+     .map((a) => () =>
+       a.correct ? recordStudyCorrect(a.wordId) : recordStudyWrong(a.wordId)
+     );
+   await runWithConcurrency(tasks, 4);
     } catch (err) {
       console.error("❌ 결과 전송 실패:", err.response?.data || err);
     }
@@ -328,8 +354,7 @@ const QuizPage = () => {
         word: w.text.trim(),
         wordId: w.wordId ?? null,
         wrongWordId: w.wrongWordId ?? null,
-        meaning:
-          w.meaningKo || w.meaning_ko || w.meaning || w.korean || "",
+        meaning: w.meaningKo || w.meaning_ko || w.meaning || w.korean || "",
       }));
 
     navigate("/stories/create", {
@@ -350,7 +375,6 @@ const QuizPage = () => {
   return (
     <div className={wrapperClassName}>
       <div className="quiz-layout">
-        {/* 진행 화면 */}
         {!isFinished && currentQuestion ? (
           <>
             <LearningProgressHeader
@@ -389,7 +413,7 @@ const QuizPage = () => {
                   <section className="quiz-options-section">
                     <QuizQuestion
                       question={{
-                        choices: currentQuestion.options.map(
+                        choices: (currentQuestion.options || []).map(
                           (text, index) => ({
                             id: index,
                             text,
@@ -400,8 +424,7 @@ const QuizPage = () => {
                       selectedChoiceId={selectedOption}
                       isAnswered={isAnswered}
                       isCorrect={
-                        isAnswered &&
-                        selectedOption === currentQuestion.answer
+                        isAnswered && selectedOption === currentQuestion.answer
                       }
                       onSelect={handleOptionClick}
                     />
@@ -409,12 +432,7 @@ const QuizPage = () => {
 
                   <footer className="quiz-footer">
                     {isAnswered && (
-                      <Button
-                        variant="primary"
-                        full
-                        size="lg"
-                        onClick={handleNext}
-                      >
+                      <Button variant="primary" full size="lg" onClick={handleNext}>
                         {currentIndex + 1 === questions.length
                           ? "결과 보기"
                           : "다음 문제"}
@@ -426,7 +444,6 @@ const QuizPage = () => {
             </div>
           </>
         ) : (
-          // 결과 화면
           <section className="quiz-learning-result">
             <header className="quiz-result-header">
               <h1 className="quiz-result-title">{resultTitle}</h1>
@@ -442,17 +459,11 @@ const QuizPage = () => {
               getUnknownKey={(w, i) => w.wordId ?? w.text ?? i}
               getUnknownWord={(w) => w.text || w.word || ""}
               getUnknownMeaning={(w) =>
-                w.meaningKo ||
-                w.meaning_ko ||
-                w.meaning ||
-                w.korean ||
-                ""
+                w.meaningKo || w.meaning_ko || w.meaning || w.korean || ""
               }
               getUnknownMetaTags={(w) => {
                 const tags = [];
-                if (w.level != null && w.level !== "") {
-                  tags.push(`Lv.${w.level}`);
-                }
+                if (w.level != null && w.level !== "") tags.push(`Lv.${w.level}`);
                 return tags;
               }}
               buildMoreHintMessage={(restCount) =>
@@ -462,9 +473,7 @@ const QuizPage = () => {
               primaryValue={`${score}문제`}
               primaryProgress={
                 <ProgressBar
-                  value={
-                    animateBars ? (score / (totalCount || 1)) * 100 : 0
-                  }
+                  value={animateBars ? (score / (totalCount || 1)) * 100 : 0}
                   variant="primary"
                   showLabel={false}
                   className="quiz-stat-progress"
