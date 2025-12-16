@@ -18,13 +18,18 @@ export default function SignupPage() {
     formData,
     errors,
     globalError,
+
     emailChecking,
     emailAvailable,
     emailCheckMessage,
+    hasEmailChecked,
+    handleEmailCheck,
+
+    nicknameChecking,
+
     handleSubmit,
     handleChange,
     handleBlur,
-    handleEmailCheck,
   } = useSignupForm();
 
   return (
@@ -76,26 +81,27 @@ export default function SignupPage() {
                       variant="secondary"
                       size="md"
                       onClick={handleEmailCheck}
-                      disabled={
-                        emailChecking ||
-                        !formData.email ||
-                        !!errors.email
-                      }
+                      disabled={emailChecking || !formData.email || !!errors.email}
                     >
                       {emailChecking ? "확인 중..." : "중복 확인"}
                     </Button>
                   </div>
                 </div>
 
-                {errors.email && (
-                  <p className="form-error">{errors.email}</p>
+                {errors.email && <p className="form-error">{errors.email}</p>}
+
+                {!errors.email && !emailChecking && emailAvailable === true && (
+                  <p className="form-success">
+                    {emailCheckMessage || "사용 가능한 이메일입니다."}
+                  </p>
                 )}
 
                 {!errors.email &&
                   !emailChecking &&
-                  emailAvailable === true && (
-                    <p className="form-success">
-                      {emailCheckMessage || "사용 가능한 이메일입니다."}
+                  hasEmailChecked &&
+                  emailAvailable === false && (
+                    <p className="form-error">
+                      {emailCheckMessage || "이미 사용 중인 이메일입니다."}
                     </p>
                   )}
               </div>
@@ -118,9 +124,7 @@ export default function SignupPage() {
                   autoComplete="new-password"
                   fullWidth
                 />
-                {errors.password && (
-                  <p className="form-error">{errors.password}</p>
-                )}
+                {errors.password && <p className="form-error">{errors.password}</p>}
               </div>
 
               {/* 비밀번호 확인 */}
@@ -142,12 +146,10 @@ export default function SignupPage() {
                   fullWidth
                 />
                 {errors.passwordConfirm && (
-                  <p className="form-error">
-                    {errors.passwordConfirm}
-                  </p>
+                  <p className="form-error">{errors.passwordConfirm}</p>
                 )}
               </div>
-              
+
               {/* 이름 */}
               <div className="form-field">
                 <label
@@ -167,12 +169,10 @@ export default function SignupPage() {
                   autoComplete="name"
                   fullWidth
                 />
-                {errors.userName && (
-                  <p className="form-error">{errors.userName}</p>
-                )}
+                {errors.userName && <p className="form-error">{errors.userName}</p>}
               </div>
 
-              {/* 닉네임 */}
+              {/* 닉네임 (버튼 제거: 다음 단계에서 자동 중복 확인) */}
               <div className="form-field">
                 <label
                   className="form-label form-label--required"
@@ -180,6 +180,7 @@ export default function SignupPage() {
                 >
                   닉네임
                 </label>
+
                 <Input
                   id="signup-nickname"
                   type="text"
@@ -190,17 +191,13 @@ export default function SignupPage() {
                   onBlur={handleBlur}
                   fullWidth
                 />
-                {errors.nickname && (
-                  <p className="form-error">{errors.nickname}</p>
-                )}
-              </div>
 
+                {errors.nickname && <p className="form-error">{errors.nickname}</p>}
+              </div>
 
               {/* 생년월일 */}
               <div className="form-field">
-                <label className="form-label form-label--required">
-                  생년월일
-                </label>
+                <label className="form-label form-label--required">생년월일</label>
 
                 <BirthdateSelector
                   name="userBirth"
@@ -211,9 +208,7 @@ export default function SignupPage() {
               </div>
 
               {globalError && (
-                <p className="form-error signup-error-global">
-                  {globalError}
-                </p>
+                <p className="form-error signup-error-global">{globalError}</p>
               )}
 
               <div className="signup-btn">
@@ -222,11 +217,9 @@ export default function SignupPage() {
                   variant="primary"
                   size="md"
                   full
-                  disabled={emailChecking}
+                  disabled={emailChecking || nicknameChecking}
                 >
-                  {emailChecking
-                    ? "이메일 확인 중..."
-                    : "다음 단계로 →"}
+                  {emailChecking || nicknameChecking ? "중복 확인 중..." : "다음 단계로 →"}
                 </Button>
               </div>
 

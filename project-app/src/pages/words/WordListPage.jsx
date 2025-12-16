@@ -36,6 +36,7 @@ const CATEGORY_OPTIONS = [
 ];
 
 // DB partOfSpeech 값 → 그룹키 매핑
+// src/pages/words/WordListPage.jsx
 const POS_TO_GROUP = {
   noun: "NOUN",
 
@@ -45,6 +46,12 @@ const POS_TO_GROUP = {
 
   adjective: "ADJ_ADV",
   adverb: "ADJ_ADV",
+
+  // ✅ 안전망 (혹시 남아있을 수 있는 약어)
+  adj: "ADJ_ADV",
+  adv: "ADJ_ADV",
+  "adj.": "ADJ_ADV",
+  "adv.": "ADJ_ADV",
 
   pronoun: "FUNC",
   preposition: "FUNC",

@@ -19,11 +19,15 @@
 }
 
 /* 2. 전체 레이아웃 (Grid) */
-.profile-grid {
+.profile-grid {                 
   display: grid;
-  grid-template-columns: 2fr 1fr;   /* 🔥 왼쪽 / 오른쪽 */
+  grid-template-columns: 1fr;   
   gap: var(--space-6);
   align-items: start;
+
+  max-width: 800px;           
+  width: 100%;
+  margin: 0 auto;              
 }
 
 /* 태블릿 & 모바일: 세로 스택 */

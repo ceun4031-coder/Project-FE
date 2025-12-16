@@ -1,7 +1,7 @@
 // src/pages/quiz/QuizPage.jsx
-import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import Button from "../../components/common/Button";
 import Spinner from "../../components/common/Spinner";
@@ -10,7 +10,7 @@ import { QuizQuestion } from "./components/QuizQuestion";
 import "./QuizPage.css";
 
 import { fetchQuizzes, submitQuizResult } from "../../api/quizApi";
-import { recordStudyCorrect, recordStudyWrong } from "../../api/studyApi";
+
 import { LearningProgressHeader } from "../learning/components/LearningProgressHeader";
 import { LearningResultSection } from "../learning/components/LearningResultSection";
 
@@ -26,6 +26,7 @@ function toLevelBadgeLabel(rawLevel) {
 
   if (lower === "all") return "All";
 
+  // "Lv.1", "lv1", "1" 모두 처리
   const normalized = lower.replace(/^lv\.?\s*/i, "");
   const n = Number(normalized);
 
@@ -35,7 +36,22 @@ function toLevelBadgeLabel(rawLevel) {
   if (n === 2) return "중급";
   if (n === 3) return "고급";
 
+  // 그 외 숫자는 기존처럼 Lv.N 형태로 표시
   return `Lv.${n}`;
+}
+
+// ✅ Lv 태그용: 숫자 레벨만 뽑기 (all/null/문자열은 제거)
+function parseLevelNumber(v) {
+  if (v == null) return null;
+  const s = String(v).trim();
+  if (!s) return null;
+
+  const lower = s.toLowerCase();
+  if (lower === "all") return null;
+
+  const normalized = lower.replace(/^lv\.?\s*/i, "");
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : null;
 }
 
 // 문제 객체에서 단어만 추출
@@ -66,28 +82,6 @@ const extractWordFromQuestion = (q) => {
     .trim();
 };
 
-const runWithConcurrency = async (tasks, concurrency = 4) => {
-  const results = [];
-  let idx = 0;
-
-  const worker = async () => {
-    while (idx < tasks.length) {
-      const cur = idx++;
-      try {
-        results[cur] = await tasks[cur]();
-      } catch (e) {
-        console.error("study 기록 실패:", e?.response?.data || e);
-        results[cur] = null;
-      }
-    }
-  };
-
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker())
-  );
-  return results;
-};
-
 const QuizPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -100,9 +94,18 @@ const QuizPage = () => {
   const parsedLimit = Number(limitParam);
 
   // ----------------------------
-  // ✅ domain/level + badgeLabel (선택 안 했으면 숨김)
+  // UI 표시용 domain/level + badgeLabel (선택 안 했으면 숨김)
   // ----------------------------
-  const rawDomainParam = searchParams.get("domain"); // 파라미터 자체(없을 수 있음)
+  // 레벨 (✅ rawLevel 변수명 유지: 아래 handleOptionClick에서 참조)
+  const rawLevel = searchParams.get("level");
+  const rawLevelLower = rawLevel ? rawLevel.toLowerCase() : null;
+
+  // API에 넘길 값: all/null 이면 필터 없음 (기존 동작 유지)
+  const levelForApi =
+    !rawLevelLower || rawLevelLower === "all" ? null : rawLevelLower;
+
+  // 분야(domain)
+  const rawDomainParam = searchParams.get("domain"); // ✅ 파라미터 자체(없을 수 있음)
   const rawDomain = rawDomainParam || "All";
 
   const DOMAIN_LABEL_MAP = {
@@ -117,29 +120,20 @@ const QuizPage = () => {
   };
   const domainLabel = DOMAIN_LABEL_MAP[rawDomain] || rawDomain;
 
-  const rawLevelParam = searchParams.get("level"); // 파라미터 자체(없을 수 있음)
-  const rawLevelLower = rawLevelParam ? rawLevelParam.toLowerCase() : null;
-  const levelLabel = toLevelBadgeLabel(rawLevelParam);
+  // 백엔드 category 파라미터로 넘길 값 (기존 동작 유지)
+  const categoryForApi = rawDomain === "All" ? null : rawDomain;
 
-  // “선택했는지” 판정 (없음 / All 이면 미선택)
+  // ✅ “선택했는지” 판정 (없음 / All 이면 미선택)
   const hasDomainFilter = !!rawDomainParam && rawDomain !== "All";
-  const hasLevelFilter = !!rawLevelParam && rawLevelLower !== "all";
+  const hasLevelFilter = !!rawLevel && rawLevelLower !== "all";
 
-  // 선택한 것만 조합, 아무것도 없으면 undefined(= 뱃지 숨김)
+  // ✅ 선택한 것만 조합, 아무것도 없으면 undefined(= 뱃지 숨김)
   const badgeLabel = (() => {
     const parts = [];
     if (hasDomainFilter) parts.push(domainLabel);
-    if (hasLevelFilter) parts.push(levelLabel);
+    if (hasLevelFilter) parts.push(toLevelBadgeLabel(rawLevel));
     return parts.length ? parts.join(" | ") : undefined;
   })();
-
-  // API에 넘길 값: all/null 이면 필터 없음
-  // (기존 로직 유지: 소문자 형태로 전달)
-  const levelForApi =
-    !rawLevelLower || rawLevelLower === "all" ? null : rawLevelLower;
-
-  // 백엔드 category 파라미터로 넘길 값
-  const categoryForApi = rawDomain === "All" ? null : rawDomain;
 
   // 선택된 단어 id들 (오답노트/카드 결과에서 넘어온 경우)
   const wordIdsParam = searchParams.get("wordIds");
@@ -150,7 +144,7 @@ const QuizPage = () => {
         .filter((n) => !Number.isNaN(n))
     : undefined;
 
-  // ✅ wordIds가 있으면 "선택 개수"만큼만 출제되게 limit을 덮어씀
+  // ✅ 핵심: wordIds가 있으면 "선택 개수"만큼만 출제되게 limit을 덮어씀
   const resolvedLimit =
     Array.isArray(wordIds) && wordIds.length > 0
       ? wordIds.length
@@ -294,6 +288,7 @@ const QuizPage = () => {
           return prev;
         }
 
+        // 1) 백엔드 meaning 계열
         const meaningFromApi =
           currentQ.meaningKo ||
           currentQ.meaning_ko ||
@@ -301,20 +296,23 @@ const QuizPage = () => {
           currentQ.korean ||
           "";
 
+        // 2) 정답 보기 텍스트
         const correctOptionText = Array.isArray(currentQ.options)
           ? currentQ.options[currentQ.answer] ?? ""
           : "";
 
         const finalMeaning = meaningFromApi || correctOptionText || "";
 
-        const resolvedLevel =
+        // 레벨 (✅ Lv.all 방지: 숫자만 추출)
+        const resolvedLevel = parseLevelNumber(
           currentQ.level ??
-          currentQ.wordLevel ??
-          currentQ.word_level ??
-          currentQ.difficulty ??
-          currentQ.levelId ??
-          rawLevelParam ??
-          null;
+            currentQ.wordLevel ??
+            currentQ.word_level ??
+            currentQ.difficulty ??
+            currentQ.levelId ??
+            rawLevel ??
+            null
+        );
 
         return [
           ...prev,
@@ -324,7 +322,7 @@ const QuizPage = () => {
             wrongWordId: currentQ.wrongWordId,
             meaning: finalMeaning,
             meaningKo: finalMeaning,
-            level: resolvedLevel,
+            level: resolvedLevel, // 숫자 or null
           },
         ];
       });
@@ -361,15 +359,6 @@ const QuizPage = () => {
         mode: isWrongMode ? "wrong" : "normal",
         answers: answersPayload,
       });
-
-      // ✅ WordDetailPage가 보는 study status 업데이트
-      const tasks = answersPayload
-        .filter((a) => a.wordId != null && !Number.isNaN(Number(a.wordId)))
-        .map((a) => () =>
-          a.correct ? recordStudyCorrect(a.wordId) : recordStudyWrong(a.wordId)
-        );
-
-      await runWithConcurrency(tasks, 4);
     } catch (err) {
       console.error("❌ 결과 전송 실패:", err.response?.data || err);
     }
@@ -416,7 +405,7 @@ const QuizPage = () => {
                   ? "틀렸던 단어들만 다시 객관식으로 점검합니다."
                   : "객관식 문제로 오늘 학습한 단어를 한 번 더 확인해 보세요."
               }
-              badgeLabel={badgeLabel} // ✅ domain/level 선택 안 하면 안 보임
+              badgeLabel={badgeLabel} // ✅ 선택 안 했으면 undefined -> 숨김
               badgeVariant={isWrongMode ? "orange" : "purple"}
               showBackButton
               onBack={handleGoLearningHome}
@@ -437,29 +426,42 @@ const QuizPage = () => {
               <section className="quiz-learning">
                 <main className="quiz-main">
                   <section className="quiz-question-box">
-                    <h2 className="quiz-question-text">{currentQuestion.question}</h2>
+                    <h2 className="quiz-question-text">
+                      {currentQuestion.question}
+                    </h2>
                   </section>
 
                   <section className="quiz-options-section">
                     <QuizQuestion
                       question={{
-                        choices: (currentQuestion.options || []).map((text, index) => ({
-                          id: index,
-                          text,
-                        })),
+                        choices: (currentQuestion.options || []).map(
+                          (text, index) => ({
+                            id: index,
+                            text,
+                          })
+                        ),
                         answerId: currentQuestion.answer,
                       }}
                       selectedChoiceId={selectedOption}
                       isAnswered={isAnswered}
-                      isCorrect={isAnswered && selectedOption === currentQuestion.answer}
+                      isCorrect={
+                        isAnswered && selectedOption === currentQuestion.answer
+                      }
                       onSelect={handleOptionClick}
                     />
                   </section>
 
                   <footer className="quiz-footer">
                     {isAnswered && (
-                      <Button variant="primary" full size="lg" onClick={handleNext}>
-                        {currentIndex + 1 === questions.length ? "결과 보기" : "다음 문제"}
+                      <Button
+                        variant="primary"
+                        full
+                        size="lg"
+                        onClick={handleNext}
+                      >
+                        {currentIndex + 1 === questions.length
+                          ? "결과 보기"
+                          : "다음 문제"}
                       </Button>
                     )}
                   </footer>
@@ -482,12 +484,10 @@ const QuizPage = () => {
               maxUnknownDisplay={MAX_WRONG_DISPLAY}
               getUnknownKey={(w, i) => w.wordId ?? w.text ?? i}
               getUnknownWord={(w) => w.text || w.word || ""}
-              getUnknownMeaning={(w) => w.meaningKo || w.meaning_ko || w.meaning || w.korean || ""}
-              getUnknownMetaTags={(w) => {
-                const tags = [];
-                if (w.level != null && w.level !== "") tags.push(`Lv.${w.level}`);
-                return tags;
-              }}
+              getUnknownMeaning={(w) =>
+                w.meaningKo || w.meaning_ko || w.meaning || w.korean || ""
+              }
+            
               buildMoreHintMessage={(restCount) =>
                 `그 외 ${restCount}개 단어는 오답 노트에서 계속 확인할 수 있어요.`
               }
@@ -506,7 +506,11 @@ const QuizPage = () => {
               secondaryValue={`${incorrectCount}문제`}
               secondaryProgress={
                 <ProgressBar
-                  value={animateBars ? (incorrectCount / (totalCount || 1)) * 100 : 0}
+                  value={
+                    animateBars
+                      ? (incorrectCount / (totalCount || 1)) * 100
+                      : 0
+                  }
                   variant="warning"
                   showLabel={false}
                   className="quiz-stat-progress"

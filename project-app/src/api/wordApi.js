@@ -172,27 +172,29 @@ const mockDelay = (result, ms = 200) =>
  * 품사 값 통일: DB / API 값 → 프론트 공통 포맷
  * - 소문자, 축약형 등 섞여 들어와도 UI에서는 Noun/Verb/Adj/Adv로 통일
  */
+// src/api/wordApi.js
 const normalizePartOfSpeech = (raw) => {
   if (!raw) return null;
   const v = String(raw).trim().toLowerCase();
 
-  switch (v) {
-    case "noun":
-    case "n":
-      return "Noun";
-    case "verb":
-    case "v":
-      return "Verb";
-    case "adjective":
-    case "adj":
-      return "Adj";
-    case "adverb":
-    case "adv":
-      return "Adv";
-    default:
-      return v.charAt(0).toUpperCase() + v.slice(1);
+  if (v === "noun" || v === "n") return "Noun";
+
+  if (
+    v === "verb" ||
+    v === "v" ||
+    v === "linking verb" ||
+    v === "modal verb"
+  ) {
+    return "Verb";
   }
+
+  if (v === "adjective" || v === "adj" || v === "adj.") return "Adjective";
+  if (v === "adverb" || v === "adv" || v === "adv.") return "Adverb";
+
+  // 그 외는 Title Case로
+  return v.replace(/\b\w/g, (c) => c.toUpperCase());
 };
+
 
 /**
  * 공통 매핑: 백엔드/Mock → 프론트 공통 형태

@@ -147,6 +147,17 @@ export async function checkEmailDuplicate(email) {
   return res.data; // { exists, message }
 }
 
+/**
+ * 닉네임 중복 체크
+ * Backend: POST /api/auth/check-nickname
+ * Request: { nickname: string }
+ * Response: { exists: boolean, message: string }
+ */
+// src/api/authApi.js
+export async function checkNicknameDuplicate(nickname) {
+  const res = await httpClient.post("/api/auth/check-nickname", { nickname });
+  return res.data; // { exists, message }
+}
 
 /**
  * 회원가입

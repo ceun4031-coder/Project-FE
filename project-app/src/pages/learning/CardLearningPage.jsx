@@ -342,11 +342,6 @@ export default function CardLearningPage() {
             getUnknownKey={(item, index) => item.wordId ?? index}
             getUnknownWord={(item) => item.word || ""}
             getUnknownMeaning={(item) => item.meaning || ""}
-            getUnknownMetaTags={(item) => {
-              const tags = [];
-              if (item.level != null) tags.push(`Lv.${item.level}`);
-              return tags;
-            }}
             buildMoreHintMessage={(restCount) =>
               `그 외 ${restCount}개 단어는 오답 노트에서 계속 확인할 수 있어요.`
             }

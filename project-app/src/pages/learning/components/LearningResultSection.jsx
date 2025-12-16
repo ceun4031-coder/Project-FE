@@ -83,9 +83,6 @@ export function LearningResultSection({
 
   const defaultGetUnknownMetaTags = (item) => {
     const tags = [];
-    if (item.level !== undefined && item.level !== null) {
-      tags.push(`Lv.${item.level}`);
-    }
     if (item.partOfSpeech) {
       tags.push(item.partOfSpeech);
     }
