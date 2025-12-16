@@ -9,7 +9,7 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import TodayWordCard from "../words/components/TodayWordCard";
 import PasswordInput from "./components/PasswordInput";
-import BirthdateSelector from "./components/BirthdateSelector";
+import BirthdateSelector from "@/components/common/BirthdateSelector";
 
 import { useSignupForm } from "./hooks/useSignupForm";
 

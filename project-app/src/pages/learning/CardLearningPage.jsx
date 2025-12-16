@@ -17,6 +17,29 @@ import Spinner from "../../components/common/Spinner";
 const MAX_UNKNOWN_DISPLAY = 20;
 const DEFAULT_LIMIT = 20;
 
+// ✅ UI 레벨 라벨(뱃지용): 1/2/3 => 초급/중급/고급
+function toLevelBadgeLabel(rawLevel) {
+  if (!rawLevel) return "All";
+
+  const s = String(rawLevel).trim();
+  const lower = s.toLowerCase();
+
+  if (lower === "all") return "All";
+
+  // "Lv.1", "lv1", "1" 모두 처리
+  const normalized = lower.replace(/^lv\.?\s*/i, "");
+  const n = Number(normalized);
+
+  if (!Number.isFinite(n)) return s;
+
+  if (n === 1) return "초급";
+  if (n === 2) return "중급";
+  if (n === 3) return "고급";
+
+  // 그 외 숫자는 기존처럼 Lv.N 형태로 표시
+  return `Lv.${n}`;
+}
+
 export default function CardLearningPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -60,14 +83,15 @@ export default function CardLearningPage() {
 
   const rawLevel = searchParams.get("level");
   const rawLevelLower = rawLevel ? rawLevel.toLowerCase() : null;
-  const levelLabel = !rawLevelLower || rawLevelLower === "all" ? "All" : rawLevel;
 
-  const badgeText = `${domainLabel} ${levelLabel}`;
+  // ✅ 여기만 변경: 뱃지에 1/2/3 대신 초급/중급/고급
+  const levelLabel = toLevelBadgeLabel(rawLevel);
+
+  const badgeText = `${domainLabel} | ${levelLabel}`;
   const isWrongMode = source === "wrong-note";
 
   // API용 (null/All/all이면 undefined로 제거)
-  const apiLevel =
-    !rawLevelLower || rawLevelLower === "all" ? undefined : rawLevel;
+  const apiLevel = !rawLevelLower || rawLevelLower === "all" ? undefined : rawLevel;
   const apiCategory = rawDomain === "All" ? undefined : rawDomain;
 
   // 상태값
@@ -87,10 +111,7 @@ export default function CardLearningPage() {
     .filter(Boolean)
     .join(" ");
 
-  const learningSectionClass = [
-    "card-learning",
-    isWrongMode ? "card-learning--wrong" : null,
-  ]
+  const learningSectionClass = ["card-learning", isWrongMode ? "card-learning--wrong" : null]
     .filter(Boolean)
     .join(" ");
 

@@ -408,7 +408,7 @@ const StoryCreatePage = () => {
             {hasMoreMistakes && (
               <div className="mistake-footer">
                 <span className="mistake-more-text">
-                  상단 고정/선택 우선, 최대 {MAX_VISIBLE_MISTAKES}개만 표시 중
+                  최대 {MAX_VISIBLE_MISTAKES}개만 표시 중
                 </span>
              <button
   type="button"

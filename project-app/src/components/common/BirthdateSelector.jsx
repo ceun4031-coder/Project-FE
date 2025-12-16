@@ -4,9 +4,8 @@ import FilterDropdown from "@/components/common/FilterDropdown";
 import "./BirthdateSelector.css";
 
 const CURRENT_YEAR = new Date().getFullYear();
-const MIN_YEAR = CURRENT_YEAR - 80; // 80년 전까지
-const MAX_YEAR = CURRENT_YEAR - 10; // 최소 10살 기준
-
+const MIN_YEAR = CURRENT_YEAR - 120;
+const MAX_YEAR = CURRENT_YEAR;
 const YEAR_OPTIONS = [
   { label: "연도 선택", value: "" },
   ...Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, idx) => {

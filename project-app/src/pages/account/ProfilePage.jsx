@@ -5,7 +5,8 @@ import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import FilterDropdown from "../../components/common/FilterDropdown";
-import { Calendar } from "lucide-react";
+
+import BirthdateSelector from "@/components/common/BirthdateSelector";
 import "./ProfilePage.css";
 
 const INTEREST_OPTIONS = [
@@ -89,54 +90,54 @@ const ProfilePage = () => {
     setOpenDropdown(null);
   };
 
-const submitProfile = async (e) => {
-  e.preventDefault();
+  const submitProfile = async (e) => {
+    e.preventDefault();
 
-  try {
-    /* 1️⃣ 기본 정보 + 학습 설정 저장 */
-    const updated = await updateUserInfo(profileForm);
+    try {
+      /* 1️⃣ 기본 정보 + 학습 설정 저장 */
+      const updated = await updateUserInfo(profileForm);
 
-    updateProfileState({
-      nickname: updated?.nickname ?? profileForm.nickname,
-      preference: updated?.preference ?? profileForm.preference,
-      goal: updated?.goal ?? profileForm.goal,
-      dailyWordGoal:
-        updated?.dailyWordGoal ?? profileForm.dailyWordGoal,
-      userBirth: updated?.userBirth ?? profileForm.userBirth,
-    });
+      updateProfileState({
+        nickname: updated?.nickname ?? profileForm.nickname,
+        preference: updated?.preference ?? profileForm.preference,
+        goal: updated?.goal ?? profileForm.goal,
+        dailyWordGoal:
+          updated?.dailyWordGoal ?? profileForm.dailyWordGoal,
+        userBirth: updated?.userBirth ?? profileForm.userBirth,
+      });
 
-    /* 2️⃣ 비밀번호 입력이 있으면 비밀번호 변경 */
-    const hasPasswordInput =
-      passwordForm.currentPassword ||
-      passwordForm.newPassword ||
-      passwordForm.confirmPassword;
+      /* 2️⃣ 비밀번호 입력이 있으면 비밀번호 변경 */
+      const hasPasswordInput =
+        passwordForm.currentPassword ||
+        passwordForm.newPassword ||
+        passwordForm.confirmPassword;
 
-    if (hasPasswordInput) {
-      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        alert("새 비밀번호가 일치하지 않습니다.");
-        return;
+      if (hasPasswordInput) {
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+          alert("새 비밀번호가 일치하지 않습니다.");
+          return;
+        }
+
+        await changePassword({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+          confirmNewPassword: passwordForm.confirmPassword,
+        });
+
+        // 비밀번호 입력값 초기화
+        setPasswordForm({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       }
 
-      await changePassword({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-        confirmNewPassword: passwordForm.confirmPassword,
-      });
-
-      // 비밀번호 입력값 초기화
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      alert("변경사항이 저장되었습니다.");
+    } catch (error) {
+      console.error(error);
+      alert("저장 중 오류가 발생했습니다.");
     }
-
-    alert("변경사항이 저장되었습니다.");
-  } catch (error) {
-    console.error(error);
-    alert("저장 중 오류가 발생했습니다.");
-  }
-};
+  };
 
 
   /* 비밀번호 변경 */
@@ -220,19 +221,18 @@ const submitProfile = async (e) => {
                 </div>
 
                 <div className="form-field form-field--with-icon">
-                  <label className="form-label" htmlFor="userBirth">
-                    생년월일
-                  </label>
-                  <Input
-                    id="userBirth"
-                    type="date"
-                    name="userBirth"
-                    value={profileForm.userBirth}
-                    onChange={handleProfileChange}
-                    leftIcon={<Calendar size={18} />}
-                    fullWidth
-                  />
-                </div>
+  <label className="form-label" htmlFor="userBirth">
+    생년월일
+  </label>
+
+  <BirthdateSelector
+    name="userBirth"
+    value={profileForm.userBirth}
+    onChange={handleProfileChange}
+    error={null}
+  />
+</div>
+
               </div>
             </div>
 

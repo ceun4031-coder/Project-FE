@@ -1,11 +1,11 @@
 // src/pages/wrongnote/WrongNotePage.jsx
 import { BookOpen, FileQuestion, Layers, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
 
 import EmptyState from "../../components/common/EmptyState";
 import FilterDropdown from "../../components/common/FilterDropdown";
 import Pagination from "../../components/common/Pagination";
 import { WrongNoteItem } from "./components/WrongNoteItem";
-// hook 분리
 import { useWrongNoteController } from "./hooks/useWrongNoteController";
 
 import "./WrongNotePage.css";
@@ -18,26 +18,20 @@ const SORT_FILTER_OPTIONS = [
 
 export default function WrongNotePage() {
   const {
- // data
-    rawItems,
     isLoading,
     isError,
     refetch,
 
-    // ui state
     tab,
     isStoryTab,
     filters,
     openDropdown,
     page,
     setPage,
-    selectedIds,
     selectedIdSet,
     selectedCount,
 
-    // derived
     tabCounts,
-    processedItems,
     pagedItems,
     totalPages,
     isSortActive,
@@ -47,13 +41,11 @@ export default function WrongNotePage() {
     hintText,
     emptyTextByTab,
 
-    // view flags
     showEmptyNoData,
     showControls,
     showTable,
     showEmptyFiltered,
 
-    // handlers
     toggleSelectId,
     toggleSelectPage,
     clearSelection,
@@ -67,13 +59,32 @@ export default function WrongNotePage() {
     goBack,
   } = useWrongNoteController();
 
+  /* ============================================================================
+   * Header checkbox: indeterminate(부분 선택) 지원
+   * ========================================================================== */
+  const pageCheckboxRef = useRef(null);
+
+  const pageSelectedCount = useMemo(() => {
+    if (!pagedItems.length) return 0;
+    let c = 0;
+    for (const it of pagedItems) if (selectedIdSet.has(it.wrongWordId)) c += 1;
+    return c;
+  }, [pagedItems, selectedIdSet]);
+
+  const allSelectedOnPage = pagedItems.length > 0 && pageSelectedCount === pagedItems.length;
+  const someSelectedOnPage = pageSelectedCount > 0 && !allSelectedOnPage;
+
+  useEffect(() => {
+    if (pageCheckboxRef.current) {
+      pageCheckboxRef.current.indeterminate = someSelectedOnPage;
+    }
+  }, [someSelectedOnPage]);
+
   return (
     <div className="page-container wrongnote-page">
       <header className="wrongnote-header">
         <h1>오답 노트</h1>
-        <p className="wrongnote-header__subtitle">
-          틀렸던 단어들을 모아서 다시 학습합니다.
-        </p>
+        <p className="wrongnote-header__subtitle">틀렸던 단어들을 모아서 다시 학습합니다.</p>
       </header>
 
       {isLoading && <div className="wrongnote-list__loading">로딩 중...</div>}
@@ -81,7 +92,7 @@ export default function WrongNotePage() {
       {isError && !isLoading && (
         <div className="wrongnote-list__error">
           <p>오답 기록을 불러오는 중 오류가 발생했습니다.</p>
-          <button className="retry-btn" onClick={() => refetch()}>
+          <button className="retry-btn" onClick={refetch}>
             다시 시도
           </button>
         </div>
@@ -229,18 +240,16 @@ export default function WrongNotePage() {
           )}
 
           {showTable && (
-            <>
+            <div className="wrongnote-table-wrap">
               <table className="wrongnote-table">
                 <thead>
                   <tr>
                     <th>
                       <input
+                        ref={pageCheckboxRef}
                         type="checkbox"
                         className="sl-checkbox"
-                        checked={
-                          pagedItems.length > 0 &&
-                          pagedItems.every((item) => selectedIdSet.has(item.wrongWordId))
-                        }
+                        checked={allSelectedOnPage}
                         onChange={(e) => toggleSelectPage(e.target.checked)}
                         title={isStoryTab ? "현재 페이지 전체 선택(스토리는 최대 5개 cap)" : undefined}
                         aria-label="현재 페이지 전체 선택"
@@ -272,7 +281,7 @@ export default function WrongNotePage() {
                   <Pagination page={page} totalPages={totalPages} onChange={setPage} />
                 </div>
               )}
-            </>
+            </div>
           )}
         </section>
       )}

@@ -10,7 +10,7 @@ import { QuizQuestion } from "./components/QuizQuestion";
 import "./QuizPage.css";
 
 import { fetchQuizzes, submitQuizResult } from "../../api/quizApi";
-
+import { recordStudyCorrect, recordStudyWrong } from "../../api/studyApi";
 import { LearningProgressHeader } from "../learning/components/LearningProgressHeader";
 import { LearningResultSection } from "../learning/components/LearningResultSection";
 
@@ -43,6 +43,27 @@ const extractWordFromQuestion = (q) => {
     .replace(/^[\[\(]+/, "")
     .replace(/[\]\)\?:]+$/, "")
     .trim();
+};
+const runWithConcurrency = async (tasks, concurrency = 4) => {
+  const results = [];
+  let idx = 0;
+
+  const worker = async () => {
+    while (idx < tasks.length) {
+      const cur = idx++;
+      try {
+        results[cur] = await tasks[cur]();
+      } catch (e) {
+        console.error("study 기록 실패:", e?.response?.data || e);
+        results[cur] = null; // 실패해도 전체는 계속
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker())
+  );
+  return results;
 };
 
 const QuizPage = () => {
@@ -310,6 +331,13 @@ const QuizPage = () => {
         mode: isWrongMode ? "wrong" : "normal",
         answers: answersPayload,
       });
+      // ✅ WordDetailPage가 보는 study status 업데이트
+   const tasks = answersPayload
+     .filter((a) => a.wordId != null && !Number.isNaN(Number(a.wordId)))
+     .map((a) => () =>
+       a.correct ? recordStudyCorrect(a.wordId) : recordStudyWrong(a.wordId)
+     );
+   await runWithConcurrency(tasks, 4);
     } catch (err) {
       console.error("❌ 결과 전송 실패:", err.response?.data || err);
     }
