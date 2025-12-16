@@ -9,19 +9,6 @@ import "./StoryCreatePage.css";
 import { generateAiStory } from "../../api/aiStoryApi";
 import { getUnusedWrongLogs } from "../../api/wrongApi";
 
-/**
- * StoryCreatePage
- *
- * 백엔드 수정 없이 사용(현재 wrongApi.getUnusedWrongLogs가 flat DTO로 내려주도록 정규화함)
- *  - mistakePool item: { wrongWordId, wordId, word, meaning }
- *
- * 동작:
- *  1) 스토리에 아직 사용되지 않은 오답 목록 로드
- *  2) (옵션) Quiz/WrongNote에서 넘어온 값으로 자동 선택(최대 5개)
- *  3) 선택된 wrongWordId들로 /api/ai/story 생성 요청
- *  4) 성공 시 /stories/{storyId} 로 이동 (state로 story를 넘기지 않음)
- */
-
 const MAX_SELECTED_WORDS = 5;
 const MAX_VISIBLE_MISTAKES = 15;
 
@@ -30,27 +17,26 @@ const StoryCreatePage = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  /* ============================================================================
-   * State
-   * ========================================================================== */
-
-  // 스토리에 아직 사용되지 않은 오답 풀(화면용 flat DTO)
+  // 미사용 오답 풀 (flat DTO)
+  // 권장 필드: { wrongWordId, wordId, word, meaning, wrongAt?, totalWrong? }
   const [mistakePool, setMistakePool] = useState([]);
   const [loadingMistakes, setLoadingMistakes] = useState(true);
 
-  // 선택된 오답(실제 요청에 쓰는 PK: wrongWordId)
-  // item: { wrongWordId, wordId, word, meaning }
+  // 선택된 오답 (mistakePool item 그대로 보관)
   const [selected, setSelected] = useState([]);
 
-  // 생성 상태
+  // ✅ 퀴즈/오답노트에서 넘어온 오답: "상단 고정" (선택 여부와 무관)
+  const [pinnedIds, setPinnedIds] = useState([]);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [initializedFromParams, setInitializedFromParams] = useState(false);
 
   const state = location.state || {};
-  const hasQuizWords = Array.isArray(state.wrongWords) && state.wrongWords.length > 0;
+  const incomingWrongWords = Array.isArray(state.wrongWords) ? state.wrongWords : [];
+  const hasQuizWords = incomingWrongWords.length > 0;
 
   /* ============================================================================
-   * Utils (유입 state/query를 최소한으로만 해석)
+   * Utils
    * ========================================================================== */
 
   const toNumberOrNull = (v) => {
@@ -58,8 +44,12 @@ const StoryCreatePage = () => {
     return Number.isFinite(n) ? n : null;
   };
 
-  // Quiz/WrongNote에서 넘어온 item을 "가능한 범위에서" 읽어오는 최소 파서
-  // (백엔드 수정이 아니라 프론트 라우팅 state 포맷이 흔들릴 수 있어서 방어 최소치만 둠)
+  const toTime = (v) => {
+    if (!v) return 0;
+    const t = Date.parse(v);
+    return Number.isFinite(t) ? t : 0;
+  };
+
   const parseIncoming = (item) => {
     if (!item || typeof item !== "object") return { id: null, text: "" };
 
@@ -74,16 +64,107 @@ const StoryCreatePage = () => {
     return { id, text };
   };
 
+  // ✅ "항상 최신순" 기준 (wrongAt desc 우선, 없으면 wrongWordId desc로 fallback)
+  const compareByLatest = (a, b) => {
+    const ta = toTime(a?.wrongAt);
+    const tb = toTime(b?.wrongAt);
+    if (tb !== ta) return tb - ta;
+
+    const ia = Number(a?.wrongWordId ?? 0);
+    const ib = Number(b?.wrongWordId ?? 0);
+    if (ib !== ia) return ib - ia;
+
+    const sa = String(a?.word ?? "").toLowerCase();
+    const sb = String(b?.word ?? "").toLowerCase();
+    if (sa < sb) return -1;
+    if (sa > sb) return 1;
+    return 0;
+  };
+
   /* ============================================================================
-   * Derived
+   * Derived: indexes
    * ========================================================================== */
 
-  const isFull = selected.length >= MAX_SELECTED_WORDS;
-  const visibleMistakes = useMemo(
-    () => mistakePool.slice(0, MAX_VISIBLE_MISTAKES),
-    [mistakePool]
+  const poolIndex = useMemo(() => {
+    const byId = new Map();
+    const byWordLower = new Map();
+
+    for (const m of Array.isArray(mistakePool) ? mistakePool : []) {
+      const id = toNumberOrNull(m?.wrongWordId);
+      if (id != null) byId.set(id, m);
+
+      const w = typeof m?.word === "string" ? m.word.trim().toLowerCase() : "";
+      if (!w) continue;
+
+      // 같은 word가 여러 개면 더 최신 것을 저장
+      const prev = byWordLower.get(w);
+      if (!prev || compareByLatest(m, prev) < 0) {
+        // compareByLatest는 "내림차순" 정렬 기준이라, m이 더 최신이면 m이 앞(작은 값)이어야 함
+        // 그래서 여기서는 compareByLatest(m, prev) < 0 이면 m이 더 우선
+        byWordLower.set(w, m);
+      }
+    }
+
+    return { byId, byWordLower };
+  }, [mistakePool]);
+
+  const selectedIdSet = useMemo(
+    () => new Set(selected.map((s) => Number(s.wrongWordId))),
+    [selected]
   );
-  const hasMoreMistakes = mistakePool.length > MAX_VISIBLE_MISTAKES;
+
+  const pinnedIdSet = useMemo(
+    () => new Set(pinnedIds.map((v) => Number(v))),
+    [pinnedIds]
+  );
+
+  /* ============================================================================
+   * Derived: ordered list
+   * 요구사항:
+   *  1) 퀴즈/오답노트 유입 오답(pinned) "항상 상단"
+   *  2) 선택한 항목도 상단에 유지(단, pinned 다음)
+   *  3) 나머지는 항상 최신순
+   * ========================================================================== */
+
+  const pinnedItemsSorted = useMemo(() => {
+    const items = pinnedIds
+      .map((id) => poolIndex.byId.get(Number(id)))
+      .filter(Boolean);
+
+    // pinned도 최신순 유지
+    items.sort(compareByLatest);
+    return items;
+  }, [pinnedIds, poolIndex.byId]);
+
+  const selectedNonPinnedSorted = useMemo(() => {
+    const items = selected.filter((s) => !pinnedIdSet.has(Number(s.wrongWordId)));
+    items.sort(compareByLatest);
+    return items;
+  }, [selected, pinnedIdSet]);
+
+  const restSorted = useMemo(() => {
+    const items = (Array.isArray(mistakePool) ? mistakePool : []).filter((m) => {
+      const id = Number(m.wrongWordId);
+      if (pinnedIdSet.has(id)) return false;
+      if (selectedIdSet.has(id)) return false;
+      return true;
+    });
+
+    items.sort(compareByLatest);
+    return items;
+  }, [mistakePool, pinnedIdSet, selectedIdSet]);
+
+  const orderedMistakes = useMemo(() => {
+    return [...pinnedItemsSorted, ...selectedNonPinnedSorted, ...restSorted];
+  }, [pinnedItemsSorted, selectedNonPinnedSorted, restSorted]);
+
+  const visibleMistakes = useMemo(
+    () => orderedMistakes.slice(0, MAX_VISIBLE_MISTAKES),
+    [orderedMistakes]
+  );
+
+  const hasMoreMistakes = orderedMistakes.length > MAX_VISIBLE_MISTAKES;
+  const isFull = selected.length >= MAX_SELECTED_WORDS;
 
   /* ============================================================================
    * Navigation
@@ -95,103 +176,115 @@ const StoryCreatePage = () => {
   };
 
   const handleOpenMistakePage = () => {
-    navigate("/learning/wrong-notes");
+    navigate("/learning/wrong-notes?tab=story");
   };
 
   /* ============================================================================
-   * Data Load: unused wrong logs
+   * Load
    * ========================================================================== */
 
   useEffect(() => {
+    let alive = true;
+
     const fetchMistakes = async () => {
       try {
         setLoadingMistakes(true);
         const res = await getUnusedWrongLogs();
+        if (!alive) return;
         setMistakePool(Array.isArray(res) ? res : []);
       } catch (e) {
         console.error("오답 목록 로딩 실패:", e);
+        if (!alive) return;
         setMistakePool([]);
       } finally {
+        if (!alive) return;
         setLoadingMistakes(false);
       }
     };
 
     fetchMistakes();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   /* ============================================================================
-   * Auto Select: from location.state.wrongWords and/or ?wrongWordIds=
+   * Auto Pin + Auto Select
+   * 요구사항:
+   *  - 퀴즈 오답이 5개 이상이어도 "유입된 오답 전체"를 상단 고정
+   *  - 자동 선택은 최대 5개만 (나머지는 고정만)
    * ========================================================================== */
 
   useEffect(() => {
     if (initializedFromParams || loadingMistakes) return;
 
-    const selectedMap = new Map(); // key: wrongWordId, value: item
+    const pinnedSet = new Set();
+    const addPinned = (id) => {
+      const n = toNumberOrNull(id);
+      if (n == null) return;
+      if (pinnedSet.has(n)) return;
+      // pool에 있는(=미사용 오답) 것만 고정 대상으로 인정
+      if (!poolIndex.byId.has(n)) return;
+      pinnedSet.add(n);
+    };
 
-    // 1) state.wrongWords → id 우선 매칭, 없으면 text로 pool에서 매칭(최소 fallback)
-    const incoming = Array.isArray(state.wrongWords) ? state.wrongWords : [];
-    for (const it of incoming) {
-      if (selectedMap.size >= MAX_SELECTED_WORDS) break;
-
+    // 1) state.wrongWords → id 우선, 없으면 word로 매칭
+    for (const it of incomingWrongWords) {
       const { id, text } = parseIncoming(it);
 
-      // id로 우선 매칭
       if (id != null) {
-        const found = mistakePool.find((m) => Number(m.wrongWordId) === id);
-        if (found && !selectedMap.has(found.wrongWordId)) {
-          selectedMap.set(found.wrongWordId, found);
-        }
+        addPinned(id);
         continue;
       }
 
-      // id가 없으면 text로만 최소 매칭
       if (text) {
-        const lower = text.toLowerCase();
-        const found = mistakePool.find(
-          (m) => typeof m.word === "string" && m.word.toLowerCase() === lower
-        );
-        if (found && !selectedMap.has(found.wrongWordId)) {
-          selectedMap.set(found.wrongWordId, found);
-        }
+        const found = poolIndex.byWordLower.get(text.toLowerCase());
+        if (found?.wrongWordId != null) addPinned(found.wrongWordId);
       }
     }
 
-    // 2) query: /stories/create?wrongWordIds=1,2,3
-    if (selectedMap.size < MAX_SELECTED_WORDS) {
-      const idsParam = searchParams.get("wrongWordIds");
-      if (idsParam) {
-        const ids = idsParam
-          .split(",")
-          .map((v) => toNumberOrNull(v.trim()))
-          .filter((n) => n != null);
-
-        for (const id of ids) {
-          if (selectedMap.size >= MAX_SELECTED_WORDS) break;
-          const found = mistakePool.find((m) => Number(m.wrongWordId) === id);
-          if (found && !selectedMap.has(found.wrongWordId)) {
-            selectedMap.set(found.wrongWordId, found);
-          }
-        }
-      }
+    // 2) query: wrongWordIds=1,2,3
+    const idsParam = searchParams.get("wrongWordIds");
+    if (idsParam) {
+      const ids = idsParam
+        .split(",")
+        .map((v) => toNumberOrNull(v.trim()))
+        .filter((n) => n != null);
+      for (const id of ids) addPinned(id);
     }
 
-    const initial = Array.from(selectedMap.values());
-    if (initial.length > 0) setSelected(initial);
+    const pinnedArr = Array.from(pinnedSet);
+
+    // ✅ pinned 전체 상단 고정
+    if (pinnedArr.length > 0) setPinnedIds(pinnedArr);
+
+    // ✅ 자동 선택은 pinned 중 최신순 기준 상위 5개
+    if (pinnedArr.length > 0) {
+      const pinnedItems = pinnedArr
+        .map((id) => poolIndex.byId.get(id))
+        .filter(Boolean)
+        .sort(compareByLatest);
+
+      setSelected(pinnedItems.slice(0, MAX_SELECTED_WORDS));
+    }
 
     setInitializedFromParams(true);
   }, [
     initializedFromParams,
     loadingMistakes,
-    mistakePool,
+    incomingWrongWords,
     searchParams,
-    state.wrongWords,
+    poolIndex.byId,
+    poolIndex.byWordLower,
   ]);
 
   /* ============================================================================
-   * Selection Handlers (기준: wrongWordId)
+   * Selection
    * ========================================================================== */
 
   const toggleSelect = (item) => {
+    if (isGenerating) return;
+
     const id = toNumberOrNull(item?.wrongWordId);
     if (!id) return;
 
@@ -227,7 +320,6 @@ const StoryCreatePage = () => {
   const handleGenerate = async () => {
     if (selected.length === 0 || isGenerating) return;
 
-    // 백엔드 기준: wrongAnswerLogIds = WRONG_ANSWER_LOG의 PK 목록(= wrongWordId)
     const wrongAnswerLogIds = selected
       .map((s) => toNumberOrNull(s.wrongWordId))
       .filter((n) => n != null);
@@ -241,12 +333,10 @@ const StoryCreatePage = () => {
       setIsGenerating(true);
 
       const aiResult = await generateAiStory({ wrongAnswerLogIds });
-
       if (!aiResult?.success) {
         throw new Error(aiResult?.message || "AI 스토리 생성에 실패했습니다.");
       }
 
-      // 상세 페이지는 서버에서 다시 로딩하므로 state 전달 제거
       navigate(`/stories/${aiResult.storyId}`);
     } catch (e) {
       console.error("스토리 생성 실패:", e);
@@ -260,10 +350,11 @@ const StoryCreatePage = () => {
    * Render
    * ========================================================================== */
 
+  const pinnedCount = pinnedItemsSorted.length;
+
   return (
     <div className="page-container">
       <div className="story-page story-create-page">
-        {/* 상단 네비게이션 */}
         <nav className="story-nav">
           <button type="button" onClick={handleBack} className="nav-back-btn">
             <ArrowLeft size={18} />
@@ -272,9 +363,7 @@ const StoryCreatePage = () => {
           <span className="nav-badge">AI Story</span>
         </nav>
 
-        {/* 메인 레이아웃 */}
         <div className="create-layout">
-          {/* LEFT: 오답 노트 */}
           <aside className="mistake-sidebar">
             <div className="mistake-header">
               <h3>
@@ -285,7 +374,9 @@ const StoryCreatePage = () => {
               </span>
             </div>
 
-            <p className="mistake-desc">최근 퀴즈에서 실수한 단어들입니다.</p>
+       <p className="mistake-desc">
+  단어를 선택해 스토리를 만들 수 있어요. 목록은 최신 오답부터 표시됩니다.
+</p>
 
             <div className="mistake-list">
               {loadingMistakes && (
@@ -294,9 +385,8 @@ const StoryCreatePage = () => {
 
               {!loadingMistakes &&
                 visibleMistakes.map((item) => {
-                  const isSelected = selected.some(
-                    (s) => Number(s.wrongWordId) === Number(item.wrongWordId)
-                  );
+                  const id = Number(item.wrongWordId);
+                  const isSelected = selectedIdSet.has(id);
 
                   return (
                     <div
@@ -305,7 +395,8 @@ const StoryCreatePage = () => {
                       onClick={() => toggleSelect(item)}
                     >
                       <div className="card-top">
-                        <span className="card-word">{item.word}</span>
+                       <span className="card-word">{item.word}</span>
+
                         {isSelected && <span className="selected-mark">선택됨</span>}
                       </div>
                       <div className="card-meaning">{item.meaning}</div>
@@ -317,20 +408,20 @@ const StoryCreatePage = () => {
             {hasMoreMistakes && (
               <div className="mistake-footer">
                 <span className="mistake-more-text">
-                  최근 오답 {MAX_VISIBLE_MISTAKES}개만 표시 중
+                  상단 고정/선택 우선, 최대 {MAX_VISIBLE_MISTAKES}개만 표시 중
                 </span>
-                <button
-                  type="button"
-                  className="mistake-more-btn"
-                  onClick={handleOpenMistakePage}
-                >
-                  전체 보기
-                </button>
+             <button
+  type="button"
+  className="mistake-more-btn"
+  onClick={handleOpenMistakePage}
+>
+  전체 보기
+</button>
+
               </div>
             )}
           </aside>
 
-          {/* RIGHT: 스토리 빌더 */}
           <main className="builder-main">
             <header className="builder-header">
               <div className="builder-heading">
@@ -340,21 +431,16 @@ const StoryCreatePage = () => {
                 </div>
                 <p className="builder-heading-desc">
                   {hasQuizWords
-                    ? "방금 퀴즈에서 틀린 단어들이 자동으로 선택되었습니다. 필요하면 좌측에서 단어를 더 선택하거나 해제하세요."
+                    ? `유입된 오답은 상단 고정됩니다. 자동 선택은 최대 ${MAX_SELECTED_WORDS}개만 되며, 필요하면 좌측에서 교체 선택하세요.`
                     : "좌측에서 단어를 선택하면, 해당 단어들로 연습용 영어 스토리를 만들어 드립니다."}
                 </p>
               </div>
 
-              <span
-                className={`nav-badge nav-badge--small ${
-                  isFull ? "nav-badge--alert" : ""
-                }`}
-              >
+              <span className={`nav-badge nav-badge--small ${isFull ? "nav-badge--alert" : ""}`}>
                 {selected.length} / {MAX_SELECTED_WORDS}
               </span>
             </header>
 
-            {/* 선택된 단어 섹션 */}
             <section className="selected-words">
               <div className="selected-words-header">
                 <div className="selected-words-text">
@@ -369,6 +455,7 @@ const StoryCreatePage = () => {
                     type="button"
                     className="chips-clear-btn"
                     onClick={handleClearAll}
+                    disabled={isGenerating}
                   >
                     전체 해제
                   </button>
@@ -386,7 +473,11 @@ const StoryCreatePage = () => {
                         <button
                           type="button"
                           className="chip-remove"
-                          onClick={() => removeSelected(item.wrongWordId)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeSelected(item.wrongWordId);
+                          }}
+                          disabled={isGenerating}
                         >
                           <X size={14} strokeWidth={3} />
                         </button>
@@ -397,7 +488,6 @@ const StoryCreatePage = () => {
               </div>
             </section>
 
-            {/* 하단 버튼 영역 */}
             <div className="builder-footer">
               <Button
                 full
@@ -411,7 +501,6 @@ const StoryCreatePage = () => {
           </main>
         </div>
 
-        {/* 생성 중 모달 스피너 */}
         {isGenerating && (
           <div className="story-generate-overlay">
             <div className="story-generate-modal">

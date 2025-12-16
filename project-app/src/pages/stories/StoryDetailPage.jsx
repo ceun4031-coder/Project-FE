@@ -74,10 +74,7 @@ const StoryDetailPage = () => {
 
   /* -------- handlers -------- */
 
-  const handleBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate("/stories");
-  };
+  const handleBack = () => { navigate("/stories");};
 
   const handleDelete = async () => {
     if (!window.confirm("정말 이 스토리를 삭제할까요?")) return;
@@ -251,8 +248,8 @@ const StoryDetailPage = () => {
 
               <hr className="story-divider" />
 
-              <div className="story-korean">
                 <div className="ko-label">한국어 번역</div>
+              <div className="story-korean">
                 {titleKo && (
                   <p className="ko-title">{titleKo}</p>
                 )}

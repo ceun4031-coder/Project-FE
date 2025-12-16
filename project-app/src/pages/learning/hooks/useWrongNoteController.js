@@ -1,6 +1,6 @@
 // src/pages/wrongnote/hooks/useWrongNoteController.js
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getWrongList } from "@/api/wrongApi";
 
@@ -20,9 +20,22 @@ const getLastWrongTime = (item) => {
 
 export function useWrongNoteController() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  /* ============================================================================
+   * Tab: URL (?tab=story) > location.state.tab > default(study)
+   * ========================================================================== */
+
+  const getTabFromRoute = useCallback(() => {
+    const q = String(searchParams.get("tab") || "").toLowerCase();
+    const s = String(location.state?.tab || "").toLowerCase();
+    const t = q || s;
+    return t === "story" ? "story" : "study";
+  }, [searchParams, location.state]);
 
   // tab: study | story
-  const [tab, setTab] = useState("study");
+  const [tab, setTab] = useState(getTabFromRoute);
   const isStoryTab = tab === "story";
 
   // filters
@@ -33,7 +46,21 @@ export function useWrongNoteController() {
   const [page, setPage] = useState(0);
   const [openDropdown, setOpenDropdown] = useState(null); // "sort" | null
 
-  // data
+  // URL 변경(뒤로/앞으로/직접 진입) 시 tab 동기화
+  useEffect(() => {
+    const nextTab = getTabFromRoute();
+    if (nextTab !== tab) {
+      setTab(nextTab);
+      setPage(0);
+      setSelectedIds([]);
+      setOpenDropdown(null);
+    }
+  }, [getTabFromRoute, tab]);
+
+  /* ============================================================================
+   * Data
+   * ========================================================================== */
+
   const {
     data: rawItems = [],
     isLoading,
@@ -43,6 +70,10 @@ export function useWrongNoteController() {
     queryKey: ["wrongNotes", "list"],
     queryFn: getWrongList,
   });
+
+  /* ============================================================================
+   * Derived
+   * ========================================================================== */
 
   // tab counts (1 pass)
   const tabCounts = useMemo(() => {
@@ -64,15 +95,13 @@ export function useWrongNoteController() {
       if (!Number.isNaN(n)) out.push(n);
     }
     return out;
-  }, [selectedIds.length, rawItems, selectedIdSet]);
+  }, [selectedIds, rawItems, selectedIdSet]);
 
   // tab filter + sort
   const processedItems = useMemo(() => {
     const { sortBy } = filters;
 
-    const base = isStoryTab
-      ? rawItems.filter((it) => !isUsedInStory(it))
-      : rawItems;
+    const base = isStoryTab ? rawItems.filter((it) => !isUsedInStory(it)) : rawItems;
 
     return [...base].sort((a, b) => {
       const aDate = getLastWrongTime(a);
@@ -107,6 +136,10 @@ export function useWrongNoteController() {
   useEffect(() => {
     if (page > 0 && page >= totalPages) setPage(Math.max(0, totalPages - 1));
   }, [page, totalPages]);
+
+  /* ============================================================================
+   * Selection
+   * ========================================================================== */
 
   // selection: single toggle (story tab capped)
   const toggleSelectId = useCallback(
@@ -151,12 +184,30 @@ export function useWrongNoteController() {
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
 
-  const handleTabChange = useCallback((nextTab) => {
-    setTab(nextTab);
-    setPage(0);
-    setSelectedIds([]);
-    setOpenDropdown(null);
-  }, []);
+  /* ============================================================================
+   * Tab / Dropdown
+   * ========================================================================== */
+
+  const handleTabChange = useCallback(
+    (nextTab) => {
+      setTab(nextTab);
+      setPage(0);
+      setSelectedIds([]);
+      setOpenDropdown(null);
+
+      // ✅ URL 동기화: /learning/wrong-notes?tab=story
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          if (nextTab === "story") p.set("tab", "story");
+          else p.delete("tab");
+          return p;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   const handleDropdownToggle = useCallback((id) => {
     setOpenDropdown((prev) => (prev === id ? null : id));
@@ -169,20 +220,27 @@ export function useWrongNoteController() {
   }, []);
 
   const isSortActive = filters.sortBy !== "latest";
+
   const handleResetSort = useCallback(() => {
     setFilters({ sortBy: "latest" });
     setOpenDropdown(null);
     setPage(0);
   }, []);
 
-  // action guards
+  /* ============================================================================
+   * Action guards
+   * ========================================================================== */
+
   const selectedCount = selectedIds.length;
   const canStudy = selectedWordIds.length > 0;
 
   const storyLimitReached = isStoryTab && selectedCount >= STORY_MAX_SELECT;
-  const canCreateStory = isStoryTab && selectedCount > 0; // cap으로 초과 불가
+  const canCreateStory = isStoryTab && selectedCount > 0;
 
-  // actions
+  /* ============================================================================
+   * Actions
+   * ========================================================================== */
+
   const handleReviewAsQuiz = useCallback(() => {
     if (!canStudy) return;
     const ids = selectedWordIds.join(",");
@@ -201,7 +259,10 @@ export function useWrongNoteController() {
     navigate(`/stories/create?wrongWordIds=${encodeURIComponent(ids)}`);
   }, [canCreateStory, navigate, selectedIds]);
 
-  // view flags
+  /* ============================================================================
+   * View flags
+   * ========================================================================== */
+
   const hasAnyItems = rawItems.length > 0;
   const hasProcessedItems = processedItems.length > 0;
 

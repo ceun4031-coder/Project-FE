@@ -18,20 +18,26 @@ const SORT_FILTER_OPTIONS = [
 
 export default function WrongNotePage() {
   const {
+ // data
+    rawItems,
     isLoading,
     isError,
     refetch,
 
+    // ui state
     tab,
     isStoryTab,
     filters,
     openDropdown,
     page,
     setPage,
+    selectedIds,
     selectedIdSet,
     selectedCount,
 
+    // derived
     tabCounts,
+    processedItems,
     pagedItems,
     totalPages,
     isSortActive,
@@ -41,11 +47,13 @@ export default function WrongNotePage() {
     hintText,
     emptyTextByTab,
 
+    // view flags
     showEmptyNoData,
     showControls,
     showTable,
     showEmptyFiltered,
 
+    // handlers
     toggleSelectId,
     toggleSelectPage,
     clearSelection,
