@@ -4,31 +4,37 @@ import httpClient from "./httpClient";
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 /**
- * WRONG_ANSWER_LOG 공통 normalize
- * - 백엔드 필드명이 달라도 프론트에서는 동일 구조로 쓰기 위함
- * - 12/12 핵심 수정:
- *   1) raw.meaningKo / raw.meaning_ko / raw.korean 우선 반영
- *   2) exampleSentenceKo로 meaning을 대체하지 않음(뜻 오염/반복 원인)
- *   3) word가 객체로 내려오는 케이스 안전 처리 유지
+ * Wrong API (백엔드 수정 없이 사용)
+ *
+ * 목표:
+ *  - 백엔드 필드명이 조금 흔들려도 프론트에서는 "고정된 구조"만 사용
+ *  - story 생성/오답 노트/최근 오답에서 공통으로 재사용
+ *
+ * normalizeWrongItem(raw) -> {
+ *   wrongWordId, wordId, word, meaning,
+ *   wordLevel, wrongAt, totalWrong, totalCorrect,
+ *   isUsedInStory: "Y" | "N"
+ * }
  */
+
+/* ============================================================================
+ * Normalizer
+ * ========================================================================== */
+
 const normalizeWrongItem = (raw) => {
-  if (!raw || typeof raw !== "object") {
-    console.error("normalizeWrongItem: invalid data", raw);
-    return null;
-  }
+  if (!raw || typeof raw !== "object") return null;
 
-  // 백엔드에서 word가 객체(Word 엔티티)로 내려오는 경우 처리
+  // word가 객체(Word 엔티티)로 내려오는 경우
   const wordObj =
-    raw.word && typeof raw.word === "object" && raw.word !== null
-      ? raw.word
-      : null;
+    raw.word && typeof raw.word === "object" && raw.word !== null ? raw.word : null;
 
+  // isUsedInStory 정규화
   const used =
     raw.isUsedInStory === true ||
     raw.isUsedInStory === "Y" ||
     raw.isUsedInStory === "y";
 
-  // meaning 정규화 (예문으로 대체 금지)
+  // meaning: 예문으로 대체 금지(뜻 오염 방지)
   const meaning =
     raw.meaningKo ??
     raw.meaning_ko ??
@@ -40,19 +46,27 @@ const normalizeWrongItem = (raw) => {
     wordObj?.korean ??
     "";
 
+  // word 텍스트
+  const word =
+    typeof raw.word === "string"
+      ? raw.word
+      : wordObj?.word ?? wordObj?.text ?? "";
+
+  const wrongWordId = raw.wrongWordId ?? raw.wrongLogId ?? raw.id ?? null;
+  if (wrongWordId == null) return null;
+
   return {
-    // PK
-    wrongWordId: raw.wrongWordId ?? raw.wrongLogId ?? raw.id,
+    // PK (WRONG_ANSWER_LOG의 PK)
+    wrongWordId: Number(wrongWordId),
 
-    // 단어 정보
+    // Word PK
     wordId: raw.wordId ?? wordObj?.wordId ?? wordObj?.id ?? null,
-    word:
-      typeof raw.word === "string"
-        ? raw.word
-        : wordObj?.word ?? wordObj?.text ?? "",
-    meaning,
 
-    // 난이도
+    // 텍스트/의미
+    word: String(word || "").trim(),
+    meaning: String(meaning || "").trim(),
+
+    // 난이도(필드명 방어)
     wordLevel:
       raw.wordLevel ??
       raw.level ??
@@ -62,24 +76,21 @@ const normalizeWrongItem = (raw) => {
       raw.difficulty ??
       null,
 
-    // 마지막 오답 시각(정규화)
+    // 마지막 오답 시각
     wrongAt: raw.wrongAt ?? raw.lastWrongAt ?? raw.wrong_at ?? null,
 
     // 누적 정답/오답
     totalWrong: raw.totalWrong ?? raw.wrongCount ?? raw.wrong ?? 0,
     totalCorrect: raw.totalCorrect ?? raw.correctCount ?? 0,
 
-    // 스토리 사용 여부 → 항상 "Y" / "N"
+    // 스토리 사용 여부: 항상 "Y" / "N"
     isUsedInStory: used ? "Y" : "N",
   };
 };
 
-/* =========================================================
- * MOCK 모드용 인메모리 상태
- *  - addWrongLog / deleteWrongLog / getWrongList /
- *    getUnusedWrongLogs / markWrongUsed / getRecentWrongLogs
- *    가 같은 배열을 공유
- * ======================================================= */
+/* ============================================================================
+ * MOCK (인메모리)
+ * ========================================================================== */
 
 let mockWrongList = [];
 let mockInitialized = false;
@@ -133,17 +144,20 @@ const initMockWrongList = () => {
   mockWrongList = raw.map(normalizeWrongItem).filter(Boolean);
 };
 
+/* ============================================================================
+ * API Functions
+ * ========================================================================== */
+
 /**
  * 오답 기록 추가
  * POST /api/wrong/{wordId}
  */
 export const addWrongLog = async (wordId) => {
   if (USE_MOCK) {
-    console.log("[Mock] 오답 기록 추가:", wordId);
     initMockWrongList();
 
     const raw = {
-      wrongWordId: Date.now(), // 임시 PK
+      wrongWordId: Date.now(),
       wordId,
       word: `mock-word-${wordId}`,
       meaning: "목업 의미",
@@ -159,21 +173,17 @@ export const addWrongLog = async (wordId) => {
   }
 
   const res = await httpClient.post(`/api/wrong/${wordId}`);
-  const data = res.data;
-  return normalizeWrongItem(data) ?? data;
+  return normalizeWrongItem(res.data) ?? res.data;
 };
 
 /**
  * 오답 기록 삭제
- * DELETE /api/wrong/{wordId}
- * (wordId 기준 삭제)
+ * DELETE /api/wrong/{wordId} (wordId 기준)
  */
 export const deleteWrongLog = async (wordId) => {
   if (USE_MOCK) {
-    console.log("[Mock] 오답 기록 삭제:", wordId);
     initMockWrongList();
-
-    mockWrongList = mockWrongList.filter((i) => i.wordId !== Number(wordId));
+    mockWrongList = mockWrongList.filter((i) => Number(i.wordId) !== Number(wordId));
     return { success: true };
   }
 
@@ -187,15 +197,12 @@ export const deleteWrongLog = async (wordId) => {
  */
 export const getWrongList = async () => {
   if (USE_MOCK) {
-    console.log("[Mock] 내 오답 목록 조회");
     initMockWrongList();
-    // 이미 normalize된 상태이므로 그대로 복사 반환
     return [...mockWrongList];
   }
 
   const res = await httpClient.get("/api/wrong");
   const arr = Array.isArray(res.data) ? res.data : [];
-
   return arr.map(normalizeWrongItem).filter(Boolean);
 };
 
@@ -203,18 +210,12 @@ export const getWrongList = async () => {
  * 스토리에 아직 사용되지 않은 오답 목록
  * GET /api/wrong/unused
  *
- * StoryCreatePage 등에서 사용.
- * 여기서는 단순 필드만 리턴.
- *
- * 추가 수정:
- * - 백엔드가 word를 객체로 내려주는 경우에도 깨지지 않게 normalizeWrongItem 사용
- * - meaningKo/meaning_ko/korean도 정상 반영
+ * StoryCreatePage에서 쓰기 좋은 "flat DTO"로 반환:
+ *  - { wrongWordId, wordId, word, meaning }
  */
 export const getUnusedWrongLogs = async () => {
   if (USE_MOCK) {
-    console.log("[Mock] 스토리 미사용 오답 목록 조회");
     initMockWrongList();
-
     return mockWrongList
       .filter((item) => item.isUsedInStory === "N")
       .map((item) => ({
@@ -240,18 +241,16 @@ export const getUnusedWrongLogs = async () => {
 };
 
 /**
- * 최근 퀴즈 오답 (대시보드/홈 등에서 사용)
+ * 최근 퀴즈 오답
  * GET /api/quiz/recent-wrong
  *
- * 리턴 형태는 예전 코드와 동일하게 맞춤:
+ * 반환 형태(기존 호환):
  *  - { wrongLogId, wordId, word, meaning }
  */
 export const getRecentWrongLogs = async () => {
   if (USE_MOCK) {
-    console.log("[Mock] 최근 퀴즈 오답 조회");
     initMockWrongList();
 
-    // wrongAt 기준 내림차순 정렬 후 상위 5개 예시
     const sorted = [...mockWrongList].sort((a, b) => {
       if (!a.wrongAt || !b.wrongAt) return 0;
       return new Date(b.wrongAt) - new Date(a.wrongAt);
@@ -268,20 +267,24 @@ export const getRecentWrongLogs = async () => {
   const res = await httpClient.get("/api/quiz/recent-wrong");
   const arr = Array.isArray(res.data) ? res.data : [];
 
-  // RecentWrongResponse는 이미 평평한 형태라 normalize 쓰지 않고 안전 매핑
-  return arr.map((raw) => ({
-    wrongLogId: raw.wrongLogId ?? raw.wrongWordId ?? raw.id,
-    wordId: raw.wordId ?? null,
-    word: typeof raw.word === "string" ? raw.word : raw.word?.word ?? "",
-    meaning:
-      raw.meaningKo ??
-      raw.meaning_ko ??
-      raw.meaning ??
-      raw.korean ??
-      raw.word?.meaningKo ??
-      raw.word?.meaning ??
-      "",
-  }));
+  return arr.map((raw) => {
+    const wordObj = raw.word && typeof raw.word === "object" ? raw.word : null;
+
+    return {
+      wrongLogId: raw.wrongLogId ?? raw.wrongWordId ?? raw.id,
+      wordId: raw.wordId ?? wordObj?.wordId ?? wordObj?.id ?? null,
+      word:
+        typeof raw.word === "string" ? raw.word : wordObj?.word ?? wordObj?.text ?? "",
+      meaning:
+        raw.meaningKo ??
+        raw.meaning_ko ??
+        raw.meaning ??
+        raw.korean ??
+        wordObj?.meaningKo ??
+        wordObj?.meaning ??
+        "",
+    };
+  });
 };
 
 /**
@@ -290,11 +293,10 @@ export const getRecentWrongLogs = async () => {
  */
 export const markWrongUsed = async (wrongLogId) => {
   if (USE_MOCK) {
-    console.log("[Mock] 오답 스토리 사용 처리:", wrongLogId);
     initMockWrongList();
 
     mockWrongList = mockWrongList.map((item) =>
-      item.wrongWordId === Number(wrongLogId)
+      Number(item.wrongWordId) === Number(wrongLogId)
         ? { ...item, isUsedInStory: "Y" }
         : item
     );
