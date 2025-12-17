@@ -13,10 +13,8 @@ export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
-
 /* -----------------------------
    REFRESH TOKEN
-   (FE에서 보관해야 백엔드 /api/auth/refresh 연동 가능)
 ------------------------------ */
 const REFRESH_TOKEN_KEY = "refreshToken";
 
@@ -27,7 +25,6 @@ export function setRefreshToken(token) {
 export function getRefreshToken() {
   return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
-
 
 /* -----------------------------
    CLEAR TOKENS

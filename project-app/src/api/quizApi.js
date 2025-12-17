@@ -5,11 +5,19 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 // --------------------------------------------------------
 // 내부 유틸: 백엔드 응답을 프론트에서 쓰기 좋은 형태로 정규화
-// 프론트가 기대하는 형태: { id, question, options: string[], answer: number }
+// 프론트가 기대하는 형태: { id, wordId, question, options: string[], answer: number }
 // + 추가: word, meaning, meaningKo, partOfSpeech, level 등을 최대한 공통 필드로 맞춰줌
 // --------------------------------------------------------
 const normalizeQuizItem = (raw, index) => {
   if (!raw) return null;
+
+  // word가 객체로 내려오는 경우 대비
+  const wordObj =
+    raw.word && typeof raw.word === "object" && raw.word !== null ? raw.word : null;
+
+  // ✅ wordId 보장(QuizPage에서 결과 저장/오답 처리에 필요)
+  const wordId =
+    raw.wordId ?? raw.word_id ?? wordObj?.wordId ?? wordObj?.id ?? raw.id ?? null;
 
   // id
   const id = raw.quizId ?? raw.id ?? raw.wordId ?? index ?? 0;
@@ -18,22 +26,15 @@ const normalizeQuizItem = (raw, index) => {
   const word =
     typeof raw.word === "string" && raw.word.trim().length > 0
       ? raw.word.trim()
-      : raw.baseWord ?? raw.mainWord ?? "";
+      : raw.baseWord ?? raw.mainWord ?? wordObj?.word ?? wordObj?.text ?? "";
 
   // 질문 텍스트
-  let question =
-    raw.questionText ??
-    raw.question ??
-    raw.prompt ??
-    null;
+  let question = raw.questionText ?? raw.question ?? raw.prompt ?? null;
 
   // word만 오는 경우 기본 문구 생성
   if (!question) {
-    if (word) {
-      question = `'${word}'의 뜻으로 가장 알맞은 것은?`;
-    } else {
-      question = "질문 내용이 없습니다.";
-    }
+    if (word) question = `'${word}'의 뜻으로 가장 알맞은 것은?`;
+    else question = "질문 내용이 없습니다.";
   }
 
   // 보기: 항상 string[]으로 정규화
@@ -57,24 +58,15 @@ const normalizeQuizItem = (raw, index) => {
       ? raw.answer
       : 0;
 
-  let answer = Number.isFinite(rawAnswerCandidate)
-    ? rawAnswerCandidate
-    : 0;
+  let answer = Number.isFinite(rawAnswerCandidate) ? rawAnswerCandidate : 0;
 
-  // answerIndex 0 기반 보정:
-  // - 정상 범위(0 ~ options.length-1)가 아니고
-  // - 1 ~ options.length 범위면 1 기반으로 간주하고 -1
+  // answerIndex 0 기반 보정
   if (options.length > 0) {
     const maxIndex = options.length - 1;
 
     if (answer < 0 || answer > maxIndex) {
-      if (answer >= 1 && answer <= options.length) {
-        // 1 기반으로 들어온 케이스 → 0 기반으로 보정
-        answer = answer - 1;
-      } else {
-        // 범위 밖이면 0번 보기로 강제
-        answer = 0;
-      }
+      if (answer >= 1 && answer <= options.length) answer = answer - 1; // 1-based -> 0-based
+      else answer = 0;
     }
   } else {
     answer = 0;
@@ -85,6 +77,9 @@ const normalizeQuizItem = (raw, index) => {
     raw.meaningKo ??
     raw.meaning_ko ??
     raw.korean ??
+    wordObj?.meaningKo ??
+    wordObj?.meaning_ko ??
+    wordObj?.korean ??
     (typeof raw.meaning === "string" ? raw.meaning : undefined);
 
   const meaningKo = typeof meaningKoSource === "string" ? meaningKoSource : "";
@@ -94,30 +89,18 @@ const normalizeQuizItem = (raw, index) => {
       : meaningKo;
 
   // 품사
-  const partOfSpeech =
-    raw.partOfSpeech ??
-    raw.pos ??
-    raw.part_of_speech ??
-    "";
+  const partOfSpeech = raw.partOfSpeech ?? raw.pos ?? raw.part_of_speech ?? "";
 
   // 레벨
-  const level =
-    raw.level ??
-    raw.wordLevel ??
-    raw.difficulty ??
-    raw.levelId ??
-    null;
+  const level = raw.level ?? raw.wordLevel ?? raw.difficulty ?? raw.levelId ?? null;
 
   // 오답 로그 ID (있으면 같이 넘겨두기)
-  const wrongWordId =
-    raw.wrongWordId ??
-    raw.wrongLogId ??
-    raw.wrongAnswerLogId ??
-    null;
+  const wrongWordId = raw.wrongWordId ?? raw.wrongLogId ?? raw.wrongAnswerLogId ?? null;
 
   return {
     ...raw,
     id,
+    wordId, // ✅ 추가
     question,
     options,
     answer,
@@ -133,35 +116,16 @@ const normalizeQuizItem = (raw, index) => {
 const normalizeQuizListResponse = (data) => {
   if (!data) return [];
 
-  if (Array.isArray(data)) {
-    return data.map(normalizeQuizItem).filter(Boolean);
-  }
-
-  if (Array.isArray(data.questions)) {
-    return data.questions.map(normalizeQuizItem).filter(Boolean);
-  }
-
-  if (Array.isArray(data.items)) {
-    return data.items.map(normalizeQuizItem).filter(Boolean);
-  }
-
-  if (Array.isArray(data.content)) {
-    return data.content.map(normalizeQuizItem).filter(Boolean);
-  }
+  if (Array.isArray(data)) return data.map(normalizeQuizItem).filter(Boolean);
+  if (Array.isArray(data.questions)) return data.questions.map(normalizeQuizItem).filter(Boolean);
+  if (Array.isArray(data.items)) return data.items.map(normalizeQuizItem).filter(Boolean);
+  if (Array.isArray(data.content)) return data.content.map(normalizeQuizItem).filter(Boolean);
 
   return [];
 };
 
 // ============================================================
 // [API 1] 퀴즈 데이터 가져오기 (GET /api/quiz)
-//    프론트 파라미터:
-//      {
-//        source: 'quiz' | 'wrong-note',
-//        limit: number,
-//        level: string|null,
-//        wordIds?: number[],
-//        category?: string | null
-//      }
 // ============================================================
 export const fetchQuizzes = async (params) => {
   const { source, limit, level, wordIds, category } = params;
@@ -173,45 +137,24 @@ export const fetchQuizzes = async (params) => {
   try {
     const mode = source === "wrong-note" ? "wrong" : "normal";
 
-    // level 정규화: "All"/"ALL" → "all"
-    const normalizedLevel =
-      typeof level === "string" ? level.trim().toLowerCase() : null;
+    const normalizedLevel = typeof level === "string" ? level.trim().toLowerCase() : null;
 
-    const query = {
-      mode, // normal | wrong
-    };
+    const query = { mode };
 
-    const numericLimit =
-      typeof limit === "number" ? limit : Number(limit);
+    const numericLimit = typeof limit === "number" ? limit : Number(limit);
+    if (Number.isFinite(numericLimit) && numericLimit > 0) query.count = numericLimit;
 
-    if (Number.isFinite(numericLimit) && numericLimit > 0) {
-      // 백엔드: @RequestParam(required = false) Integer count
-      query.count = numericLimit;
-    }
+    if (normalizedLevel && normalizedLevel !== "all") query.level = normalizedLevel;
 
-    // all / null 이면 레벨 필터 안 보냄
-    if (normalizedLevel && normalizedLevel !== "all") {
-      query.level = normalizedLevel;
-    }
+    if (category && category !== "All") query.category = category;
 
-    // 카테고리(분야) 연동
-    if (category && category !== "All") {
-      query.category = category;
-    }
+    if (Array.isArray(wordIds) && wordIds.length > 0) query.wordIds = wordIds.join(",");
 
-    if (Array.isArray(wordIds) && wordIds.length > 0) {
-      query.wordIds = wordIds.join(",");
-    }
-
-    const res = await httpClient.get("/api/quiz", {
-      params: query,
-    });
+    const res = await httpClient.get("/api/quiz", { params: query });
 
     const list = normalizeQuizListResponse(res.data);
 
-    return Number.isFinite(numericLimit) && numericLimit > 0
-      ? list.slice(0, numericLimit)
-      : list;
+    return Number.isFinite(numericLimit) && numericLimit > 0 ? list.slice(0, numericLimit) : list;
   } catch (error) {
     console.error("Quiz Fetch Error:", error.response?.data || error);
     throw error;
@@ -220,12 +163,9 @@ export const fetchQuizzes = async (params) => {
 
 // ============================================================
 // [API 2] 퀴즈 결과 저장하기 (POST /api/quiz/result)
-//    payload: { mode: 'normal'|'wrong', answers: [{ wordId, correct }] }
 // ============================================================
 export const submitQuizResult = async (payload) => {
-  if (USE_MOCK) {
-    return mockSubmitResult(payload);
-  }
+  if (USE_MOCK) return mockSubmitResult(payload);
 
   try {
     const res = await httpClient.post("/api/quiz/result", payload);
@@ -237,7 +177,7 @@ export const submitQuizResult = async (payload) => {
 };
 
 // ============================================================
-// 🧪 MOCK DATA (VITE_USE_MOCK === "true" 일 때만 사용)
+// 🧪 MOCK DATA
 // ============================================================
 const mockFetchQuizzes = (params) => {
   const { source, limit, wordIds } = params || {};
@@ -295,31 +235,26 @@ const mockFetchQuizzes = (params) => {
       let list = mockData;
 
       if (Array.isArray(wordIds) && wordIds.length > 0) {
-        const set = new Set(
-          wordIds
-            .map((n) => Number(n))
-            .filter((n) => !Number.isNaN(n))
-        );
+        const set = new Set(wordIds.map(Number).filter(Number.isFinite));
         list = mockData.filter((item) => set.has(Number(item.wordId)));
       }
 
-      const numericLimit =
-        typeof limit === "number" ? limit : Number(limit);
-        
-// ✅ wordIds가 있으면 count는 wordIds.length로 강제
-const effectiveLimit =
-  Array.isArray(wordIds) && wordIds.length > 0 ? wordIds.length : numericLimit;
+      const numericLimit = typeof limit === "number" ? limit : Number(limit);
 
-if (Number.isFinite(effectiveLimit) && effectiveLimit > 0) {
-  query.count = effectiveLimit;
-}
-
+      // ✅ wordIds가 있으면 그 개수로 강제
+      const effectiveLimit =
+        Array.isArray(wordIds) && wordIds.length > 0
+          ? wordIds.length
+          : Number.isFinite(numericLimit) && numericLimit > 0
+          ? numericLimit
+          : 0;
 
       const normalized = normalizeQuizListResponse(list);
 
+      // ✅ query.count 같은 거 건드리지 말고, 여기서만 slice로 통제
       const sliced =
-        Number.isFinite(numericLimit) && numericLimit > 0
-          ? normalized.slice(0, numericLimit)
+        Number.isFinite(effectiveLimit) && effectiveLimit > 0
+          ? normalized.slice(0, effectiveLimit)
           : normalized;
 
       resolve(sliced);

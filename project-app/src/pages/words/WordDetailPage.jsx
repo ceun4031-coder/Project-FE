@@ -97,6 +97,7 @@ const runWithConcurrency = async (tasks, concurrency = 3) => {
   await Promise.all(workers);
   return results;
 };
+
 // ---- Chip 컴포넌트 (memo) ----
 const ClusterChip = React.memo(function ClusterChip({ item, onOpen }) {
   return (
@@ -118,7 +119,6 @@ const ClusterChip = React.memo(function ClusterChip({ item, onOpen }) {
   );
 });
 
-
 function WordDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -137,7 +137,6 @@ function WordDetailPage() {
   const autoClusterLoadedRef = useRef(null);
   const clusterReqSeqRef = useRef(0);
   const autoCreateTriedRef = useRef(new Set());
-
 
   const queryClient = useQueryClient();
 
@@ -164,12 +163,11 @@ function WordDetailPage() {
         const wordId = Number(detail.wordId);
 
         const favoriteIds = new Set((favoriteRes || []).map((f) => Number(f.wordId)));
-       
+
         setWord({
           ...detail,
           isFavorite: favoriteIds.has(wordId) || !!detail.isFavorite,
           isCompleted: isStudyCompleted(studyRes?.status),
-
         });
         setError(null);
       } catch (e) {
@@ -186,6 +184,7 @@ function WordDetailPage() {
       cancelled = true;
     };
   }, [id]);
+
   // ✅ 학습하고 뒤로 돌아왔을 때 완료 상태 재동기화
   useEffect(() => {
     if (!id) return;
@@ -196,10 +195,7 @@ function WordDetailPage() {
         const studyRes = await getStudyStatus(id).catch(() => ({ status: "none" }));
         if (cancelled) return;
 
-        setWord((prev) =>
-          prev ? { ...prev, isCompleted: isStudyCompleted(studyRes?.status) } : prev
-
-        );
+        setWord((prev) => (prev ? { ...prev, isCompleted: isStudyCompleted(studyRes?.status) } : prev));
       } catch (e) {
         console.error("학습 상태 갱신 실패", e);
       }
@@ -223,6 +219,9 @@ function WordDetailPage() {
     setClusterError(null);
 
     autoClusterLoadedRef.current = null;
+
+    // ✅ 다른 단어로 이동했을 때 탭이 이상하게 남지 않게
+    setClusterTab("전체");
   }, [id]);
 
   // ------------------------------
@@ -256,10 +255,10 @@ function WordDetailPage() {
 
         console.error("연관 단어 로딩 실패", e);
         setClusterError(
-        e?.message === "timeout"
-        ? "연관 단어 로딩이 지연되고 있어요. 다시 시도해 주세요."
-       : "연관 단어를 불러오지 못했습니다."
-      );
+          e?.message === "timeout"
+            ? "연관 단어 로딩이 지연되고 있어요. 다시 시도해 주세요."
+            : "연관 단어를 불러오지 못했습니다."
+        );
         setClusterStatus("error");
         return null;
       }
@@ -297,9 +296,9 @@ function WordDetailPage() {
 
         console.error("연관 단어 생성 실패", e);
         setClusterError(
-        e?.message === "timeout"
-          ? "연관 단어 생성이 지연되고 있어요. 잠시 후 다시 시도해 주세요."
-          : "연관 단어 생성 중 오류가 발생했습니다."
+          e?.message === "timeout"
+            ? "연관 단어 생성이 지연되고 있어요. 잠시 후 다시 시도해 주세요."
+            : "연관 단어 생성 중 오류가 발생했습니다."
         );
         setClusterStatus("error");
         return null;
@@ -307,42 +306,42 @@ function WordDetailPage() {
     },
     [id]
   );
+
   // 자동: GET -> empty면 POST
-useEffect(() => {
-  if (!id) return;
+  useEffect(() => {
+    if (!id) return;
 
-  let cancelled = false;
+    let cancelled = false;
 
-  const run = async () => {
-    // 1) 캐시로 먼저 시도
-    const grouped = await fetchClusters({ useCache: true, centerId: id });
-    if (cancelled) return;
+    const run = async () => {
+      // 1) 캐시로 먼저 시도
+      const grouped = await fetchClusters({ useCache: true, centerId: id });
+      if (cancelled) return;
 
-    // 캐시 실패(에러/timeout)면 no-cache로 한 번 더
-    if (!grouped) {
-      await fetchClusters({ useCache: false, centerId: id });
-      return;
-    }
+      // 캐시 실패(에러/timeout)면 no-cache로 한 번 더
+      if (!grouped) {
+        await fetchClusters({ useCache: false, centerId: id });
+        return;
+      }
 
-    const empty =
-      (grouped.similar?.length ?? 0) === 0 &&
-      (grouped.opposite?.length ?? 0) === 0;
+      const empty =
+        (grouped.similar?.length ?? 0) === 0 && (grouped.opposite?.length ?? 0) === 0;
 
-    if (!empty) return;
+      if (!empty) return;
 
-    // 2) 비어있으면 생성 (id당 1회만)
-    if (autoCreateTriedRef.current.has(String(id))) return;
-    autoCreateTriedRef.current.add(String(id));
+      // 2) 비어있으면 생성 (id당 1회만)
+      if (autoCreateTriedRef.current.has(String(id))) return;
+      autoCreateTriedRef.current.add(String(id));
 
-    await runCreateCluster(id);
-  };
+      await runCreateCluster(id);
+    };
 
-  run();
+    run();
 
-  return () => {
-    cancelled = true;
-  };
-}, [id, fetchClusters, runCreateCluster]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, fetchClusters, runCreateCluster]);
 
   // ------------------------------
   // 즐겨찾기 토글
@@ -378,14 +377,14 @@ useEffect(() => {
       setFavLoading(false);
     }
   };
-  // ✅ 학습 완료 판정(백엔드가 learned/pending 등을 줄 수 있어서 보정)
-const normalizeStudyStatus = (raw) =>
-  String(raw ?? "none").trim().toLowerCase();
 
-const isStudyCompleted = (rawStatus) => {
-  const s = normalizeStudyStatus(rawStatus);
-  return s === "correct" || s === "learned" || s === "completed" || s === "done";
-};
+  // ✅ 학습 완료 판정(백엔드가 learned/pending 등을 줄 수 있어서 보정)
+  const normalizeStudyStatus = (raw) => String(raw ?? "none").trim().toLowerCase();
+
+  const isStudyCompleted = (rawStatus) => {
+    const s = normalizeStudyStatus(rawStatus);
+    return s === "correct" || s === "learned" || s === "completed" || s === "done";
+  };
 
   // ✅ 연관 단어 클릭 -> 상세 페이지 이동
   const handleOpenClusterWord = useCallback(
@@ -408,8 +407,6 @@ const isStudyCompleted = (rawStatus) => {
     [navigate, location.state]
   );
 
- 
-
   const handleBack = () => {
     const fromList = location.state?.from === "word-list";
     const search = location.state?.search || "";
@@ -417,17 +414,33 @@ const isStudyCompleted = (rawStatus) => {
     else navigate("/words");
   };
 
-  const hasAnyCluster =
-    (clusterData.similar?.length ?? 0) > 0 || (clusterData.opposite?.length ?? 0) > 0;
+  // ✅ 반의어/유의어 없으면 탭/섹션 숨김
+  const hasSimilar = (clusterData.similar?.length ?? 0) > 0;
+  const hasOpposite = (clusterData.opposite?.length ?? 0) > 0;
+  const hasAnyCluster = hasSimilar || hasOpposite;
 
-  const viewSimilar = useMemo(
-    () => (clusterTab === "전체" || clusterTab === "similar" ? clusterData.similar : []),
-    [clusterTab, clusterData.similar]
-  );
-  const viewOpposite = useMemo(
-    () => (clusterTab === "전체" || clusterTab === "opposite" ? clusterData.opposite : []),
-    [clusterTab, clusterData.opposite]
-  );
+  const availableTabs = useMemo(() => {
+    const tabs = ["전체"];
+    if (hasSimilar) tabs.push("similar");
+    if (hasOpposite) tabs.push("opposite");
+    return tabs;
+  }, [hasSimilar, hasOpposite]);
+
+  // ✅ 없는 탭이 선택된 상태면 전체로 복구
+  useEffect(() => {
+    const allowed = new Set(availableTabs);
+    if (!allowed.has(clusterTab)) setClusterTab("전체");
+  }, [availableTabs, clusterTab]);
+
+  const viewSimilar = useMemo(() => {
+    if (!hasSimilar) return [];
+    return clusterTab === "전체" || clusterTab === "similar" ? clusterData.similar : [];
+  }, [clusterTab, clusterData.similar, hasSimilar]);
+
+  const viewOpposite = useMemo(() => {
+    if (!hasOpposite) return [];
+    return clusterTab === "전체" || clusterTab === "opposite" ? clusterData.opposite : [];
+  }, [clusterTab, clusterData.opposite, hasOpposite]);
 
   if (loading)
     return (
@@ -484,9 +497,13 @@ const isStudyCompleted = (rawStatus) => {
 
           <div className="header-bottom-row">
             <div className="detail-tags-row">
-              {typeof level === "number" && <span className="tag tag-level">Lv.{displayLevel}</span>}
+              {typeof level === "number" && (
+                <span className="tag tag-level">Lv.{displayLevel}</span>
+              )}
               {partOfSpeech && <span className="tag tag-pos">{getPosLabel(partOfSpeech)}</span>}
-              {displayDomain && <span className="tag tag-domain">{getDomainLabel(displayDomain)}</span>}
+              {displayDomain && (
+                <span className="tag tag-domain">{getDomainLabel(displayDomain)}</span>
+              )}
             </div>
 
             <div className={`status-badge ${isCompleted ? "done" : "todo"}`}>
@@ -519,7 +536,7 @@ const isStudyCompleted = (rawStatus) => {
               <div className="cluster-header">
                 <h3>연관 단어</h3>
                 <div className="cluster-tabs">
-                  {["전체", "similar", "opposite"].map((tab) => (
+                  {availableTabs.map((tab) => (
                     <button
                       key={tab}
                       className={`cluster-tab ${clusterTab === tab ? "active" : ""}`}
@@ -573,7 +590,7 @@ const isStudyCompleted = (rawStatus) => {
 
                 {clusterStatus === "ready" && hasAnyCluster && (
                   <>
-                    {(clusterTab === "전체" || clusterTab === "similar") && (
+                    {(clusterTab === "전체" || clusterTab === "similar") && hasSimilar && (
                       <div className="cluster-group">
                         <div className="group-title-row">
                           <h4>유의어 (Similar)</h4>
@@ -590,7 +607,7 @@ const isStudyCompleted = (rawStatus) => {
                       </div>
                     )}
 
-                    {(clusterTab === "전체" || clusterTab === "opposite") && (
+                    {(clusterTab === "전체" || clusterTab === "opposite") && hasOpposite && (
                       <div className="cluster-group">
                         <div className="group-title-row">
                           <h4>반의어 (Opposite)</h4>
@@ -598,9 +615,9 @@ const isStudyCompleted = (rawStatus) => {
                         <div className="chip-grid">
                           {viewOpposite.map((item) => (
                             <ClusterChip
-                              key={item.id ?? item.text}
+                              key={item.wordId ?? item.id ?? item.text}
                               item={item}
-                             onOpen={handleOpenClusterWord}
+                              onOpen={handleOpenClusterWord}
                             />
                           ))}
                         </div>

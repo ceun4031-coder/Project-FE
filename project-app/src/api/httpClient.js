@@ -8,9 +8,7 @@ import {
   setRefreshToken,
 } from "../utils/storage";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 const httpClient = axios.create({
@@ -27,15 +25,21 @@ const refreshClient = axios.create({
 // Refresh 관련 상태
 // ---------------------------
 let isRefreshing = false;
+// pending 방지: resolve/reject 둘 다 들고 있어야 함
 let refreshSubscribers = [];
 
+function subscribeTokenRefresh(resolve, reject) {
+  refreshSubscribers.push({ resolve, reject });
+}
+
 function onRefreshed(newToken) {
-  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers.forEach(({ resolve }) => resolve(newToken));
   refreshSubscribers = [];
 }
 
-function addRefreshSubscriber(cb) {
-  refreshSubscribers.push(cb);
+function onRefreshFailed(err) {
+  refreshSubscribers.forEach(({ reject }) => reject(err));
+  refreshSubscribers = [];
 }
 
 function setAuthHeader(config, token) {
@@ -47,6 +51,7 @@ function setAuthHeader(config, token) {
 
 function redirectToLogin() {
   clearTokens();
+  localStorage.removeItem("userInfo");
   // 목업 모드에서는 로그인 페이지로 강제 이동하지 않음
   if (!USE_MOCK) {
     window.location.href = "/auth/login";
@@ -69,7 +74,7 @@ httpClient.interceptors.request.use(
 httpClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // ✅ 목업 모드에서는 refresh/redirect 로직 사용하지 않고 그대로 에러만 넘김
+    // 목업 모드에서는 refresh/redirect 로직 사용하지 않고 그대로 에러만 넘김
     if (USE_MOCK) {
       return Promise.reject(error);
     }
@@ -93,7 +98,7 @@ httpClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // refresh 요청 자체에서 401, 또는 이미 재시도한 요청이면 바로 로그아웃
+    // refresh 요청 자체에서 401/403이거나, 이미 재시도한 요청이면 바로 로그인으로
     if (
       originalRequest._retry ||
       originalRequest.url?.includes("/api/auth/refresh")
@@ -111,12 +116,13 @@ httpClient.interceptors.response.use(
     }
 
     try {
-      // 이미 다른 요청이 refresh 중이면 대기
+      // 이미 다른 요청이 refresh 중이면 대기 (성공/실패 모두 처리)
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          addRefreshSubscriber((newToken) => {
-            resolve(httpClient(setAuthHeader(originalRequest, newToken)));
-          });
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh(
+            (newToken) => resolve(httpClient(setAuthHeader(originalRequest, newToken))),
+            (err) => reject(err)
+          );
         });
       }
 
@@ -126,9 +132,7 @@ httpClient.interceptors.response.use(
         "/api/auth/refresh",
         { refreshToken },
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
 
@@ -138,14 +142,18 @@ httpClient.interceptors.response.use(
 
       if (!newAccessToken) {
         isRefreshing = false;
+        onRefreshFailed(new Error("No accessToken in refresh response"));
         redirectToLogin();
         return Promise.reject(error);
       }
 
+      // 토큰 저장
       setAccessToken(newAccessToken);
-      if (newRefreshToken) {
-        setRefreshToken(newRefreshToken);
-      }
+      if (newRefreshToken) setRefreshToken(newRefreshToken);
+
+      // 이후 요청들도 최신 토큰을 쓰도록 기본 헤더 갱신
+      httpClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+      refreshClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
 
       isRefreshing = false;
       onRefreshed(newAccessToken);
@@ -154,8 +162,16 @@ httpClient.interceptors.response.use(
       return httpClient(setAuthHeader(originalRequest, newAccessToken));
     } catch (refreshError) {
       isRefreshing = false;
-      refreshSubscribers = []; // 대기 중인 요청 정리
-      redirectToLogin();
+
+      // 대기 중이던 요청들 pending 방지
+      onRefreshFailed(refreshError);
+
+      // refresh가 인증 실패(세션 만료)면 로그인으로
+      const status = refreshError?.response?.status;
+      if (status === 401 || status === 403) {
+        redirectToLogin();
+      }
+
       return Promise.reject(refreshError);
     }
   }

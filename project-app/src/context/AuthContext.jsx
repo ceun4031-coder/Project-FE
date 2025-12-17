@@ -1,19 +1,11 @@
 // src/context/AuthContext.jsx
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-} from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import {
   login as loginApi,
   logout as logoutApi,
   getMe as getMeApi,
 } from "../api/authApi";
-import {
-  getAccessToken,
-  clearTokens,
-} from "../utils/storage";
+import { getAccessToken, clearTokens } from "../utils/storage";
 import useAuthStore from "../store/useAuthStore";
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
@@ -34,6 +26,8 @@ export function AuthProvider({ children }) {
   // 앱 최초 로드시 세션 복원
   // -----------------------------
   useEffect(() => {
+    let alive = true;
+
     // 목업 모드: 서버 호출 없이 localStorage만 사용
     if (USE_MOCK) {
       const stored = localStorage.getItem("userInfo");
@@ -43,10 +37,14 @@ export function AuthProvider({ children }) {
           setUser(parsed);
         } catch {
           clearUser();
+          localStorage.removeItem("userInfo");
+          clearTokens();
         }
       }
-      setLoading(false);
-      return;
+      if (alive) setLoading(false);
+      return () => {
+        alive = false;
+      };
     }
 
     // 실서버 모드: accessToken 있으면 /api/user/me로 검증
@@ -54,34 +52,40 @@ export function AuthProvider({ children }) {
       const token = getAccessToken();
 
       if (!token) {
-        setLoading(false);
+        if (alive) setLoading(false);
         return;
       }
 
       try {
         const me = await getMeApi();
+        if (!alive) return;
+
         setUser(me);
         localStorage.setItem("userInfo", JSON.stringify(me));
-      } catch (e) {
+      } catch {
         clearTokens();
         localStorage.removeItem("userInfo");
         clearUser();
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
 
     initAuth();
+
+    return () => {
+      alive = false;
+    };
   }, [setUser, clearUser]);
 
   // -----------------------------
   // 로그인
   // -----------------------------
   const login = async (email, password) => {
-    // authApi.login 이 내부에서
+    // authApi.login:
     // 1) /api/auth/login → 토큰 발급
     // 2) 토큰 저장
-    // 3) /api/user/me 호출 후 user 반환
+    // 3) /api/user/me 호출 후 user 반환 (실패 시 throw)
     const { user: userData } = await loginApi({ email, password });
 
     setUser(userData);
@@ -108,14 +112,12 @@ export function AuthProvider({ children }) {
     let email;
 
     try {
-      email =
-        user?.email ||
-        (storedUser ? JSON.parse(storedUser).email : undefined);
+      email = user?.email || (storedUser ? JSON.parse(storedUser).email : undefined);
     } catch {
       email = undefined;
     }
 
-    // 상태/스토리지 초기화
+    // 상태/스토리지 초기화 (클라이언트 로그아웃은 무조건 성공해야 함)
     clearUser();
     localStorage.removeItem("userInfo");
     clearTokens();
@@ -132,15 +134,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        updateProfileState,
-        loading,
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, updateProfileState, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );

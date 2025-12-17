@@ -2,7 +2,7 @@
 import { create } from "zustand";
 
 const useAuthStore = create((set) => ({
-  user: null,            // { id, email, nickname, ... } 형태 가정
+  user: null, // { id, email, nickname, ... } 형태 가정
   isLoggedIn: false,
 
   // 사용자 전체 교체
