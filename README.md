@@ -37,10 +37,11 @@
 ---
 
 ## 🛠 Tech Stack
-- **Core:** React, Vite, TypeScript
+- **Core:** React, Vite, JavaScript
 - **State:** TanStack Query v5, Zustand
 - **Network:** Axios (Interceptor)
 - **Routing:** React Router DOM
+- **Mock:** MSW
 
 ---
 
@@ -73,3 +74,4 @@ npm ci
 
 # 2. Run development server
 npm run dev
+
